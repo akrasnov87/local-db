@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="MBL_APP_VERSION"
+        android:summary="0.0.0.0"
+        android:title="Версия"
+        app:summary="Общая информация о приложении" />
+
+    <PreferenceCategory
+        android:icon="@drawable/ic_baseline_bug_report_24"
+        android:summary="Включен режим отладки приложения"
+        android:title="Режим отладки">
+
+        <SwitchPreference
+            android:key="MBL_DEBUG"
+            android:summary="Включить режим отладки"
+            android:title="Включить" />
+
+    </PreferenceCategory>
+
+    <Preference
+        android:key="SERVER_APP_VERSION"
+        android:summary="0.0.0.0"
+        android:title="Доступно обновление"
+        app:icon="@drawable/ic_baseline_system_update_24"
+        app:summary="Информация о доступном обновлении" />
+
+</PreferenceScreen>

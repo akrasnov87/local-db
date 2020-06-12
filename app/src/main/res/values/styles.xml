@@ -1,0 +1,32 @@
+<resources>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColor">@color/colorPrimaryText</item>
+        <item name="colorError">@color/colorAccent</item>
+        <item name="colorBackgroundFloating">@color/colorSecondaryText</item>
+        <item name="android:windowBackground">@color/colorSecondaryText</item>
+        <item name="android:textColorHint">@color/colorHint</item>
+        <item name="android:textColorSecondary">@color/colorHintDark</item>
+
+        <item name="buttonStyle">@style/AppTheme.Dialog.ButtonStyle</item>
+    </style>
+
+    <style name="AppTheme.Dialog.ButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/colorPrimary</item>
+    </style>
+
+    <style name="AppTheme.ButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:background">@drawable/button_state</item>
+        <item name="android:textColor">@color/colorSecondaryText</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="AppTheme.ButtonStyle.Alt" parent="AppTheme.ButtonStyle">
+        <item name="android:background">@drawable/button_state_alt</item>
+    </style>
+</resources>

@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Local Db</string>
+    <string name="settings">Настройки</string>
+    <string name="stop">Стоп</string>
+    <string name="start">Старт</string>
+</resources>
