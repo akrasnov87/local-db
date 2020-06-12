@@ -38,7 +38,7 @@ public class HttpService extends Service
      */
     public static final String SERVICE_NAME = "ru.mobnius.localdb.HttpService";
 
-    private HttpServerThread httpServerThread;
+    private static HttpServerThread sHttpServerThread;
 
     private List<OnRequestListener> mRequestListeners;
 
@@ -55,23 +55,31 @@ public class HttpService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        httpServerThread = new HttpServerThread(this);
-        httpServerThread.start();
+        if(sHttpServerThread != null) {
+            sHttpServerThread.onDestroy();
+        }
 
-        int mode = intent.getIntExtra(MODE, 0);
+        sHttpServerThread = new HttpServerThread(this);
+        sHttpServerThread.start();
         String strMode;
-        switch (mode) {
-            case AUTO:
-                strMode = "автоматически";
-                break;
 
-            case MANUAL:
-                strMode = "в ручную";
-                break;
+        if(intent != null) {
+            int mode = intent.getIntExtra(MODE, 0);
+            switch (mode) {
+                case AUTO:
+                    strMode = "автоматически";
+                    break;
 
-            default:
-                strMode = "неизвестным образом";
-                break;
+                case MANUAL:
+                    strMode = "в ручную";
+                    break;
+
+                default:
+                    strMode = "неизвестным образом";
+                    break;
+            }
+        } else {
+            strMode = "автоматически";
         }
 
         ((App)getApplication()).onAddLog(new LogItem("служба и хост запущены " + strMode, false));
@@ -81,8 +89,8 @@ public class HttpService extends Service
 
     @Override
     public void onDestroy() {
-        httpServerThread.onDestroy();
         super.onDestroy();
+        sHttpServerThread.onDestroy();
     }
 
     /**

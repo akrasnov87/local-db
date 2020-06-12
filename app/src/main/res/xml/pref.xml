@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <Preference
         android:key="MBL_APP_VERSION"
@@ -26,6 +27,8 @@
         android:summary="0.0.0.0"
         android:title="Доступно обновление"
         app:icon="@drawable/ic_baseline_system_update_24"
+        app:isPreferenceVisible="false"
+        tools:isPreferenceVisible="true"
         app:summary="Информация о доступном обновлении" />
 
 </PreferenceScreen>

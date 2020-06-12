@@ -35,9 +35,9 @@ public class HttpResponseThread extends Thread {
             String request = is.readLine();
             PrintWriter os = new PrintWriter(mSocket.getOutputStream(), true);
 
-            int status = 200;
+            int status;
 
-            if(mResponseListener != null) {
+            if(mResponseListener != null && request != null) {
                 Response response = mResponseListener.onResponse(new UrlReader(request));
                 status = response.getStatus();
                 os.print(response.toResponseString());
@@ -54,7 +54,7 @@ public class HttpResponseThread extends Thread {
             os.flush();
             mSocket.close();
 
-            if(mLogListener != null && new UrlReader(request).getSegments().length > 0) {
+            if(mLogListener != null && request != null && new UrlReader(request).getSegments().length > 0) {
                 mLogListener.onAddLog(new LogItem("request: " + request + " - " + status, false));
             }
 

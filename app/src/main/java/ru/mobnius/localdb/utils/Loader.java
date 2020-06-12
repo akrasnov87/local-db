@@ -2,8 +2,6 @@ package ru.mobnius.localdb.utils;
 
 import com.google.gson.Gson;
 
-import org.json.JSONObject;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +11,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 import ru.mobnius.localdb.AutoRunReceiver;
+import ru.mobnius.localdb.data.OnLogListener;
+import ru.mobnius.localdb.model.LogItem;
+import ru.mobnius.localdb.model.UI_SV_FIAS.UI_SV_FIAS_Result;
 import ru.mobnius.localdb.model.User;
+import ru.mobnius.localdb.storage.UI_SV_FIAS;
 
 public class Loader {
     /**
@@ -71,6 +73,54 @@ public class Loader {
         } catch (Exception ignored) {
 
         }
+    }
+
+    /**
+     * запрос к БД
+     * @param action имя таблицы
+     * @param method метод
+     * @param data данные для фильтрации
+     * @param classOfT тип возвращаемого результата
+     * @param <T> тип
+     * @return результат
+     */
+    public <T> T rpc(String action, String method, String data, Class<T> classOfT) {
+        String urlParams = "[{ \"action\": \"" + action + "\", \"method\": \"" + method + "\", \"data\": " + data + ", \"tid\": 0, \"type\": \"rpc\" }]";
+        byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
+        URL url;
+        HttpURLConnection urlConnection = null;
+        try {
+            url = new URL(AutoRunReceiver.getRpcUrl() + "/rpc");
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            urlConnection.setRequestProperty("Accept","application/json");
+
+            urlConnection.setRequestProperty("Authorization", "Token " + getUser().token);
+
+            urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+            urlConnection.setDoOutput(true);
+            urlConnection.setInstanceFollowRedirects( false );
+            urlConnection.setUseCaches(false);
+            urlConnection.setConnectTimeout(SERVER_CONNECTION_TIMEOUT);
+
+            urlConnection.getOutputStream().write(postData);
+
+            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+            Scanner s = new Scanner(in).useDelimiter("\\A");
+            String serverResult = s.hasNext() ? s.next() : "";
+            Gson gson = new Gson();
+            return gson.fromJson(serverResult, classOfT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if(urlConnection != null) {
+                urlConnection.disconnect();
+            }
+        }
+
+        return null;
     }
 
     /**

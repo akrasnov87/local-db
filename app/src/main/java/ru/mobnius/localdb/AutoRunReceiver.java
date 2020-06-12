@@ -3,16 +3,21 @@ package ru.mobnius.localdb;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.widget.Toast;
 
 import java.util.Timer;
 
 import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.LogItem;
+import ru.mobnius.localdb.storage.DaoMaster;
+import ru.mobnius.localdb.storage.DaoSession;
+import ru.mobnius.localdb.storage.DbOpenHelper;
 import ru.mobnius.localdb.utils.ServiceUtil;
 
 public class AutoRunReceiver extends BroadcastReceiver
         implements AvailableTimerTask.OnAvailableListener {
+    private static DaoSession mDaoSession;
 
     public static String getRpcUrl() {
         String baseUrl = "http://demo.it-serv.ru";
@@ -28,6 +33,10 @@ public class AutoRunReceiver extends BroadcastReceiver
         return baseUrl + virtualDirPath;
     }
 
+    public static DaoSession getDaoSession() {
+        return mDaoSession;
+    }
+
     private Context mContext;
 
     @Override
@@ -40,6 +49,8 @@ public class AutoRunReceiver extends BroadcastReceiver
         int TIMEOUT = 1000;
         timer.schedule(availableTimerTask, 1000, TIMEOUT);
         ((App)mContext).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
+
+        mDaoSession = new DaoMaster(new DbOpenHelper(mContext, "local-db.db").getWritableDb()).newSession();
     }
 
     @Override
