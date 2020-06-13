@@ -11,11 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 import ru.mobnius.localdb.AutoRunReceiver;
-import ru.mobnius.localdb.data.OnLogListener;
-import ru.mobnius.localdb.model.LogItem;
-import ru.mobnius.localdb.model.UI_SV_FIAS.UI_SV_FIAS_Result;
 import ru.mobnius.localdb.model.User;
-import ru.mobnius.localdb.storage.UI_SV_FIAS;
 
 public class Loader {
     /**

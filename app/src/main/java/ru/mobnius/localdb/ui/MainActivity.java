@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView mRecyclerView;
     private Button btnStart;
     private Button btnStop;
+    private UpdateFragment mUpdateFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +73,8 @@ public class MainActivity extends AppCompatActivity
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
+
+        mUpdateFragment = (UpdateFragment)getSupportFragmentManager().findFragmentById(R.id.log_upload);
     }
 
     @Override
@@ -83,9 +86,14 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
-            startActivity(SettingActivity.getIntent(this));
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                startActivity(SettingActivity.getIntent(this));
+                return true;
+
+            case R.id.action_fias:
+                mUpdateFragment.startProcess("iserv", "iserv");
+                return true;
         }
 
         return super.onOptionsItemSelected(item);
