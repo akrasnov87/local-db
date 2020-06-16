@@ -7,4 +7,5 @@
     <string name="cancel">Отмена</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
+    <string name="handle_query">Обработать запрос</string>
 </resources>

@@ -65,10 +65,14 @@ public class SettingActivity extends AppCompatActivity {
         private Preference pVersion;
         private Preference pServerVersion;
         private SwitchPreference spDebug;
+        private Preference pSQLite;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
             addPreferencesFromResource(R.xml.pref);
+
+            pSQLite = findPreference(PreferencesManager.SQL);
+            Objects.requireNonNull(pSQLite).setOnPreferenceClickListener(this);
 
             pServerVersion = findPreference(PreferencesManager.SERVER_APP_VERSION);
             Objects.requireNonNull(pServerVersion).setOnPreferenceClickListener(this);
@@ -95,16 +99,22 @@ public class SettingActivity extends AppCompatActivity {
 
         @Override
         public boolean onPreferenceClick(Preference preference) {
-            if (PreferencesManager.APP_VERSION.equals(preference.getKey())) {
-                clickToVersion++;
-                if (clickToVersion >= 6) {
-                    PreferencesManager.getInstance().getSharedPreferences().edit().putBoolean(PreferencesManager.DEBUG, true).apply();
-                    spDebug.setChecked(true);
-                    spDebug.setEnabled(true);
+            switch (preference.getKey()) {
+                case PreferencesManager.APP_VERSION:
+                    clickToVersion++;
+                    if (clickToVersion >= 6) {
+                        PreferencesManager.getInstance().getSharedPreferences().edit().putBoolean(PreferencesManager.DEBUG, true).apply();
+                        spDebug.setChecked(true);
+                        spDebug.setEnabled(true);
 
-                    Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
-                    clickToVersion = 0;
-                }
+                        Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
+                        clickToVersion = 0;
+                    }
+
+                case PreferencesManager.SQL:
+                    Intent i = new Intent(getContext(), SQLViewer.class);
+                    startActivity(i);
+                    break;
             }
             return false;
         }
@@ -148,11 +158,9 @@ public class SettingActivity extends AppCompatActivity {
                             if (pVersion != null) {
                                 pVersion.setSummary(VersionUtil.getVersionName(requireActivity()));
                             }
-
                             return;
                         }
                     }
-
                     pServerVersion.setVisible(false);
                     if (pVersion != null) {
                         pVersion.setSummary("Установлена последняя версия " + VersionUtil.getVersionName(requireActivity()));

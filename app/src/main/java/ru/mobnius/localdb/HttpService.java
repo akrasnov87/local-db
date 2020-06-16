@@ -90,7 +90,9 @@ public class HttpService extends Service
     @Override
     public void onDestroy() {
         super.onDestroy();
-        sHttpServerThread.onDestroy();
+        if(sHttpServerThread != null) {
+            sHttpServerThread.onDestroy();
+        }
     }
 
     /**

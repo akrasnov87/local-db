@@ -11,6 +11,18 @@
         app:summary="Общая информация о приложении" />
 
     <PreferenceCategory
+        android:icon="@drawable/ic_sql_database_24"
+        android:summary="Просмотр Базы данных"
+        android:title="SQLite">
+
+        <Preference
+            android:key="MBL_SQL"
+            android:summary="Перейти на экран построения запросов"
+            android:title="Перейти" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"
         android:summary="Включен режим отладки приложения"
         android:title="Режим отладки">
