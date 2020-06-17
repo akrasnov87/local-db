@@ -3,6 +3,10 @@ package ru.mobnius.localdb.data;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.google.gson.Gson;
+
+import ru.mobnius.localdb.model.Progress;
+
 public class PreferencesManager {
 
     public static final String NAME = "MBL";
@@ -12,6 +16,7 @@ public class PreferencesManager {
     public final static String SERVER_APP_VERSION = "SERVER_APP_VERSION";
     public static final String LOGIN = "MBL_LOGIN";
     public static final String PASSWORD = "MBL_PASSWORD";
+    public static final String PROGRESS = "MBL_PROGRESS";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -58,5 +63,17 @@ public class PreferencesManager {
 
     public boolean isAuthorized() {
         return getLogin() != null && getPassword() != null;
+    }
+
+    public void setProgress(Progress progress) {
+        getSharedPreferences().edit().putString(PROGRESS, progress == null ? null : new Gson().toJson(progress)).apply();
+    }
+
+    public Progress getProgress() {
+        String value = getSharedPreferences().getString(PROGRESS, null);
+        if(value == null) {
+            return null;
+        }
+        return new Gson().fromJson(value, Progress.class);
     }
 }

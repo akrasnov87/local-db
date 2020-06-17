@@ -1,9 +1,7 @@
 package ru.mobnius.localdb.ui;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.fragment.app.Fragment;
 
@@ -17,7 +15,6 @@ import android.widget.TextView;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.model.Progress;
-import ru.mobnius.localdb.model.fias.LoadAsyncTask;
 
 public class UpdateFragment extends Fragment {
 

@@ -5,14 +5,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.nfc.tech.NfcA;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -46,7 +43,6 @@ import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.storage.FiasDao;
 import ru.mobnius.localdb.utils.Loader;
-import ru.mobnius.localdb.utils.LocalhostUtil;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 import ru.mobnius.localdb.utils.VersionUtil;
@@ -202,9 +198,7 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if(DialogInterface.BUTTON_POSITIVE == which) {
-                            if(SyncRequestListener.sLoadAsyncTask != null) {
-                                SyncRequestListener.sLoadAsyncTask.cancel(true);
-                            }
+                            PreferencesManager.getInstance().setProgress(null);
                             mUpdateFragment.stopProcess();
                         }
                     }

@@ -18,7 +18,6 @@ import ru.mobnius.localdb.utils.ServiceUtil;
 
 public class AutoRunReceiver extends BroadcastReceiver
         implements AvailableTimerTask.OnAvailableListener {
-    private static DaoSession mDaoSession;
 
     public static String getRpcUrl() {
         String baseUrl = "http://demo.it-serv.ru";
@@ -32,10 +31,6 @@ public class AutoRunReceiver extends BroadcastReceiver
         String virtualDirPath = "/armnext/demo_kavkaz";
 
         return baseUrl + virtualDirPath;
-    }
-
-    public static DaoSession getDaoSession() {
-        return mDaoSession;
     }
 
     private Context mContext;
@@ -52,8 +47,6 @@ public class AutoRunReceiver extends BroadcastReceiver
         int TIMEOUT = 1000;
         timer.schedule(availableTimerTask, 1000, TIMEOUT);
         ((App)mContext).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
-
-        mDaoSession = new DaoMaster(new DbOpenHelper(mContext, "local-db.db").getWritableDb()).newSession();
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.RpcMeta;
@@ -28,17 +29,16 @@ public class SyncStatusRequestListener
     @Override
     public Response getResponse(UrlReader urlReader) {
         Response response;
-        if(SyncRequestListener.sDownloadProgress != null) {
+        if(PreferencesManager.getInstance().getProgress() != null) {
             response = new Response(Response.RESULT_OK, urlReader.getParts()[2]);
             response.setContentType(Response.APPLICATION_JSON);
             ProgressResult progressResult = new ProgressResult();
             progressResult.result = new ProgressRecords();
             progressResult.result.records = new Progress[1];
-            progressResult.result.records[0] = SyncRequestListener.sDownloadProgress;
+            progressResult.result.records[0] = PreferencesManager.getInstance().getProgress();
             progressResult.result.total = 1;
             progressResult.meta = new RpcMeta();
             progressResult.meta.success = true;
-            progressResult.meta.msg = SyncRequestListener.sTableName;
 
             response.setContent(new Gson().toJson(progressResult));
         } else {
