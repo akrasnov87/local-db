@@ -51,7 +51,7 @@ public class AutoRunReceiver extends BroadcastReceiver
         AvailableTimerTask availableTimerTask = new AvailableTimerTask(this);
         int TIMEOUT = 1000;
         timer.schedule(availableTimerTask, 1000, TIMEOUT);
-        ((App)mContext.getApplicationContext()).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
+        ((App)mContext).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
 
         mDaoSession = new DaoMaster(new DbOpenHelper(mContext, "local-db.db").getWritableDb()).newSession();
     }
@@ -59,10 +59,11 @@ public class AutoRunReceiver extends BroadcastReceiver
     @Override
     public void onAvailable(boolean available) {
         // тут нужно автоматически перезапускать сервис
-        ((App)mContext.getApplicationContext()).onAvailable(available);
+        ((App)mContext).onAvailable(available);
+
         if(!available) {
             boolean serviceAvailable = ServiceUtil.checkServiceRunning(mContext, HttpService.SERVICE_NAME);
-            ((App) mContext.getApplicationContext()).onAddLog(new LogItem("хост не доступен, служба " + (serviceAvailable ? "запущена" : "остановлена"), true));
+            ((App) mContext).onAddLog(new LogItem("хост не доступен, служба " + (serviceAvailable ? "запущена" : "остановлена"), true));
             mContext.startService(HttpService.getIntent(mContext, HttpService.AUTO));
         }
     }

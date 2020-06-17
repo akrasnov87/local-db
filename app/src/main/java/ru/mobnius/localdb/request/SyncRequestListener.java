@@ -47,9 +47,6 @@ public class SyncRequestListener
     public Response getResponse(UrlReader urlReader) {
         mUrlReader = urlReader;
         // TODO: 17.06.2020 нужно достать из запроса логин и пароль
-        if(sLoadAsyncTask != null) {
-            sLoadAsyncTask.cancel(true);
-        }
         sTableName = urlReader.getParam("table");
         sLoadAsyncTask = new LoadAsyncTask(sTableName, this);
 

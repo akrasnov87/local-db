@@ -11,6 +11,7 @@ import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -112,7 +113,7 @@ public class MainActivity extends BaseActivity
 
             case R.id.action_fias:
                 mUpdateFragment.startProcess();
-                LocalhostUtil.sync((App)getApplication(), FiasDao.TABLENAME);
+                startService(HttpService.getIntent(this, FiasDao.TABLENAME));
                 return true;
         }
 

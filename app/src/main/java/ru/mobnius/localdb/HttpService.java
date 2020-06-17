@@ -38,6 +38,7 @@ public class HttpService extends Service
     public static final int MANUAL = 2;
 
     private static final String MODE = "mode";
+    private static final String TABLE = "table";
 
     public static Intent getIntent(Context context, int mode) {
         Intent intent =  new Intent();
@@ -46,12 +47,20 @@ public class HttpService extends Service
         return intent;
     }
 
+    public static Intent getIntent(Context context, String tableName) {
+        Intent intent =  new Intent();
+        intent.setClass(context, HttpService.class);
+        intent.putExtra(MODE, MANUAL);
+        intent.putExtra(TABLE, tableName);
+        return intent;
+    }
+
     /**
      * Имя сервиса
      */
     public static final String SERVICE_NAME = "ru.mobnius.localdb.HttpService";
 
-    private static HttpServerThread sHttpServerThread;
+    private HttpServerThread sHttpServerThread;
 
     private List<OnRequestListener> mRequestListeners;
 
@@ -73,19 +82,15 @@ public class HttpService extends Service
         mRequestListeners.add(new SyncRequestListener((App)getApplication()));
         mRequestListeners.add(new SyncStatusRequestListener());
         mRequestListeners.add(new AuthRequestListener());
+
+        sHttpServerThread = new HttpServerThread(this);
+        sHttpServerThread.start();
+        Log.d(Names.TAG, "Http Service start");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        if(sHttpServerThread != null) {
-            sHttpServerThread.onDestroy();
-        }
-
-        sHttpServerThread = new HttpServerThread(this);
-        sHttpServerThread.start();
         String strMode;
-
         if(intent != null) {
             int mode = intent.getIntExtra(MODE, 0);
             switch (mode) {
@@ -104,8 +109,13 @@ public class HttpService extends Service
         } else {
             strMode = "автоматически";
         }
-        Log.d(Names.TAG, "Http Service start " + flags);
-        ((App)getApplication()).onAddLog(new LogItem("служба и хост запущены " + strMode, false));
+
+        if(intent != null && intent.hasExtra(TABLE)) {
+            String table = intent.getStringExtra(TABLE);
+            onResponse(new UrlReader("GET /sync?table=" + table + " HTTP/1.1"));
+        } else {
+            ((App) getApplication()).onAddLog(new LogItem("служба и хост запущены " + strMode, false));
+        }
 
         return Service.START_STICKY;
     }
@@ -113,6 +123,7 @@ public class HttpService extends Service
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.d(Names.TAG, "Остановка сервиса");
         sHttpServerThread.onDestroy();
     }
 
