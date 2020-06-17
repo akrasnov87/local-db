@@ -4,17 +4,30 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
 
+import com.google.gson.Gson;
+
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.OnResponseListener;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.model.User;
+import ru.mobnius.localdb.request.AuthRequestListener;
 import ru.mobnius.localdb.request.DefaultRequestListener;
 import ru.mobnius.localdb.request.OnRequestListener;
+import ru.mobnius.localdb.request.SyncRequestListener;
+import ru.mobnius.localdb.request.SyncStatusRequestListener;
 import ru.mobnius.localdb.utils.UrlReader;
 
 public class HttpService extends Service
@@ -44,7 +57,6 @@ public class HttpService extends Service
 
     public HttpService() {
         mRequestListeners = new ArrayList<>();
-        mRequestListeners.add(new DefaultRequestListener());
     }
 
     @Override
@@ -54,7 +66,18 @@ public class HttpService extends Service
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+
+        mRequestListeners.add(new DefaultRequestListener());
+        mRequestListeners.add(new SyncRequestListener((App)getApplication()));
+        mRequestListeners.add(new SyncStatusRequestListener());
+        mRequestListeners.add(new AuthRequestListener());
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
         if(sHttpServerThread != null) {
             sHttpServerThread.onDestroy();
         }
@@ -81,7 +104,7 @@ public class HttpService extends Service
         } else {
             strMode = "автоматически";
         }
-
+        Log.d(Names.TAG, "Http Service start " + flags);
         ((App)getApplication()).onAddLog(new LogItem("служба и хост запущены " + strMode, false));
 
         return Service.START_STICKY;
@@ -100,13 +123,19 @@ public class HttpService extends Service
      */
     @Override
     public Response onResponse(UrlReader urlReader) {
+        ((App)getApplication()).onHttpRequest(urlReader);
+
         for (OnRequestListener req:
              mRequestListeners) {
             if(req.isValid(urlReader.getParts()[1])) {
-                return req.getResponse(urlReader);
+                Response response = req.getResponse(urlReader);
+                ((App)getApplication()).onHttpResponse(response);
+                return response;
             }
         }
-        return new DefaultRequestListener(Response.RESULT_NOT_FOUNT, "NOT FOUND").getResponse(urlReader);
+        Response defaultResponse = new DefaultRequestListener(Response.RESULT_NOT_FOUNT, "NOT FOUND").getResponse(urlReader);
+        ((App)getApplication()).onHttpResponse(defaultResponse);
+        return defaultResponse;
     }
 
     @Override

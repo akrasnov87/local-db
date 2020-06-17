@@ -65,7 +65,11 @@ public class UrlReader {
                             String[] data = kv.split("=");
                             KeyValue keyValue = new KeyValue();
                             keyValue.key = data[0];
-                            keyValue.value = data[1];
+                            try {
+                                keyValue.value = data[1];
+                            }catch (IndexOutOfBoundsException ignored) {
+
+                            }
 
                             values.add(keyValue);
                         }

@@ -3,6 +3,7 @@ package ru.mobnius.localdb;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Timer;
@@ -42,13 +43,15 @@ public class AutoRunReceiver extends BroadcastReceiver
     @Override
     public void onReceive(Context context, Intent intent) {
         mContext = context;
+
+        Log.d(Names.TAG, "Receive");
         context.startService(HttpService.getIntent(context, HttpService.AUTO));
 
         Timer timer = new Timer();
         AvailableTimerTask availableTimerTask = new AvailableTimerTask(this);
         int TIMEOUT = 1000;
         timer.schedule(availableTimerTask, 1000, TIMEOUT);
-        ((App)mContext).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
+        ((App)mContext.getApplicationContext()).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
 
         mDaoSession = new DaoMaster(new DbOpenHelper(mContext, "local-db.db").getWritableDb()).newSession();
     }
@@ -56,10 +59,10 @@ public class AutoRunReceiver extends BroadcastReceiver
     @Override
     public void onAvailable(boolean available) {
         // тут нужно автоматически перезапускать сервис
-        ((App)mContext).onAvailable(available);
+        ((App)mContext.getApplicationContext()).onAvailable(available);
         if(!available) {
             boolean serviceAvailable = ServiceUtil.checkServiceRunning(mContext, HttpService.SERVICE_NAME);
-            ((App) mContext).onAddLog(new LogItem("хост не доступен, служба " + (serviceAvailable ? "запущена" : "остановлена"), true));
+            ((App) mContext.getApplicationContext()).onAddLog(new LogItem("хост не доступен, служба " + (serviceAvailable ? "запущена" : "остановлена"), true));
             mContext.startService(HttpService.getIntent(mContext, HttpService.AUTO));
         }
     }

@@ -1,8 +1,11 @@
 package ru.mobnius.localdb.ui;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.nfc.tech.NfcA;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
@@ -13,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 
 import android.view.Menu;
@@ -29,19 +33,32 @@ import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.LogAdapter;
 import ru.mobnius.localdb.data.AvailableTimerTask;
+import ru.mobnius.localdb.data.BaseActivity;
 import ru.mobnius.localdb.data.HttpServerThread;
+import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.component.MySnackBar;
 import ru.mobnius.localdb.model.LogItem;
+import ru.mobnius.localdb.model.Progress;
+import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.request.SyncRequestListener;
+import ru.mobnius.localdb.storage.FiasDao;
 import ru.mobnius.localdb.utils.Loader;
+import ru.mobnius.localdb.utils.LocalhostUtil;
 import ru.mobnius.localdb.utils.NetworkUtil;
+import ru.mobnius.localdb.utils.UrlReader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends BaseActivity
         implements OnLogListener,
         AvailableTimerTask.OnAvailableListener,
-        View.OnClickListener {
+        View.OnClickListener,
+        OnHttpListener {
+
+    public static Intent getIntent(Context context) {
+        return new Intent(context, MainActivity.class);
+    }
 
     private static String TAG = "LOCAL_DB";
 
@@ -57,12 +74,16 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.app_name);
-        getSupportActionBar().setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
+        Log.d(Names.TAG, "Запуск главного экрана");
 
         ((App)getApplication()).registryAvailableListener(this);
         ((App)getApplication()).registryLogListener(this);
+        ((App)getApplication()).registryHttpListener(this);
+
+        mUpdateFragment = (UpdateFragment)getSupportFragmentManager().findFragmentById(R.id.log_upload);
+
+        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.app_name);
+        getSupportActionBar().setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
         mRecyclerView = findViewById(R.id.log_list);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -73,8 +94,6 @@ public class MainActivity extends AppCompatActivity
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
-
-        mUpdateFragment = (UpdateFragment)getSupportFragmentManager().findFragmentById(R.id.log_upload);
     }
 
     @Override
@@ -92,7 +111,8 @@ public class MainActivity extends AppCompatActivity
                 return true;
 
             case R.id.action_fias:
-                mUpdateFragment.startProcess("iserv", "iserv");
+                mUpdateFragment.startProcess();
+                LocalhostUtil.sync((App)getApplication(), FiasDao.TABLENAME);
                 return true;
         }
 
@@ -139,6 +159,7 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
         ((App)getApplication()).unRegistryLogListener(this);
         ((App)getApplication()).unRegistryAvailableListener(this);
+        ((App)getApplication()).unRegistryHttpListener(this);
     }
 
     @Override
@@ -173,7 +194,42 @@ public class MainActivity extends AppCompatActivity
             case R.id.service_stop:
                 stopService(HttpService.getIntent(this, HttpService.MANUAL));
                 break;
+
+            case R.id.log_cancel:
+                String message = "После отмены процесс требуется выполнить заново. Остановить загрузку данных?";
+                confirm(message, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(DialogInterface.BUTTON_POSITIVE == which) {
+                            if(SyncRequestListener.sLoadAsyncTask != null) {
+                                SyncRequestListener.sLoadAsyncTask.cancel(true);
+                            }
+                            mUpdateFragment.stopProcess();
+                        }
+                    }
+                });
+                break;
         }
+    }
+
+    @Override
+    public void onHttpRequest(UrlReader reader) {
+
+    }
+
+    @Override
+    public void onHttpResponse(Response response) {
+
+    }
+
+    @Override
+    public void onDownLoadProgress(UrlReader reader, Progress progress) {
+        mUpdateFragment.updateProcess(progress);
+    }
+
+    @Override
+    public void onDownLoadFinish(UrlReader reader) {
+        mUpdateFragment.stopProcess();
     }
 
     @SuppressLint("StaticFieldLeak")

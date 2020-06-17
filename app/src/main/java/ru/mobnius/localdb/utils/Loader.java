@@ -17,7 +17,7 @@ public class Loader {
     /**
      * время на проверку подключения к серверу в милисекундах
      */
-    private final static int SERVER_CONNECTION_TIMEOUT = 3000;
+    public final static int SERVER_CONNECTION_TIMEOUT = 3000;
 
     private static Loader sLoader;
 

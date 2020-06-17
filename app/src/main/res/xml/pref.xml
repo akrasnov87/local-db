@@ -11,6 +11,18 @@
         app:summary="Общая информация о приложении" />
 
     <PreferenceCategory
+        android:icon="@drawable/ic_baseline_settings_remote_24"
+        android:summary="Серверные настройки"
+        android:title="Администрирование">
+
+        <Preference
+            android:key="MBL_LOGIN"
+            android:summary="Логин для авторизации на сервере"
+            android:title="Логин" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"
         android:summary="Включен режим отладки приложения"
         android:title="Режим отладки">

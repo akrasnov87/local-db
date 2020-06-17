@@ -58,12 +58,11 @@ public class SettingActivity extends AppCompatActivity {
             Preference.OnPreferenceClickListener {
 
         private final String debugSummary = "Режим отладки: %s";
-        private final String volumeSummary = "Уровень громкости по умолчанию: %s";
-        private final String nightSummary = "Минимальный уровень света: %s";
         private int clickToVersion = 0;
 
         private Preference pVersion;
         private Preference pServerVersion;
+        private Preference pLogin;
         private SwitchPreference spDebug;
 
         @Override
@@ -75,6 +74,8 @@ public class SettingActivity extends AppCompatActivity {
 
             pVersion = findPreference(PreferencesManager.APP_VERSION);
             Objects.requireNonNull(pVersion).setOnPreferenceClickListener(this);
+
+            pLogin = findPreference(PreferencesManager.LOGIN);
 
             spDebug = findPreference(PreferencesManager.DEBUG);
             Objects.requireNonNull(spDebug).setEnabled(PreferencesManager.getInstance().isDebug());
@@ -89,6 +90,9 @@ public class SettingActivity extends AppCompatActivity {
 
             spDebug.setSummary(String.format(debugSummary, PreferencesManager.getInstance().isDebug() ? "включен" : "отключен"));
             spDebug.setChecked(PreferencesManager.getInstance().isDebug());
+
+            String loginSummary = "Логин для авторизации на сервере: %s";
+            pLogin.setSummary(String.format(loginSummary, PreferencesManager.getInstance().getLogin()));
 
             new ServerAppVersionAsyncTask().execute();
         }

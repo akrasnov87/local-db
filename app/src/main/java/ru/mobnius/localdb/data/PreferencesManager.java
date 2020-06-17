@@ -10,6 +10,8 @@ public class PreferencesManager {
     public static final String DEBUG = "MBL_DEBUG";
     public final static String APP_VERSION = "MBL_APP_VERSION";
     public final static String SERVER_APP_VERSION = "SERVER_APP_VERSION";
+    public static final String LOGIN = "MBL_LOGIN";
+    public static final String PASSWORD = "MBL_PASSWORD";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -36,5 +38,25 @@ public class PreferencesManager {
 
     public void setDebug(boolean value) {
         getSharedPreferences().edit().putBoolean(DEBUG, value).apply();
+    }
+
+    public void setLogin(String login) {
+        getSharedPreferences().edit().putString(LOGIN, login).apply();
+    }
+
+    public String getLogin() {
+        return getSharedPreferences().getString(LOGIN, null);
+    }
+
+    public void setPassword(String password) {
+        getSharedPreferences().edit().putString(PASSWORD, password).apply();
+    }
+
+    public String getPassword() {
+        return getSharedPreferences().getString(PASSWORD, null);
+    }
+
+    public boolean isAuthorized() {
+        return getLogin() != null && getPassword() != null;
     }
 }

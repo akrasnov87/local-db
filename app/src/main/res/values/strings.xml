@@ -7,4 +7,8 @@
     <string name="cancel">Отмена</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
+    <string name="no_auth">Требуется выполнить авторизацию в приложении \"Мобильные сервисы\"</string>
+    <string name="sign_out_message">Нажмите повторно для выхода из приложения.</string>
+    <string name="not_permissions">Предоставлены не все разрешения.</string>
+    <string name="permissions_grant">Разрешения получены.</string>
 </resources>
