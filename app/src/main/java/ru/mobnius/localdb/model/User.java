@@ -7,5 +7,6 @@ public class User {
     /**
      * токен авторизации
      */
+    @SuppressWarnings("unused")
     public String token;
 }

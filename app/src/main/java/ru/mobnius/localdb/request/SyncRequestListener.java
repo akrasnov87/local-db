@@ -12,7 +12,7 @@ import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.model.RpcMeta;
+import ru.mobnius.localdb.model.rpc.RpcMeta;
 import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.model.progress.ProgressResult;
 import ru.mobnius.localdb.utils.UrlReader;

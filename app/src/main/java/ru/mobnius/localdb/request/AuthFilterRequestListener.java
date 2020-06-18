@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.AuthResult;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.model.RpcMeta;
+import ru.mobnius.localdb.model.rpc.RpcMeta;
 import ru.mobnius.localdb.utils.UrlReader;
 
 public abstract class AuthFilterRequestListener

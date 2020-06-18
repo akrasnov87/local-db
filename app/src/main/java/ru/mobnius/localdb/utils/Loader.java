@@ -2,9 +2,6 @@ package ru.mobnius.localdb.utils;
 
 import com.google.gson.Gson;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.User;
 
 public class Loader {
@@ -79,11 +77,9 @@ public class Loader {
      * @param action имя таблицы
      * @param method метод
      * @param data данные для фильтрации
-     * @param classOfT тип возвращаемого результата
-     * @param <T> тип
      * @return результат
      */
-    public <T> T rpc(String action, String method, String data, Class<T> classOfT) {
+    public RPCResult[] rpc(String action, String method, String data) {
         String urlParams = "[{ \"action\": \"" + action + "\", \"method\": \"" + method + "\", \"data\": " + data + ", \"tid\": 0, \"type\": \"rpc\" }]";
         byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
         URL url;
@@ -109,10 +105,8 @@ public class Loader {
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
             Scanner s = new Scanner(in).useDelimiter("\\A");
             String serverResult = s.hasNext() ? s.next() : "";
-            //JSONArray jsonArray = new JSONArray(serverResult);
-            Gson gson = new Gson();
-            return gson.fromJson(serverResult, classOfT);
-        } catch (IOException | JSONException e) {
+            return RPCResult.createInstance(serverResult);
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             if(urlConnection != null) {
