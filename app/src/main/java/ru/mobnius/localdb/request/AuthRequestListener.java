@@ -13,6 +13,7 @@ import ru.mobnius.localdb.utils.UrlReader;
 
 /**
  * авторизация
+ * http://localhost:8888/auth?login=iserv&password=iserv&node=http://demo.it-serv.ru/armnext/demo_kavkaz&rpc=http://demo.it-serv.ru/MobileServiceSevKav
  */
 public class AuthRequestListener
         implements OnRequestListener {

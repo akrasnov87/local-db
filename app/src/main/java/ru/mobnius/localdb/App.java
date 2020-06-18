@@ -112,9 +112,9 @@ public class App extends Application implements
     }
 
     @Override
-    public void onDownLoadFinish(UrlReader reader) {
+    public void onDownLoadFinish(String tableName, UrlReader reader) {
         for(OnHttpListener listener : mHttpListeners) {
-            listener.onDownLoadFinish(reader);
+            listener.onDownLoadFinish(tableName, reader);
         }
     }
 }

@@ -1,12 +1,9 @@
 package ru.mobnius.localdb.adapter.holder;
 
-import android.content.Context;
-import android.content.DialogInterface;
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.DecimalFormat;
@@ -20,11 +17,11 @@ import ru.mobnius.localdb.ui.DialogDownloadFragment;
 public class StorageNameHolder extends RecyclerView.ViewHolder
         implements View.OnClickListener {
 
-    private TextView tvDescription;
-    private TextView tvTable;
+    private final TextView tvDescription;
+    private final TextView tvTable;
     private StorageName mStorageName;
-    private TextView tvCount;
-    private DialogDownloadFragment.OnDownloadStorageListener mListener;
+    private final TextView tvCount;
+    private final DialogDownloadFragment.OnDownloadStorageListener mListener;
 
     public StorageNameHolder(@NonNull View itemView, DialogDownloadFragment.OnDownloadStorageListener listener) {
         super(itemView);

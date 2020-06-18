@@ -14,8 +14,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="15:25:12"
         android:textSize="@dimen/small_text_size"
-        android:textColor="@color/colorHint"
-        app:layout_constraintBottom_toBottomOf="@id/log_list_item_message"/>
+        android:textColor="@color/colorHint"/>
 
     <TextView
         android:id="@+id/log_list_item_message"

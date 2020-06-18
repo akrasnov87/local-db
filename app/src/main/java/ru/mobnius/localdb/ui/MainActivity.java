@@ -13,14 +13,12 @@ import com.google.android.material.snackbar.Snackbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -30,7 +28,6 @@ import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.LogAdapter;
-import ru.mobnius.localdb.adapter.StorageNameAdapter;
 import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.BaseActivity;
 import ru.mobnius.localdb.data.HttpServerThread;
@@ -42,7 +39,6 @@ import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.StorageName;
-import ru.mobnius.localdb.storage.FiasDao;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
@@ -202,7 +198,8 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    public void onDownLoadFinish(UrlReader reader) {
+    public void onDownLoadFinish(String tableName, UrlReader reader) {
+        alert("Загрузка " + tableName + " завершена");
         mUpdateFragment.stopProcess();
     }
 
@@ -236,18 +233,21 @@ public class MainActivity extends BaseActivity
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
+            try {
+                if (VersionUtil.isUpgradeVersion(MainActivity.this, s, PreferencesManager.getInstance().isDebug())) {
+                    // тут доступно новая версия
+                    MySnackBar.make(mRecyclerView, "Доступна новая версия " + s, Snackbar.LENGTH_LONG).setAction("Загрузить", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String url = Names.UPDATE_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
+                        }
+                    }).show();
+                }
+            } catch (Exception ignored) {
 
-            if(VersionUtil.isUpgradeVersion(MainActivity.this, s, PreferencesManager.getInstance().isDebug())) {
-                // тут доступно новая версия
-                MySnackBar.make(mRecyclerView, "Доступна новая версия " + s, Snackbar.LENGTH_LONG).setAction("Загрузить", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        String url = Names.UPDATE_URL;
-                        Intent i = new Intent(Intent.ACTION_VIEW);
-                        i.setData(Uri.parse(url));
-                        startActivity(i);
-                    }
-                }).show();
             }
         }
     }

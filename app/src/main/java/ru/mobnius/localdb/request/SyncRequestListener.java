@@ -23,7 +23,7 @@ import ru.mobnius.localdb.utils.UrlReader;
 public class SyncRequestListener extends AuthFilterRequestListener
         implements LoadAsyncTask.OnLoadListener {
 
-    private App mApp;
+    private final App mApp;
     private UrlReader mUrlReader;
 
     public SyncRequestListener(App app) {
@@ -72,11 +72,11 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onLoadProgress(String tableName, Progress progress) {
         mApp.onDownLoadProgress(mUrlReader, progress);
-        Log.d(Names.TAG, String.valueOf(progress.getPercent()));
+        Log.d(Names.TAG, tableName + ": " + progress.getPercent());
     }
 
     @Override
     public void onLoadFinish(String tableName) {
-        mApp.onDownLoadFinish(mUrlReader);
+        mApp.onDownLoadFinish(tableName, mUrlReader);
     }
 }

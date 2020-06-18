@@ -10,7 +10,6 @@ import java.lang.annotation.Target;
 public @interface Storage {
     /**
      * Описание таблицы
-     * @return
      */
     String description();
 

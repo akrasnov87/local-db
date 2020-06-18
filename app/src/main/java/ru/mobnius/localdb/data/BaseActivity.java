@@ -88,6 +88,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    @SuppressWarnings("SameParameterValue")
     protected void alert(String message) {
         new android.app.AlertDialog.Builder(this)
                 .setIcon(R.drawable.ic_baseline_info_24)

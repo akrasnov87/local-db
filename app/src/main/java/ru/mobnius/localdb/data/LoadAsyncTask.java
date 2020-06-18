@@ -11,8 +11,8 @@ import ru.mobnius.localdb.utils.Loader;
  * Загрузка данных с сервера
  */
 public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
-    private OnLoadListener mListener;
-    private String mTableName;
+    private final OnLoadListener mListener;
+    private final String mTableName;
 
     public LoadAsyncTask(String tableName, OnLoadListener listener) {
         mListener = listener;

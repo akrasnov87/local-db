@@ -8,5 +8,5 @@ public interface OnHttpListener {
     void onHttpRequest(UrlReader reader);
     void onHttpResponse(Response response);
     void onDownLoadProgress(UrlReader reader, Progress progress);
-    void onDownLoadFinish(UrlReader reader);
+    void onDownLoadFinish(String tableName, UrlReader reader);
 }

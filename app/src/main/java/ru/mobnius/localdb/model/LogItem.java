@@ -10,9 +10,9 @@ public class LogItem {
         mDate = new Date();
     }
 
-    private String mMessage;
-    private boolean mIsError;
-    private Date mDate;
+    private final String mMessage;
+    private final boolean mIsError;
+    private final Date mDate;
 
     public String getMessage() {
         return mMessage;

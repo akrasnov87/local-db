@@ -1,7 +1,6 @@
 package ru.mobnius.localdb.adapter;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,9 +19,9 @@ import ru.mobnius.localdb.ui.DialogDownloadFragment;
 import ru.mobnius.localdb.utils.StorageUtil;
 
 public class StorageNameAdapter extends RecyclerView.Adapter<StorageNameHolder> {
-    private Context mContext;
-    private List<StorageName> mList;
-    private DialogDownloadFragment.OnDownloadStorageListener mListener;
+    private final Context mContext;
+    private final List<StorageName> mList;
+    private final DialogDownloadFragment.OnDownloadStorageListener mListener;
 
     public StorageNameAdapter(Context context, DialogDownloadFragment.OnDownloadStorageListener listener) {
         mContext = context;

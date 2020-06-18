@@ -137,7 +137,7 @@ public class SettingActivity extends AppCompatActivity {
             }
 
             if(PreferencesManager.LOGIN_RESET.equals(preference.getKey())) {
-                confirm("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?", new DialogInterface.OnClickListener() {
+                confirm(new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if(which == DialogInterface.BUTTON_POSITIVE) {
@@ -173,10 +173,10 @@ public class SettingActivity extends AppCompatActivity {
             return true;
         }
 
-        protected void confirm(String message, DialogInterface.OnClickListener listener) {
+        protected void confirm(DialogInterface.OnClickListener listener) {
             AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
             dialog.setTitle("Сообщение");
-            dialog.setMessage(message);
+            dialog.setMessage("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?");
             dialog.setCancelable(false);
             dialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.yes), listener);
             dialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.no), listener);
@@ -202,17 +202,21 @@ public class SettingActivity extends AppCompatActivity {
 
                 if (pServerVersion != null) {
                     if(!s.equals("0.0.0.0")) {
-                        if(VersionUtil.isUpgradeVersion(requireActivity(), s, PreferencesManager.getInstance().isDebug())) {
-                            pServerVersion.setVisible(true);
-                            pServerVersion.setSummary("Доступна новая версия " + s);
-                            pServerVersion.setIntent(new Intent().setAction(Intent.ACTION_VIEW).setData(
-                                    Uri.parse(Names.UPDATE_URL)));
+                        try {
+                            if (VersionUtil.isUpgradeVersion(requireActivity(), s, PreferencesManager.getInstance().isDebug())) {
+                                pServerVersion.setVisible(true);
+                                pServerVersion.setSummary("Доступна новая версия " + s);
+                                pServerVersion.setIntent(new Intent().setAction(Intent.ACTION_VIEW).setData(
+                                        Uri.parse(Names.UPDATE_URL)));
 
-                            if (pVersion != null) {
-                                pVersion.setSummary(VersionUtil.getVersionName(requireActivity()));
+                                if (pVersion != null) {
+                                    pVersion.setSummary(VersionUtil.getVersionName(requireActivity()));
+                                }
+
+                                return;
                             }
+                        }catch (Exception ignored) {
 
-                            return;
                         }
                     }
 

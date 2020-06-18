@@ -9,7 +9,7 @@ import ru.mobnius.localdb.model.KeyValue;
  * Разбор запроса
  */
 public class UrlReader {
-    private String mRequest;
+    private final String mRequest;
     //GET /?idx=0 HTTP/1.1
     public UrlReader(String request) {
         mRequest = request;

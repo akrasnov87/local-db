@@ -2,6 +2,9 @@ package ru.mobnius.localdb.utils;
 
 import com.google.gson.Gson;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +13,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-import ru.mobnius.localdb.AutoRunReceiver;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.User;
 
@@ -107,9 +109,10 @@ public class Loader {
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
             Scanner s = new Scanner(in).useDelimiter("\\A");
             String serverResult = s.hasNext() ? s.next() : "";
+            //JSONArray jsonArray = new JSONArray(serverResult);
             Gson gson = new Gson();
             return gson.fromJson(serverResult, classOfT);
-        } catch (IOException e) {
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
         } finally {
             if(urlConnection != null) {
@@ -156,9 +159,5 @@ public class Loader {
 
     public boolean isAuthorized() {
         return getUser() != null;
-    }
-
-    public void destroy() {
-        sLoader = null;
     }
 }

@@ -8,9 +8,9 @@ public class Progress {
         this.tableName = tableName;
     }
 
-    public int current;
-    public int total;
-    public String tableName;
+    public final int current;
+    public final int total;
+    public final String tableName;
 
     public double getPercent() {
         double result = (double) (current * 100) / total;

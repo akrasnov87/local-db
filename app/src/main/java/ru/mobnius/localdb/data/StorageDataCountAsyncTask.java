@@ -6,7 +6,7 @@ import android.os.AsyncTask;
 import ru.mobnius.localdb.HttpService;
 
 public class StorageDataCountAsyncTask extends AsyncTask<String, Void, Long> {
-    private OnStorageCountListener mListener;
+    private final OnStorageCountListener mListener;
 
     public StorageDataCountAsyncTask(OnStorageCountListener listener) {
         mListener = listener;

@@ -16,7 +16,7 @@ import ru.mobnius.localdb.adapter.holder.LogItemHolder;
 import ru.mobnius.localdb.model.LogItem;
 
 public class LogAdapter extends RecyclerView.Adapter<LogItemHolder> {
-    private List<LogItem> mList;
+    private final List<LogItem> mList;
     private final Context mContext;
 
     public LogAdapter(Context context) {

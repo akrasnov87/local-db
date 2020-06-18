@@ -22,6 +22,7 @@ import ru.mobnius.localdb.request.OnRequestListener;
 import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.request.SyncStatusRequestListener;
 import ru.mobnius.localdb.request.SyncStopRequestListener;
+import ru.mobnius.localdb.request.TableRequestListener;
 import ru.mobnius.localdb.storage.DaoMaster;
 import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.storage.DbOpenHelper;
@@ -64,7 +65,7 @@ public class HttpService extends Service
 
     private HttpServerThread sHttpServerThread;
 
-    private List<OnRequestListener> mRequestListeners;
+    private final List<OnRequestListener> mRequestListeners;
 
     public HttpService() {
         mRequestListeners = new ArrayList<>();
@@ -87,6 +88,7 @@ public class HttpService extends Service
         mRequestListeners.add(new SyncStatusRequestListener());
         mRequestListeners.add(new AuthRequestListener());
         mRequestListeners.add(new SyncStopRequestListener());
+        mRequestListeners.add(new TableRequestListener());
 
         sHttpServerThread = new HttpServerThread(this);
         sHttpServerThread.start();

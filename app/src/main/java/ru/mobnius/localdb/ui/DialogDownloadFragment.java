@@ -3,7 +3,6 @@ package ru.mobnius.localdb.ui;
 import android.os.Bundle;
 
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,9 +19,7 @@ import ru.mobnius.localdb.adapter.StorageNameAdapter;
 import ru.mobnius.localdb.model.StorageName;
 
 public class DialogDownloadFragment extends DialogFragment {
-    private OnDownloadStorageListener mListener;
-
-    private RecyclerView mRecyclerView;
+    private final OnDownloadStorageListener mListener;
 
     public DialogDownloadFragment(OnDownloadStorageListener listener) {
         mListener = listener;
@@ -39,10 +36,10 @@ public class DialogDownloadFragment extends DialogFragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_dialog_download, container, false);
-        mRecyclerView = view.findViewById(R.id.download_list);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mRecyclerView.setAdapter(new StorageNameAdapter(requireContext(), mListener));
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(requireContext(),
+        RecyclerView recyclerView = view.findViewById(R.id.download_list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recyclerView.setAdapter(new StorageNameAdapter(requireContext(), mListener));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(),
                 DividerItemDecoration.VERTICAL));
 
         return view;

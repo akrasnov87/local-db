@@ -19,13 +19,11 @@ import static org.junit.Assert.*;
 
 public class LoaderTest {
 
-    private DaoSession mDaoSession;
-
     @Before
     public void setUp() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        mDaoSession = new DaoMaster(new DbOpenHelper(context, "loader-test.db").getWritableDb()).newSession();
-        mDaoSession.getFiasDao().deleteAll();
+        DaoSession daoSession = new DaoMaster(new DbOpenHelper(context, "loader-test.db").getWritableDb()).newSession();
+        daoSession.getFiasDao().deleteAll();
     }
 
     @Test

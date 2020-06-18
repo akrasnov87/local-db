@@ -1,5 +1,4 @@
 <resources>
-    <dimen name="little_text_size">12sp</dimen>
     <dimen name="small_text_size">14sp</dimen>
     <dimen name="medium_text_size">16sp</dimen>
     <dimen name="high_text_size">18sp</dimen>

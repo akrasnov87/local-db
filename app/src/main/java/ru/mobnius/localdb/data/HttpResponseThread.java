@@ -1,8 +1,6 @@
 package ru.mobnius.localdb.data;
 
 import android.content.Context;
-import android.nfc.tech.NfcA;
-import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,13 +8,12 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.UrlReader;
 
 public class HttpResponseThread extends Thread {
-    private Socket mSocket;
+    private final Socket mSocket;
     private OnLogListener mLogListener;
     private OnResponseListener mResponseListener;
 

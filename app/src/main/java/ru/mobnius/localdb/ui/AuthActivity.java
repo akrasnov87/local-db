@@ -12,6 +12,9 @@ import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.utils.NetworkUtil;
 
+/**
+ * Проверка авторизации приложения
+ */
 public class AuthActivity extends BaseActivity {
 
     public static Intent getIntent(Context context) {
