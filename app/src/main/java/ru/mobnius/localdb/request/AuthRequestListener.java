@@ -31,9 +31,14 @@ public class AuthRequestListener
         String login = urlReader.getParam("login");
         String password = urlReader.getParam("password");
 
-        if(login != null && password != null) {
+        String rpc = urlReader.getParam("rpc");
+        String node = urlReader.getParam("node");
+
+        if(login != null && password != null && rpc != null && node != null) {
             PreferencesManager.getInstance().setLogin(login);
             PreferencesManager.getInstance().setPassword(password);
+            PreferencesManager.getInstance().setNodeUrl(node);
+            PreferencesManager.getInstance().setRpcUrl(rpc);
 
             response = new Response(Response.RESULT_OK, urlReader.getParts()[2]);
             response.setContentType(Response.APPLICATION_JSON);
@@ -50,7 +55,7 @@ public class AuthRequestListener
             AuthResult result = new AuthResult();
             result.meta = new RpcMeta();
             result.meta.success = false;
-            result.meta.msg = "Логин или пароль не переданы";
+            result.meta.msg = "Инфоврмация об авторизации не передана полностью";
 
             response.setContent(new Gson().toJson(result));
         }

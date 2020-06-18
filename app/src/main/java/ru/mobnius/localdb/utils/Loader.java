@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 import ru.mobnius.localdb.AutoRunReceiver;
+import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.User;
 
 public class Loader {
@@ -40,7 +41,7 @@ public class Loader {
             byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
             int postDataLength = postData.length;
 
-            URL url = new URL(AutoRunReceiver.getRpcUrl() + "/auth");
+            URL url = new URL(PreferencesManager.getInstance().getRpcUrl() + "/auth");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             try {
 
@@ -86,7 +87,7 @@ public class Loader {
         URL url;
         HttpURLConnection urlConnection = null;
         try {
-            url = new URL(AutoRunReceiver.getRpcUrl() + "/rpc");
+            url = new URL(PreferencesManager.getInstance().getRpcUrl() + "/rpc");
             urlConnection = (HttpURLConnection) url.openConnection();
 
             urlConnection.setRequestMethod("POST");
@@ -126,7 +127,7 @@ public class Loader {
      * @throws IOException общая ошибка
      */
     public String version() throws IOException {
-        URL url = new URL(AutoRunReceiver.getNodeUrl() + "/download/localdb");
+        URL url = new URL(PreferencesManager.getInstance().getNodeUrl() + "/download/localdb");
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
 

@@ -20,9 +20,8 @@ import ru.mobnius.localdb.utils.UrlReader;
 /**
  * запуск синхронизации
  */
-public class SyncRequestListener
-        implements OnRequestListener,
-        LoadAsyncTask.OnLoadListener {
+public class SyncRequestListener extends AuthFilterRequestListener
+        implements LoadAsyncTask.OnLoadListener {
 
     private App mApp;
     private UrlReader mUrlReader;
@@ -40,10 +39,14 @@ public class SyncRequestListener
 
     @Override
     public Response getResponse(UrlReader urlReader) {
+       Response response = super.getResponse(urlReader);
+       if(response != null) {
+           return response;
+       }
+
         mUrlReader = urlReader;
         // TODO: 17.06.2020 нужно достать из запроса логин и пароль
         String tableName = urlReader.getParam("table");
-        Response response;
         if(tableName != null) {
             new LoadAsyncTask(tableName, this).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
 

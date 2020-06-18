@@ -67,6 +67,8 @@ public class SettingActivity extends AppCompatActivity {
         private Preference pLogin;
         private SwitchPreference spDebug;
         private Preference pLoginReset;
+        private Preference pNodeUrl;
+        private Preference pRpcUrl;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -79,6 +81,8 @@ public class SettingActivity extends AppCompatActivity {
             Objects.requireNonNull(pVersion).setOnPreferenceClickListener(this);
 
             pLogin = findPreference(PreferencesManager.LOGIN);
+            pNodeUrl = findPreference(PreferencesManager.NODE_URL);
+            pRpcUrl = findPreference(PreferencesManager.RPC_URL);
 
             spDebug = findPreference(PreferencesManager.DEBUG);
             Objects.requireNonNull(spDebug).setEnabled(PreferencesManager.getInstance().isDebug());
@@ -100,6 +104,9 @@ public class SettingActivity extends AppCompatActivity {
 
             String loginSummary = "Логин для авторизации на сервере: %s";
             pLogin.setSummary(String.format(loginSummary, PreferencesManager.getInstance().getLogin()));
+
+            pNodeUrl.setSummary(PreferencesManager.getInstance().getNodeUrl());
+            pRpcUrl.setSummary(PreferencesManager.getInstance().getRpcUrl());
 
             new ServerAppVersionAsyncTask().execute();
         }

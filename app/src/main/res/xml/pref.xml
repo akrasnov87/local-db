@@ -20,6 +20,15 @@
             android:summary="Логин для авторизации на сервере"
             android:title="Логин" />
 
+        <Preference
+            android:key="MBL_NODE_URL"
+            android:summary="Адрес сервера приложений 1"
+            android:title="Адрес сервера приложений 1" />
+
+        <Preference
+            android:key="MBL_RPC_URL"
+            android:summary="Адрес сервера приложений 2"
+            android:title="Адрес сервера приложений 2" />
     </PreferenceCategory>
 
     <PreferenceCategory

@@ -14,20 +14,6 @@ import ru.mobnius.localdb.utils.ServiceUtil;
 public class AutoRunReceiver extends BroadcastReceiver
         implements AvailableTimerTask.OnAvailableListener {
 
-    public static String getRpcUrl() {
-        String baseUrl = "http://demo.it-serv.ru";
-        String virtualDirPath = "/MobileServiceSevKav";
-
-        return baseUrl + virtualDirPath;
-    }
-
-    public static String getNodeUrl() {
-        String baseUrl = "http://demo.it-serv.ru";
-        String virtualDirPath = "/armnext/demo_kavkaz";
-
-        return baseUrl + virtualDirPath;
-    }
-
     private Context mContext;
 
     @Override

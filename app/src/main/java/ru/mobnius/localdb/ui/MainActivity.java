@@ -56,7 +56,6 @@ public class MainActivity extends BaseActivity
         return new Intent(context, MainActivity.class);
     }
 
-
     private LogAdapter mLogAdapter;
     private RecyclerView mRecyclerView;
     private Button btnStart;
@@ -76,7 +75,6 @@ public class MainActivity extends BaseActivity
         mUpdateFragment = (UpdateFragment)getSupportFragmentManager().findFragmentById(R.id.log_upload);
 
         Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.app_name);
-        getSupportActionBar().setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
         mRecyclerView = findViewById(R.id.log_list);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -115,6 +113,8 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
+
+        Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
         if(PreferencesManager.getInstance().isDebug()) {
             btnStop.setVisibility(View.VISIBLE);

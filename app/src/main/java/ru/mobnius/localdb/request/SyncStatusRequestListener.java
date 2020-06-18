@@ -16,7 +16,7 @@ import ru.mobnius.localdb.utils.UrlReader;
 /**
  * Проверка выполнения синхронизации
  */
-public class SyncStatusRequestListener
+public class SyncStatusRequestListener extends AuthFilterRequestListener
         implements OnRequestListener {
 
     @Override
@@ -28,7 +28,11 @@ public class SyncStatusRequestListener
 
     @Override
     public Response getResponse(UrlReader urlReader) {
-        Response response;
+        Response response = super.getResponse(urlReader);
+        if(response != null) {
+            return response;
+        }
+
         if(PreferencesManager.getInstance().getProgress() != null) {
             response = new Response(Response.RESULT_OK, urlReader.getParts()[2]);
             response.setContentType(Response.APPLICATION_JSON);

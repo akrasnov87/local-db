@@ -8,7 +8,9 @@ import java.util.Objects;
 
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.data.BaseActivity;
+import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.utils.NetworkUtil;
 
 public class AuthActivity extends BaseActivity {
 
@@ -27,6 +29,8 @@ public class AuthActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
         if(PreferencesManager.getInstance().isAuthorized()) {
             startActivity(MainActivity.getIntent(this));

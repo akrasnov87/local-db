@@ -18,6 +18,8 @@ public class PreferencesManager {
     public static final String PASSWORD = "MBL_PASSWORD";
     public static final String PROGRESS = "MBL_PROGRESS";
     public static final String LOGIN_RESET = "MBL_LOGIN_RESET";
+    public static final String NODE_URL = "MBL_NODE_URL";
+    public static final String RPC_URL = "MBL_RPC_URL";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -60,6 +62,22 @@ public class PreferencesManager {
 
     public String getPassword() {
         return getSharedPreferences().getString(PASSWORD, null);
+    }
+
+    public void setNodeUrl(String nodeUrl) {
+        getSharedPreferences().edit().putString(NODE_URL, nodeUrl).apply();
+    }
+
+    public String getNodeUrl() {
+        return getSharedPreferences().getString(NODE_URL, null);
+    }
+
+    public void setRpcUrl(String rpcUrl) {
+        getSharedPreferences().edit().putString(RPC_URL, rpcUrl).apply();
+    }
+
+    public String getRpcUrl() {
+        return getSharedPreferences().getString(RPC_URL, null);
     }
 
     public boolean isAuthorized() {

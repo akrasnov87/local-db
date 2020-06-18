@@ -4,6 +4,7 @@ public class Response {
 
     public final static int RESULT_OK = 200;
     public final static int RESULT_FAIL = 500;
+    public final static int RESULT_NO_AUTH = 401;
     public final static int RESULT_NOT_FOUNT = 404;
 
     public final static String TEXT_PLAIN = "text/plain";
@@ -46,8 +47,8 @@ public class Response {
 
     public String toResponseString() {
         return mHost + " " + mStatus + "\r\n" +
-                "content-type:" + " " + mContentType + "\r\n; charset=utf-8\r\n" +
-                "content-length:" + " " + mContent.length() + "\r\n" +
+                "Content-Type: " + mContentType + "; charset=utf-8\r\n" +
+                "Content-Length: " + mContent.getBytes().length + "\r\n" +
                 "\r\n" +
                 mContent;
     }
