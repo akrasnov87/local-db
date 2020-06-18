@@ -1,18 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <EditText
-        android:layout_width="wrap_content"
+        android:id="@+id/sql_viewer_edit_text"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minWidth="250dp"/>
+        android:layout_marginBottom="8dp"
+        android:autofillHints="no"
+        android:hint="@string/enter_query"
+        android:inputType="text" />
+
     <Button
         android:id="@+id/sql_viewer_query"
+        style="@style/ButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/handle_query"/>
+        android:layout_marginBottom="8dp"
+        android:enabled="false"
+        android:padding="4dp"
+        android:text="@string/handle_query" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/sql_viewer_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

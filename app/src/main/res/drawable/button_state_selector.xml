@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="true">
+        <ripple android:color="#FFFFFF">
+            <item android:id="@android:id/background">
+                <shape>
+                    <solid android:color="#2b78bf" />
+                    <corners android:radius="10dp" />
+                    <padding android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp" />
+                </shape>
+            </item>
+        </ripple>
+    </item>
+    <item>
+        <layer-list>
+            <item android:id="@android:id/background">
+                <shape>
+                    <solid android:color="#cfd8dc" />
+                    <corners android:radius="10dp" />
+                    <padding android:bottom="0dp" android:left="0dp" android:right="0dp" android:top="0dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

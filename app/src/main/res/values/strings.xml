@@ -8,4 +8,5 @@
     <string name="yes">Да</string>
     <string name="no">Нет</string>
     <string name="handle_query">Обработать запрос</string>
+    <string name="enter_query">Введите запрос</string>
 </resources>
