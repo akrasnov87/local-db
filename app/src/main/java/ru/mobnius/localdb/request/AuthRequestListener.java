@@ -7,11 +7,8 @@ import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.AuthResult;
-import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.RpcMeta;
-import ru.mobnius.localdb.model.progress.ProgressRecords;
-import ru.mobnius.localdb.model.progress.ProgressResult;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**

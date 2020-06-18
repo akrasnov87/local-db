@@ -1,7 +1,5 @@
 package ru.mobnius.localdb.model;
 
-import java.io.Serializable;
-
 public class Progress {
 
     public Progress(int current, int total, String tableName) {

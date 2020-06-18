@@ -8,7 +8,6 @@ import java.net.Socket;
 
 import ru.mobnius.localdb.data.HttpResponseThread;
 import ru.mobnius.localdb.data.OnLogListener;
-import ru.mobnius.localdb.data.OnResponseListener;
 import ru.mobnius.localdb.model.LogItem;
 
 public class HttpServerThread extends Thread {

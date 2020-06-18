@@ -3,6 +3,7 @@ package ru.mobnius.localdb.data;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.os.Handler;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import ru.mobnius.localdb.R;
 public abstract class BaseActivity extends AppCompatActivity {
     private final int REQUEST_PERMISSIONS = 1;
     private int mPermissionLength = 0;
+    private boolean doubleBackToExitPressedOnce = false;
 
     @Override
     protected void onResume() {
@@ -52,6 +54,27 @@ public abstract class BaseActivity extends AppCompatActivity {
                 Toast.makeText(this, getText(R.string.not_permissions), Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            finishAffinity();
+            finish();
+            super.onBackPressed();
+            return;
+        }
+        doubleBackToExitPressedOnce = true;
+
+        Toast.makeText(this, "Нажмите повторно для выхода из приложения.", Toast.LENGTH_LONG).show();
+
+        int TOAST_DURATION = 2750;
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce = false;
+            }
+        }, TOAST_DURATION);
     }
 
     protected void confirm(String message, DialogInterface.OnClickListener listener) {

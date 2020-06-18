@@ -1,12 +1,8 @@
 package ru.mobnius.localdb.ui;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.MenuItem;
-import android.widget.Toast;
 
 import java.util.Objects;
 
@@ -16,7 +12,9 @@ import ru.mobnius.localdb.data.PreferencesManager;
 
 public class AuthActivity extends BaseActivity {
 
-    private boolean doubleBackToExitPressedOnce = false;
+    public static Intent getIntent(Context context) {
+        return new Intent(context, AuthActivity.class);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,27 +31,5 @@ public class AuthActivity extends BaseActivity {
         if(PreferencesManager.getInstance().isAuthorized()) {
             startActivity(MainActivity.getIntent(this));
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            finishAffinity();
-            finish();
-            super.onBackPressed();
-            return;
-        }
-
-        doubleBackToExitPressedOnce = true;
-
-        Toast.makeText(this, getString(R.string.sign_out_message), Toast.LENGTH_LONG).show();
-
-        int TOAST_DURATION = 2750;
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
-            }
-        }, TOAST_DURATION);
     }
 }

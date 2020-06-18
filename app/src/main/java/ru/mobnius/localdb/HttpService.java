@@ -6,16 +6,8 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.google.gson.Gson;
-
-import java.io.BufferedInputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnLogListener;
@@ -24,7 +16,6 @@ import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.model.User;
 import ru.mobnius.localdb.request.AuthRequestListener;
 import ru.mobnius.localdb.request.DefaultRequestListener;
 import ru.mobnius.localdb.request.OnRequestListener;

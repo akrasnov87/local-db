@@ -40,7 +40,6 @@ import ru.mobnius.localdb.data.component.MySnackBar;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.storage.FiasDao;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
@@ -57,9 +56,6 @@ public class MainActivity extends BaseActivity
         return new Intent(context, MainActivity.class);
     }
 
-    private static String TAG = "LOCAL_DB";
-
-    private boolean doubleBackToExitPressedOnce = false;
 
     private LogAdapter mLogAdapter;
     private RecyclerView mRecyclerView;
@@ -129,27 +125,6 @@ public class MainActivity extends BaseActivity
         }
 
         new ServerAppVersionAsyncTask().execute();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            finishAffinity();
-            finish();
-            super.onBackPressed();
-            return;
-        }
-        doubleBackToExitPressedOnce = true;
-
-        Toast.makeText(this, "Нажмите повторно для выхода из приложения.", Toast.LENGTH_LONG).show();
-
-        int TOAST_DURATION = 2750;
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
-            }
-        }, TOAST_DURATION);
     }
 
     protected void onDestroy() {

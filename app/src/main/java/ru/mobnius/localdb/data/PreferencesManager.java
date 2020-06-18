@@ -17,6 +17,7 @@ public class PreferencesManager {
     public static final String LOGIN = "MBL_LOGIN";
     public static final String PASSWORD = "MBL_PASSWORD";
     public static final String PROGRESS = "MBL_PROGRESS";
+    public static final String LOGIN_RESET = "MBL_LOGIN_RESET";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;

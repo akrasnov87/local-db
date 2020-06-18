@@ -1,6 +1,7 @@
 package ru.mobnius.localdb.ui;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
@@ -9,6 +10,7 @@ import androidx.preference.SwitchPreference;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -64,6 +66,7 @@ public class SettingActivity extends AppCompatActivity {
         private Preference pServerVersion;
         private Preference pLogin;
         private SwitchPreference spDebug;
+        private Preference pLoginReset;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -80,6 +83,10 @@ public class SettingActivity extends AppCompatActivity {
             spDebug = findPreference(PreferencesManager.DEBUG);
             Objects.requireNonNull(spDebug).setEnabled(PreferencesManager.getInstance().isDebug());
             spDebug.setOnPreferenceChangeListener(this);
+
+            pLoginReset = findPreference(PreferencesManager.LOGIN_RESET);
+            Objects.requireNonNull(pLoginReset).setOnPreferenceClickListener(this);
+            pLoginReset.setVisible(PreferencesManager.getInstance().isDebug());
         }
 
         @Override
@@ -102,13 +109,28 @@ public class SettingActivity extends AppCompatActivity {
             if (PreferencesManager.APP_VERSION.equals(preference.getKey())) {
                 clickToVersion++;
                 if (clickToVersion >= 6) {
-                    PreferencesManager.getInstance().getSharedPreferences().edit().putBoolean(PreferencesManager.DEBUG, true).apply();
+                    PreferencesManager.getInstance().setDebug(true);
                     spDebug.setChecked(true);
                     spDebug.setEnabled(true);
+                    pLoginReset.setVisible(true);
 
                     Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                     clickToVersion = 0;
                 }
+            }
+
+            if(PreferencesManager.LOGIN_RESET.equals(preference.getKey())) {
+                confirm("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(which == DialogInterface.BUTTON_POSITIVE) {
+                            PreferencesManager.getInstance().setLogin(null);
+                            PreferencesManager.getInstance().setPassword(null);
+
+                            requireContext().startActivity(AuthActivity.getIntent(requireContext()));
+                        }
+                    }
+                });
             }
             return false;
         }
@@ -121,8 +143,20 @@ public class SettingActivity extends AppCompatActivity {
                 spDebug.setEnabled(debugValue);
 
                 PreferencesManager.getInstance().setDebug(debugValue);
+                pLoginReset.setVisible(debugValue);
             }
             return true;
+        }
+
+        protected void confirm(String message, DialogInterface.OnClickListener listener) {
+            AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+            dialog.setTitle("Сообщение");
+            dialog.setMessage(message);
+            dialog.setCancelable(false);
+            dialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.yes), listener);
+            dialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.no), listener);
+            dialog.setIcon(R.drawable.ic_baseline_warning_24);
+            dialog.show();
         }
 
         @SuppressLint("StaticFieldLeak")

@@ -4,16 +4,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.Timer;
 
 import ru.mobnius.localdb.data.AvailableTimerTask;
-import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.LogItem;
-import ru.mobnius.localdb.storage.DaoMaster;
-import ru.mobnius.localdb.storage.DaoSession;
-import ru.mobnius.localdb.storage.DbOpenHelper;
 import ru.mobnius.localdb.utils.ServiceUtil;
 
 public class AutoRunReceiver extends BroadcastReceiver

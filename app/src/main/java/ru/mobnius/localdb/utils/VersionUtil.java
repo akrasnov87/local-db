@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 
 import java.util.Date;
 
-import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.Version;
 
 /**

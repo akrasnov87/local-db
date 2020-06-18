@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Date;
 
 import ru.mobnius.localdb.model.fias.FiasResult;
 import ru.mobnius.localdb.storage.DaoMaster;

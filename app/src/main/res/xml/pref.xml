@@ -32,6 +32,11 @@
             android:summary="Включить режим отладки"
             android:title="Включить" />
 
+        <Preference
+            android:key="MBL_LOGIN_RESET"
+            android:summary="Сбросить локальную информацию о логине и пароле"
+            android:title="Сбросить авторизацию" />
+
     </PreferenceCategory>
 
     <Preference

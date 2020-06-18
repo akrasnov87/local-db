@@ -1,11 +1,8 @@
 package ru.mobnius.localdb.data;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
-import ru.mobnius.localdb.AutoRunReceiver;
 import ru.mobnius.localdb.HttpService;
-import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.fias.FiasResult;
 import ru.mobnius.localdb.utils.Loader;
