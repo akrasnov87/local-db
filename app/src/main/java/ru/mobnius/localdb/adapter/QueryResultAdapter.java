@@ -12,11 +12,13 @@ import java.util.List;
 
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.holder.QueryResultHolder;
+import ru.mobnius.localdb.model.QueryResult;
 
 public class QueryResultAdapter extends RecyclerView.Adapter<QueryResultHolder> {
     private Context mContext;
-    private List<String> mList;
-    public QueryResultAdapter (Context context, List<String> list) {
+    private List<QueryResult> mList;
+
+    public QueryResultAdapter(Context context, List<QueryResult> list) {
         mContext = context;
         mList = list;
     }

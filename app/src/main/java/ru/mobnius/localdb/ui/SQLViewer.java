@@ -24,15 +24,16 @@ import java.util.Objects;
 
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.QueryResultAdapter;
+import ru.mobnius.localdb.model.QueryResult;
 import ru.mobnius.localdb.storage.DbOpenHelper;
-import ru.mobnius.localdb.utils.SQLValidation;
+import ru.mobnius.localdb.utils.SQLValidator;
+import ru.mobnius.localdb.utils.SQLFieldTypeChecker;
 
 public class SQLViewer extends AppCompatActivity implements View.OnClickListener, TextWatcher {
     private final int MAX_RECYCLER_VIEW_LENGTH = 100;
     private EditText etQuery;
     private Button btnQuery;
     private RecyclerView mRecyclerView;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -48,7 +49,6 @@ public class SQLViewer extends AppCompatActivity implements View.OnClickListener
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
-
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
@@ -61,13 +61,13 @@ public class SQLViewer extends AppCompatActivity implements View.OnClickListener
     public void onClick(View v) {
         if (v.getId() == R.id.sql_viewer_query) {
             String query = etQuery.getText().toString();
-            String queryValidated = SQLValidation.primitiveMatcher(query);
+            String queryValidated = SQLValidator.primitiveMatcher(query);
             if (queryValidated.isEmpty()) {
                 Toast.makeText(this, "Запрос построен не правильно", Toast.LENGTH_SHORT).show();
                 return;
             }
-            String tableCheckedQuery = SQLValidation.getRightQuery(queryValidated);
-            if (tableCheckedQuery.equals(SQLValidation.NO_COLUMN) || tableCheckedQuery.equals(SQLValidation.NO_TABLE)) {
+            String tableCheckedQuery = SQLValidator.getRightQuery(queryValidated);
+            if (tableCheckedQuery.equals(SQLValidator.NO_COLUMN) || tableCheckedQuery.equals(SQLValidator.NO_TABLE)) {
                 Toast.makeText(this, tableCheckedQuery, Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -77,15 +77,26 @@ public class SQLViewer extends AppCompatActivity implements View.OnClickListener
                 if (cursor != null) {
                     if (cursor.moveToFirst()) {
                         int columnCount = cursor.getColumnCount();
-                        ArrayList<String> list = new ArrayList<>();
+                        ArrayList<QueryResult> list = new ArrayList<>();
                         int x = 0;
                         do {
-                            String s = "";
+                            StringBuilder s = new StringBuilder();
+                            byte[] bytes = null;
                             for (int i = 0; i < columnCount; i++) {
-                                s = s + cursor.getColumnName(i) + ": " + cursor.getString(i) + "\n";
+                                Object o = SQLFieldTypeChecker.getType(cursor, i);
+                                if (o == null) {
+                                    continue;
+                                }
+                                if (o instanceof String) {
+                                    s.append(cursor.getColumnName(i)).append(": ").append(o).append("\n");
+                                }
+                                if (o instanceof byte[]) {
+                                    bytes = (byte[]) o;
+                                }
                             }
-                            String g = s.substring(0, s.length() - 1);
-                            list.add(g);
+                            String g = s.toString().substring(0, s.length() - 1);
+                            QueryResult result = new QueryResult(g,bytes);
+                            list.add(result);
                             x++;
                         } while (cursor.moveToNext() && x < MAX_RECYCLER_VIEW_LENGTH);
 
@@ -104,19 +115,15 @@ public class SQLViewer extends AppCompatActivity implements View.OnClickListener
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
     }
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-
         btnQuery.setEnabled(count != 0);
-
     }
 
     @Override
     public void afterTextChanged(Editable s) {
-
     }
 }
 
