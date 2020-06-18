@@ -48,7 +48,6 @@ public class UpdateFragment extends Fragment {
     }
 
     public void updateProcess(Progress progress) {
-        Log.d(Names.TAG, "VISIBLE PROGRESS: " + mBar.getVisibility());
         if(mBar.getVisibility() != View.VISIBLE) {
             startProcess();
         }

@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreference;
@@ -19,6 +20,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Objects;
 
 import ru.mobnius.localdb.Names;
@@ -69,6 +71,7 @@ public class SettingActivity extends AppCompatActivity {
         private Preference pLoginReset;
         private Preference pNodeUrl;
         private Preference pRpcUrl;
+        private ListPreference lpSize;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -91,6 +94,10 @@ public class SettingActivity extends AppCompatActivity {
             pLoginReset = findPreference(PreferencesManager.LOGIN_RESET);
             Objects.requireNonNull(pLoginReset).setOnPreferenceClickListener(this);
             pLoginReset.setVisible(PreferencesManager.getInstance().isDebug());
+
+            lpSize = findPreference(PreferencesManager.SIZE);
+            Objects.requireNonNull(lpSize).setOnPreferenceChangeListener(this);
+            lpSize.setEnabled(PreferencesManager.getInstance().isDebug());
         }
 
         @Override
@@ -107,6 +114,8 @@ public class SettingActivity extends AppCompatActivity {
 
             pNodeUrl.setSummary(PreferencesManager.getInstance().getNodeUrl());
             pRpcUrl.setSummary(PreferencesManager.getInstance().getRpcUrl());
+            DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
+            lpSize.setSummary(df.format(PreferencesManager.getInstance().getSize()));
 
             new ServerAppVersionAsyncTask().execute();
         }
@@ -120,6 +129,7 @@ public class SettingActivity extends AppCompatActivity {
                     spDebug.setChecked(true);
                     spDebug.setEnabled(true);
                     pLoginReset.setVisible(true);
+                    lpSize.setEnabled(true);
 
                     Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                     clickToVersion = 0;
@@ -148,9 +158,17 @@ public class SettingActivity extends AppCompatActivity {
                 boolean debugValue = Boolean.parseBoolean(String.valueOf(newValue));
                 spDebug.setSummary(String.format(debugSummary, debugValue ? "включен" : "отключен"));
                 spDebug.setEnabled(debugValue);
+                lpSize.setEnabled(debugValue);
 
                 PreferencesManager.getInstance().setDebug(debugValue);
                 pLoginReset.setVisible(debugValue);
+            }
+
+            if(PreferencesManager.SIZE.equals(preference.getKey())) {
+                DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
+                lpSize.setSummary(df.format(Integer.parseInt(String.valueOf(newValue))));
+
+                PreferencesManager.getInstance().setSize(Integer.parseInt(String.valueOf(newValue)));
             }
             return true;
         }

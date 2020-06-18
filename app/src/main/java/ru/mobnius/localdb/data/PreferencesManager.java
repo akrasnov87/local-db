@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import com.google.gson.Gson;
 
+import java.util.Objects;
+
 import ru.mobnius.localdb.model.Progress;
 
 public class PreferencesManager {
@@ -20,6 +22,7 @@ public class PreferencesManager {
     public static final String LOGIN_RESET = "MBL_LOGIN_RESET";
     public static final String NODE_URL = "MBL_NODE_URL";
     public static final String RPC_URL = "MBL_RPC_URL";
+    public static final String SIZE = "MBL_SIZE";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -94,5 +97,14 @@ public class PreferencesManager {
             return null;
         }
         return new Gson().fromJson(value, Progress.class);
+    }
+
+    public void setSize(int size) {
+        getSharedPreferences().edit().putString(SIZE, String.valueOf(size)).apply();
+    }
+
+    public int getSize() {
+        String value = getSharedPreferences().getString(SIZE, "100000");
+        return Integer.parseInt(Objects.requireNonNull(value));
     }
 }

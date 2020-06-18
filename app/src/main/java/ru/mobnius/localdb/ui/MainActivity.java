@@ -30,6 +30,7 @@ import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.LogAdapter;
+import ru.mobnius.localdb.adapter.StorageNameAdapter;
 import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.BaseActivity;
 import ru.mobnius.localdb.data.HttpServerThread;
@@ -40,6 +41,7 @@ import ru.mobnius.localdb.data.component.MySnackBar;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.storage.FiasDao;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
@@ -50,7 +52,8 @@ public class MainActivity extends BaseActivity
         implements OnLogListener,
         AvailableTimerTask.OnAvailableListener,
         View.OnClickListener,
-        OnHttpListener {
+        OnHttpListener,
+        DialogDownloadFragment.OnDownloadStorageListener {
 
     public static Intent getIntent(Context context) {
         return new Intent(context, MainActivity.class);
@@ -61,6 +64,7 @@ public class MainActivity extends BaseActivity
     private Button btnStart;
     private Button btnStop;
     private UpdateFragment mUpdateFragment;
+    private DialogDownloadFragment mDialogDownloadFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,8 +106,8 @@ public class MainActivity extends BaseActivity
                 return true;
 
             case R.id.action_fias:
-                mUpdateFragment.startProcess();
-                startService(HttpService.getIntent(this, FiasDao.TABLENAME));
+                mDialogDownloadFragment = new DialogDownloadFragment(this);
+                mDialogDownloadFragment.show(getSupportFragmentManager(), "storage");
                 return true;
         }
 
@@ -200,6 +204,21 @@ public class MainActivity extends BaseActivity
     @Override
     public void onDownLoadFinish(UrlReader reader) {
         mUpdateFragment.stopProcess();
+    }
+
+    @Override
+    public void onDownloadStorage(final StorageName name) {
+        confirm("Загрузить таблицу " + name.getName() + "?", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if(which == DialogInterface.BUTTON_POSITIVE) {
+                    mDialogDownloadFragment.dismiss();
+
+                    mUpdateFragment.startProcess();
+                    startService(HttpService.getIntent(MainActivity.this, name.table));
+                }
+            }
+        });
     }
 
     @SuppressLint("StaticFieldLeak")

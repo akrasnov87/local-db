@@ -4,14 +4,13 @@
     tools:context="ru.mobnius.localdb.ui.MainActivity">
 
     <item
-        android:id="@+id/action_settings"
-        android:title="@string/settings"
-        android:icon="@drawable/ic_baseline_settings_24"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/action_fias"
+        android:title="@string/download"
+        app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_fias"
-        android:title="@string/fias"
+        android:id="@+id/action_settings"
+        android:title="@string/settings"
         app:showAsAction="never" />
 
 </menu>

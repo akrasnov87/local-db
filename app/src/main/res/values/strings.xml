@@ -11,4 +11,8 @@
     <string name="sign_out_message">Нажмите повторно для выхода из приложения.</string>
     <string name="not_permissions">Предоставлены не все разрешения.</string>
     <string name="permissions_grant">Разрешения получены.</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="download_list">Список таблиц для загрузки в мобильное приложение</string>
+    <string name="download">Загрузка</string>
 </resources>

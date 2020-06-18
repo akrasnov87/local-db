@@ -8,8 +8,4 @@ public class User {
      * токен авторизации
      */
     public String token;
-    /**
-     * Информация о пользователе
-     */
-    public UserInfo user;
 }

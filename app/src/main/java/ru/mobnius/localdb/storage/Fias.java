@@ -4,7 +4,10 @@ import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Id;
 import org.greenrobot.greendao.annotation.Generated;
 
+import ru.mobnius.localdb.data.Storage;
+
 @Entity(nameInDb = "UI_SV_FIAS")
+@Storage(description = "ФИАС", table = "UI_SV_FIAS")
 public class Fias {
     @Id
     public String LINK;

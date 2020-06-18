@@ -21,7 +21,7 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
 
     @Override
     protected Void doInBackground(String... strings) {
-        int size = 100;
+        int size = PreferencesManager.getInstance().getSize();
         Progress progress = PreferencesManager.getInstance().getProgress() != null ? PreferencesManager.getInstance().getProgress() : new Progress(0, 1, mTableName);
         publishProgress(progress);
 

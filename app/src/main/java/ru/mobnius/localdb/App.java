@@ -106,7 +106,6 @@ public class App extends Application implements
 
     @Override
     public void onDownLoadProgress(UrlReader reader, Progress progress) {
-        Log.d(Names.TAG, "HttpListeners: " + mHttpListeners.size());
         for(OnHttpListener listener : mHttpListeners) {
             listener.onDownLoadProgress(reader, progress);
         }
