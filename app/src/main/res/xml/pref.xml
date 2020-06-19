@@ -11,6 +11,7 @@
         app:summary="Общая информация о приложении" />
 
     <PreferenceCategory
+        android:key="MBL_SQL_CATEGORY"
         android:icon="@drawable/ic_sql_database_24"
         android:summary="Просмотр Базы данных"
         android:title="SQLite">

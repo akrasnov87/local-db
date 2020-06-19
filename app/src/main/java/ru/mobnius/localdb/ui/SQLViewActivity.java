@@ -1,6 +1,7 @@
 package ru.mobnius.localdb.ui;
 
 import android.database.Cursor;
+import android.database.SQLException;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
@@ -25,7 +26,6 @@ import java.util.Objects;
 
 import ru.mobnius.localdb.AutoRunReceiver;
 import ru.mobnius.localdb.R;
-import ru.mobnius.localdb.utils.SQLValidator;
 
 public class SQLViewActivity extends AppCompatActivity implements View.OnClickListener, TextWatcher {
     private EditText etQuery;
@@ -59,17 +59,18 @@ public class SQLViewActivity extends AppCompatActivity implements View.OnClickLi
         if (v.getId() == R.id.sql_viewer_query) {
             tvList.setTextColor(Color.BLACK);
             String query = etQuery.getText().toString();
-            String tableCheckedQuery = SQLValidator.isTableAndColumnExist(query);
-            if (tableCheckedQuery.equals(SQLValidator.NO_COLUMN) || tableCheckedQuery.equals(SQLValidator.NO_TABLE)) {
-                errorText(tableCheckedQuery);
+            Database database = AutoRunReceiver.getDaoSession().getDatabase();
+            JSONArray array = getResults(database, query);
+            if (array == null) {
                 return;
             }
-            Database database = AutoRunReceiver.getDaoSession().getDatabase();
-            JSONArray array = getResults(database, tableCheckedQuery);
+            if (array.length() == 0) {
+                errorText("Результат пуст");
+                return;
+            }
             try {
                 String s = array.toString(4);
                 tvList.setText(s);
-                tvList.setVisibility(View.VISIBLE);
             } catch (JSONException e) {
                 e.printStackTrace();
                 errorText(e.toString());
@@ -103,8 +104,14 @@ public class SQLViewActivity extends AppCompatActivity implements View.OnClickLi
      * @param query    запрос
      * @return объект JSON
      */
-    public static JSONArray getResults(Database database, String query) {
-        Cursor cursor = database.rawQuery(query, null);
+    public JSONArray getResults(Database database, String query) {
+        Cursor cursor;
+        try {
+            cursor = database.rawQuery(query, null);
+        } catch (SQLException e) {
+            errorText(e.toString());
+            return null;
+        }
         JSONArray resultSet = new JSONArray();
         int x = 0;
         cursor.moveToFirst();
@@ -122,6 +129,7 @@ public class SQLViewActivity extends AppCompatActivity implements View.OnClickLi
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
+                        errorText(e.toString());
                     }
                 }
             }

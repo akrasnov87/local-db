@@ -10,7 +10,7 @@ public class PreferencesManager {
     public static final String DEBUG = "MBL_DEBUG";
     public final static String APP_VERSION = "MBL_APP_VERSION";
     public final static String SERVER_APP_VERSION = "SERVER_APP_VERSION";
-    public static final String SQL = "MBL_SQL";
+    public final static String SQL = "MBL_SQL";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
