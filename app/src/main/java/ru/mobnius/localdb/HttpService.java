@@ -108,7 +108,7 @@ public class HttpService extends Service
         Progress progress = PreferencesManager.getInstance().getProgress();
         if(progress != null) {
             onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
-            onResponse(new UrlReader("GET /sync?table=" + progress.tableName + " HTTP/1.1"));
+            onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
         }
     }
 

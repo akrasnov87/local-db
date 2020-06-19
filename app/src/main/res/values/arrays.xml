@@ -2,9 +2,13 @@
 <resources>
     <string-array name="size">
         <item>1000</item>
+        <item>2500</item>
+        <item>5000</item>
+        <item>7500</item>
         <item>10000</item>
-        <item>100000</item>
-        <item>250000</item>
-        <item>500000</item>
+        <item>15000</item>
+        <item>20000</item>
+        <item>25000</item>
+        <item>50000</item>
     </string-array>
 </resources>

@@ -47,7 +47,9 @@ public class SyncRequestListener extends AuthFilterRequestListener
         String tableName = urlReader.getParam("table");
         if(tableName != null) {
             if(NetworkUtil.isNetworkAvailable(mApp)) {
-                PreferencesManager.getInstance().setProgress(null);
+                if(urlReader.getParam("restore") == null) {
+                    PreferencesManager.getInstance().setProgress(null);
+                }
 
                 new LoadAsyncTask(tableName, this).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
 

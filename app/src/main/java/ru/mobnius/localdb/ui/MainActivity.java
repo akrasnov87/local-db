@@ -63,6 +63,7 @@ public class MainActivity extends BaseActivity
     private Button btnStop;
     private UpdateFragment mUpdateFragment;
     private DialogDownloadFragment mDialogDownloadFragment;
+    private ServerAppVersionAsyncTask mServerAppVersionAsyncTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,6 +121,10 @@ public class MainActivity extends BaseActivity
     protected void onResume() {
         super.onResume();
 
+        if(PreferencesManager.getInstance().getProgress() != null) {
+            mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress());
+        }
+
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
         if(PreferencesManager.getInstance().isDebug()) {
@@ -130,11 +135,14 @@ public class MainActivity extends BaseActivity
             btnStart.setVisibility(View.GONE);
         }
 
-        new ServerAppVersionAsyncTask().execute();
+        mServerAppVersionAsyncTask = new ServerAppVersionAsyncTask();
+        mServerAppVersionAsyncTask.execute();
     }
 
     protected void onDestroy() {
         super.onDestroy();
+        mServerAppVersionAsyncTask.cancel(true);
+        mServerAppVersionAsyncTask = null;
         ((App)getApplication()).unRegistryLogListener(this);
         ((App)getApplication()).unRegistryAvailableListener(this);
         ((App)getApplication()).unRegistryHttpListener(this);

@@ -7,6 +7,7 @@ import java.util.Locale;
 
 public class DateUtil {
     public static final String USER_FORMAT = "dd.MM.yyyy HH:mm:ss";
+    public static final String SHORT_USER_FORMAT = "HH:mm:ss";
     private static final String SYSTEM_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
     /**

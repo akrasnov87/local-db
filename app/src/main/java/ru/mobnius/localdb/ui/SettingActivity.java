@@ -83,6 +83,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
         private Preference pRpcUrl;
         private ListPreference lpSize;
         private Preference pCreateError;
+        private ServerAppVersionAsyncTask mServerAppVersionAsyncTask;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -137,8 +138,10 @@ public class SettingActivity extends ExceptionInterceptActivity {
             pRpcUrl.setSummary(PreferencesManager.getInstance().getRpcUrl());
             DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
             lpSize.setSummary(df.format(PreferencesManager.getInstance().getSize()));
+            lpSize.setValue(String.valueOf(PreferencesManager.getInstance().getSize()));
 
-            new ServerAppVersionAsyncTask().execute();
+            mServerAppVersionAsyncTask = new ServerAppVersionAsyncTask();
+            mServerAppVersionAsyncTask.execute();
         }
 
         @Override
@@ -227,6 +230,13 @@ public class SettingActivity extends ExceptionInterceptActivity {
             return ExceptionCode.SETTING;
         }
 
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+            mServerAppVersionAsyncTask.cancel(true);
+            mServerAppVersionAsyncTask = null;
+        }
+
         @SuppressLint("StaticFieldLeak")
         private class ServerAppVersionAsyncTask extends AsyncTask<Void, Void, String> {
 
@@ -262,7 +272,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
 
                         }
                     }
-
                     pServerVersion.setVisible(false);
                     if (pVersion != null) {
                         pVersion.setSummary("Установлена последняя версия " + VersionUtil.getVersionName(requireActivity()));
