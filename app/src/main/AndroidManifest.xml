@@ -30,7 +30,7 @@
 
         <activity android:name=".ui.SettingActivity"
             android:label="@string/settings"/>
-        <activity android:name=".ui.SQLViewer" />
+        <activity android:name=".ui.SQLViewActivity" />
 
         <receiver android:name=".AutoRunReceiver">
             <intent-filter>

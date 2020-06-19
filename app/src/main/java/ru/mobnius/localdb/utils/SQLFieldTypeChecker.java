@@ -9,7 +9,7 @@ public class SQLFieldTypeChecker {
     private static final int FIELD_TYPE_STRING = 3;
     private static final int FIELD_TYPE_BLOB = 4;
 
-    public static Object getType(Cursor cursor, int columnIndex) {
+    public static String getType(Cursor cursor, int columnIndex) {
         switch (cursor.getType(columnIndex)) {
             case FIELD_TYPE_NULL:
                 return "null";
@@ -22,8 +22,8 @@ public class SQLFieldTypeChecker {
             case FIELD_TYPE_STRING:
                 return cursor.getString(columnIndex);
             case FIELD_TYPE_BLOB:
-                return cursor.getBlob(columnIndex);
+                return "blob";
         }
-        return null;
+        return "";
     }
 }

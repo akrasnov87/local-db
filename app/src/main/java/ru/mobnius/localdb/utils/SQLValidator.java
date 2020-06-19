@@ -11,7 +11,7 @@ public class SQLValidator {
     public final static String NO_TABLE = "Ошибка: нет такой таблицы";
     public final static String NO_COLUMN = "Не выбрано ни одной колонки";
 
-    public static String getRightQuery(String query) {
+    public static String isTableAndColumnExist(String query) {
         AbstractDao<?, ?>[] abstractDao = AutoRunReceiver.getDaoSession().getAllDaos().toArray(new AbstractDao[0]);
         boolean has = false;
         boolean hasColumn = false;
@@ -42,16 +42,4 @@ public class SQLValidator {
         }
         return query;
     }
-
-    public static String primitiveMatcher(String query) {
-        String queryIgnoreCase = query.toLowerCase();
-        if (queryIgnoreCase.matches("select\\b.*? from\\b.*?where\\b.*")) {
-            return queryIgnoreCase;
-        }
-        if (queryIgnoreCase.matches("select\\b.*? top\\b.*?from\\b.*")) {
-            return queryIgnoreCase;
-        }
-        return "";
-    }
-
 }

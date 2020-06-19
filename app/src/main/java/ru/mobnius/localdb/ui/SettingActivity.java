@@ -112,7 +112,7 @@ public class SettingActivity extends AppCompatActivity {
                     }
 
                 case PreferencesManager.SQL:
-                    Intent i = new Intent(getContext(), SQLViewer.class);
+                    Intent i = new Intent(getContext(), SQLViewActivity.class);
                     startActivity(i);
                     break;
             }
