@@ -1,16 +1,11 @@
 package ru.mobnius.localdb.data;
 
 import android.os.AsyncTask;
-import android.util.Log;
-
-import java.util.Date;
 
 import ru.mobnius.localdb.HttpService;
-import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.storage.DaoSession;
-import ru.mobnius.localdb.utils.DateUtil;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.StorageUtil;
 
