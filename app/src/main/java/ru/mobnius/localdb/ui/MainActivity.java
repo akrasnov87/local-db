@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -85,6 +86,10 @@ public class MainActivity extends BaseActivity
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            alert(getString(R.string.android_8));
+        }
     }
 
     @Override
@@ -199,7 +204,6 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onDownLoadFinish(String tableName, UrlReader reader) {
-        alert("Загрузка " + tableName + " завершена");
         mUpdateFragment.stopProcess();
     }
 

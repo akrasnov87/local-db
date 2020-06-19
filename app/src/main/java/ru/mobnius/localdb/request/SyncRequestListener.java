@@ -45,6 +45,8 @@ public class SyncRequestListener extends AuthFilterRequestListener
         // TODO: 17.06.2020 нужно достать из запроса логин и пароль
         String tableName = urlReader.getParam("table");
         if(tableName != null) {
+            PreferencesManager.getInstance().setProgress(null);
+
             new LoadAsyncTask(tableName, this).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
 
             response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());

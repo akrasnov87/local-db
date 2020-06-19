@@ -11,4 +11,5 @@
     <string name="permissions_grant">Разрешения получены.</string>
     <string name="download_list">Список таблиц для загрузки в мобильное приложение</string>
     <string name="download">Загрузка</string>
+    <string name="android_8">В android версии 8 и выше запрещено выполнение приложений, которые работают в фоне (background). Чтобы сервер был доступен, требуется всегда держать приложение «Local Db» в активном состоянии</string>
 </resources>
