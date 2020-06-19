@@ -28,7 +28,6 @@ import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.utils.SQLValidator;
 
 public class SQLViewActivity extends AppCompatActivity implements View.OnClickListener, TextWatcher {
-    private final int MAX_RECYCLER_VIEW_LENGTH = 100;
     private EditText etQuery;
     private TextView tvList;
     private Button btnQuery;
