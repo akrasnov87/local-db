@@ -2,8 +2,6 @@ package ru.mobnius.localdb.model;
 
 import com.google.gson.Gson;
 
-import ru.mobnius.localdb.model.progress.ProgressRecords;
-import ru.mobnius.localdb.model.progress.ProgressResult;
 import ru.mobnius.localdb.model.rpc.RpcMeta;
 
 public class DefaultResult {

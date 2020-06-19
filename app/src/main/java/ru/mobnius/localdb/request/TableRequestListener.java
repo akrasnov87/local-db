@@ -2,8 +2,6 @@ package ru.mobnius.localdb.request;
 
 import android.net.Uri;
 
-import com.google.gson.Gson;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -12,8 +10,6 @@ import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.model.rpc.RpcMeta;
-import ru.mobnius.localdb.model.progress.ProgressResult;
 import ru.mobnius.localdb.utils.StorageUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 

@@ -1,14 +1,11 @@
 package ru.mobnius.localdb.request;
 
-import com.google.gson.Gson;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.model.rpc.RpcMeta;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**

@@ -2,7 +2,6 @@ package ru.mobnius.localdb.model;
 
 import com.google.gson.Gson;
 
-import ru.mobnius.localdb.model.progress.ProgressResult;
 import ru.mobnius.localdb.model.rpc.RpcMeta;
 import ru.mobnius.localdb.utils.UrlReader;
 

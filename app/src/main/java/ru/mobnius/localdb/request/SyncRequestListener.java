@@ -2,8 +2,6 @@ package ru.mobnius.localdb.request;
 
 import android.util.Log;
 
-import com.google.gson.Gson;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,9 +11,7 @@ import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.model.rpc.RpcMeta;
 import ru.mobnius.localdb.data.LoadAsyncTask;
-import ru.mobnius.localdb.model.progress.ProgressResult;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**
