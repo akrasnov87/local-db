@@ -46,6 +46,9 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
                 break;
             }
             results = loader.rpc("Domain." + mTableName, "Query", "[{ \"start\": " + i + ", \"limit\": " + size + ", \"sort\": [{ \"property\": \"LINK\", \"direction\": \"ASC\" }] }]");
+            if(results == null) {
+                break;
+            }
             result = results[0];
             StorageUtil.processing(daoSession, result, mTableName, isAppend);
             publishProgress(new Progress(i, total, mTableName));

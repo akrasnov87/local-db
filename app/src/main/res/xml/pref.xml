@@ -50,6 +50,11 @@
             android:title="Включить" />
 
         <Preference
+            android:key="MBL_GENERATED_ERROR"
+            android:summary="Генерация исключения для проверки механизма обработки ошибок. Внимание будет перезапуск приложения!!!"
+            android:title="Создать исключение" />
+
+        <Preference
             android:key="MBL_LOGIN_RESET"
             android:summary="Сбросить локальную информацию о логине и пароле"
             android:title="Сбросить авторизацию" />

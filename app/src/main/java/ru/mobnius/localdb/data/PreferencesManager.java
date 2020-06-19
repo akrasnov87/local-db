@@ -23,6 +23,7 @@ public class PreferencesManager {
     public static final String NODE_URL = "MBL_NODE_URL";
     public static final String RPC_URL = "MBL_RPC_URL";
     public static final String SIZE = "MBL_SIZE";
+    public static final String GENERATED_ERROR = "MBL_GENERATED_ERROR";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;

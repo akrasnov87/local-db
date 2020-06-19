@@ -13,11 +13,17 @@ import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.OnResponseListener;
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.data.exception.ExceptionUtils;
+import ru.mobnius.localdb.data.exception.ExceptionCode;
+import ru.mobnius.localdb.data.exception.ExceptionGroup;
+import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
+import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.request.AuthRequestListener;
 import ru.mobnius.localdb.request.DefaultRequestListener;
+import ru.mobnius.localdb.request.ErrorRequestListener;
 import ru.mobnius.localdb.request.OnRequestListener;
 import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.request.SyncStatusRequestListener;
@@ -30,7 +36,8 @@ import ru.mobnius.localdb.utils.UrlReader;
 
 public class HttpService extends Service
         implements OnResponseListener,
-        OnLogListener {
+        OnLogListener,
+        OnExceptionIntercept {
 
     public static final int AUTO = 1;
     public static final int MANUAL = 2;
@@ -80,15 +87,18 @@ public class HttpService extends Service
     @Override
     public void onCreate() {
         super.onCreate();
+        onExceptionIntercept();
 
         mDaoSession = new DaoMaster(new DbOpenHelper(getApplication(), "local-db.db").getWritableDb()).newSession();
+        ExceptionUtils.saveLocalException(this, mDaoSession);
 
         mRequestListeners.add(new DefaultRequestListener());
         mRequestListeners.add(new SyncRequestListener((App)getApplication()));
-        mRequestListeners.add(new SyncStatusRequestListener());
+        mRequestListeners.add(new SyncStatusRequestListener((App)getApplication()));
         mRequestListeners.add(new AuthRequestListener());
         mRequestListeners.add(new SyncStopRequestListener());
         mRequestListeners.add(new TableRequestListener());
+        mRequestListeners.add(new ErrorRequestListener());
 
         sHttpServerThread = new HttpServerThread(this);
         sHttpServerThread.start();
@@ -167,5 +177,25 @@ public class HttpService extends Service
     @Override
     public void onAddLog(LogItem item) {
         ((App)getApplication()).onAddLog(item);
+    }
+
+    /**
+     * Обработчик перехвата ошибок
+     */
+    public void onExceptionIntercept() {
+        Thread.setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler(), getExceptionGroup(), getExceptionCode(), this));
+    }
+
+    /**
+     * Группа ошибки из IExceptionGroup
+     * @return строка
+     */
+    public String getExceptionGroup(){
+        return ExceptionGroup.SERVICE;
+    }
+
+    @Override
+    public int getExceptionCode() {
+        return ExceptionCode.HTTP_SERVICE;
     }
 }

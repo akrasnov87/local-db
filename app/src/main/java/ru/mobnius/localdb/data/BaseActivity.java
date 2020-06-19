@@ -3,20 +3,28 @@ package ru.mobnius.localdb.data;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import ru.mobnius.localdb.R;
 
-public abstract class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends ExceptionInterceptActivity {
     private final int REQUEST_PERMISSIONS = 1;
     private int mPermissionLength = 0;
     private boolean doubleBackToExitPressedOnce = false;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // предназначено для привязки перехвата ошибок
+        onExceptionIntercept();
+    }
 
     @Override
     protected void onResume() {

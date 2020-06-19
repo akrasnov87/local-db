@@ -36,6 +36,7 @@ import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.component.MySnackBar;
+import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
@@ -209,17 +210,26 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onDownloadStorage(final StorageName name) {
-        confirm("Загрузить таблицу " + name.getName() + "?", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if(which == DialogInterface.BUTTON_POSITIVE) {
-                    mDialogDownloadFragment.dismiss();
+        if(NetworkUtil.isNetworkAvailable(this)) {
+            confirm("Убедительсь в стабильном подключении к сети интернет. Загрузить таблицу " + name.getName() + "?", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (which == DialogInterface.BUTTON_POSITIVE) {
+                        mDialogDownloadFragment.dismiss();
 
-                    mUpdateFragment.startProcess();
-                    startService(HttpService.getIntent(MainActivity.this, name.table));
+                        mUpdateFragment.startProcess();
+                        startService(HttpService.getIntent(MainActivity.this, name.table));
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            alert("Нет подключения к интернету");
+        }
+    }
+
+    @Override
+    public int getExceptionCode() {
+        return ExceptionCode.MAIN;
     }
 
     @SuppressLint("StaticFieldLeak")

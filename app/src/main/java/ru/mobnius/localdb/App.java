@@ -13,6 +13,10 @@ import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.data.exception.ExceptionCode;
+import ru.mobnius.localdb.data.exception.ExceptionGroup;
+import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
+import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
@@ -21,7 +25,8 @@ import ru.mobnius.localdb.utils.UrlReader;
 public class App extends Application implements
         OnLogListener,
         AvailableTimerTask.OnAvailableListener,
-        OnHttpListener {
+        OnHttpListener,
+        OnExceptionIntercept {
 
     private AutoRunReceiver mAutoRunReceiver;
 
@@ -32,6 +37,8 @@ public class App extends Application implements
     @Override
     public void onCreate() {
         super.onCreate();
+        onExceptionIntercept();
+
         Log.d(Names.TAG, "Старт приложения");
         mLogListeners = new ArrayList<>();
         mAvailableListeners = new ArrayList<>();
@@ -116,5 +123,20 @@ public class App extends Application implements
         for(OnHttpListener listener : mHttpListeners) {
             listener.onDownLoadFinish(tableName, reader);
         }
+    }
+
+    @Override
+    public void onExceptionIntercept() {
+        Thread.setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler(), getExceptionGroup(), getExceptionCode(), this));
+    }
+
+    @Override
+    public String getExceptionGroup() {
+        return ExceptionGroup.APPLICATION;
+    }
+
+    @Override
+    public int getExceptionCode() {
+        return ExceptionCode.ALL;
     }
 }

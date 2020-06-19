@@ -3,7 +3,6 @@ package ru.mobnius.localdb.ui;
 import android.os.Bundle;
 
 import androidx.core.widget.ContentLoadingProgressBar;
-import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,9 +11,11 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import ru.mobnius.localdb.R;
+import ru.mobnius.localdb.data.BaseFragment;
+import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.model.Progress;
 
-public class UpdateFragment extends Fragment {
+public class UpdateFragment extends BaseFragment {
 
     private Button btnCancel;
     private TextView tvStatus;
@@ -61,5 +62,11 @@ public class UpdateFragment extends Fragment {
         btnCancel.setVisibility(View.GONE);
         tvStatus.setVisibility(View.GONE);
         mBar.setVisibility(View.GONE);
+    }
+
+    @SuppressWarnings("unused")
+    @Override
+    public int getExceptionCode() {
+        return ExceptionCode.DOWNLOAD_PROGRESS;
     }
 }

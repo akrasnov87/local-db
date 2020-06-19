@@ -2,7 +2,6 @@ package ru.mobnius.localdb.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -25,11 +24,16 @@ import java.util.Objects;
 
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
+import ru.mobnius.localdb.data.ExceptionInterceptActivity;
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.data.exception.ExceptionCode;
+import ru.mobnius.localdb.data.exception.ExceptionGroup;
+import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
+import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
-public class SettingActivity extends AppCompatActivity {
+public class SettingActivity extends ExceptionInterceptActivity {
 
     public static Intent getIntent(Context context) {
         return new Intent(context, SettingActivity.class);
@@ -57,9 +61,15 @@ public class SettingActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public int getExceptionCode() {
+        return ExceptionCode.SETTING;
+    }
+
     public static class PrefFragment extends PreferenceFragmentCompat implements
             Preference.OnPreferenceChangeListener,
-            Preference.OnPreferenceClickListener {
+            Preference.OnPreferenceClickListener,
+            OnExceptionIntercept {
 
         private final String debugSummary = "Режим отладки: %s";
         private int clickToVersion = 0;
@@ -72,6 +82,13 @@ public class SettingActivity extends AppCompatActivity {
         private Preference pNodeUrl;
         private Preference pRpcUrl;
         private ListPreference lpSize;
+        private Preference pCreateError;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            onExceptionIntercept();
+        }
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -98,6 +115,10 @@ public class SettingActivity extends AppCompatActivity {
             lpSize = findPreference(PreferencesManager.SIZE);
             Objects.requireNonNull(lpSize).setOnPreferenceChangeListener(this);
             lpSize.setEnabled(PreferencesManager.getInstance().isDebug());
+
+            pCreateError = findPreference(PreferencesManager.GENERATED_ERROR);
+            Objects.requireNonNull(pCreateError).setVisible(PreferencesManager.getInstance().isDebug());
+            pCreateError.setOnPreferenceClickListener(this);
         }
 
         @Override
@@ -130,10 +151,16 @@ public class SettingActivity extends AppCompatActivity {
                     spDebug.setEnabled(true);
                     pLoginReset.setVisible(true);
                     lpSize.setEnabled(true);
+                    pCreateError.setVisible(true);
 
                     Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                     clickToVersion = 0;
                 }
+            }
+
+            if(PreferencesManager.GENERATED_ERROR.equals(preference.getKey())) {
+                //noinspection ResultOfMethodCallIgnored
+                Integer.parseInt("Проверка обработки ошибок");
             }
 
             if(PreferencesManager.LOGIN_RESET.equals(preference.getKey())) {
@@ -159,6 +186,7 @@ public class SettingActivity extends AppCompatActivity {
                 spDebug.setSummary(String.format(debugSummary, debugValue ? "включен" : "отключен"));
                 spDebug.setEnabled(debugValue);
                 lpSize.setEnabled(debugValue);
+                pCreateError.setVisible(debugValue);
 
                 PreferencesManager.getInstance().setDebug(debugValue);
                 pLoginReset.setVisible(debugValue);
@@ -182,6 +210,21 @@ public class SettingActivity extends AppCompatActivity {
             dialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.no), listener);
             dialog.setIcon(R.drawable.ic_baseline_warning_24);
             dialog.show();
+        }
+
+        @Override
+        public void onExceptionIntercept() {
+            Thread.setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler(), getExceptionGroup(), getExceptionCode(), getContext()));
+        }
+
+        @Override
+        public String getExceptionGroup() {
+            return ExceptionGroup.SETTING;
+        }
+
+        @Override
+        public int getExceptionCode() {
+            return ExceptionCode.SETTING;
         }
 
         @SuppressLint("StaticFieldLeak")

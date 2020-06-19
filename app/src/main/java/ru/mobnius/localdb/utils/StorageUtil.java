@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 
 import dalvik.system.DexFile;
+import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.SqlInsertFromJSONObject;
 import ru.mobnius.localdb.data.SqlUpdateFromJSONObject;
 import ru.mobnius.localdb.data.Storage;
@@ -55,11 +56,11 @@ public class StorageUtil {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.error(e);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(e);
         }
 
         return storageNames.toArray(new StorageName[0]);
@@ -90,7 +91,7 @@ public class StorageUtil {
                         }
                     }
                     catch(Exception e) {
-                        e.printStackTrace();
+                        Logger.error(e);
                     }
                 }
             }
@@ -152,7 +153,7 @@ public class StorageUtil {
                 }
                 db.setTransactionSuccessful();
             } catch (Exception e) {
-                e.printStackTrace();
+                Logger.error(e);
             }
             db.endTransaction();
         }

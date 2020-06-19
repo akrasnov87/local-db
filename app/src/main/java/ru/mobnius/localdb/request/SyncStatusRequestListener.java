@@ -3,9 +3,11 @@ package ru.mobnius.localdb.request;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
+import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**
@@ -13,6 +15,12 @@ import ru.mobnius.localdb.utils.UrlReader;
  */
 public class SyncStatusRequestListener extends AuthFilterRequestListener
         implements OnRequestListener {
+
+    private final App mApp;
+
+    public SyncStatusRequestListener(App app) {
+        mApp = app;
+    }
 
     @Override
     public boolean isValid(String query) {
@@ -29,8 +37,12 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
         }
 
         if(PreferencesManager.getInstance().getProgress() != null) {
-            ProgressResult progressResult = ProgressResult.getInstance(PreferencesManager.getInstance().getProgress());
-            response = Response.getInstance(urlReader, progressResult.toJsonString());
+            if(NetworkUtil.isNetworkAvailable(mApp)) {
+                ProgressResult progressResult = ProgressResult.getInstance(PreferencesManager.getInstance().getProgress());
+                response = Response.getInstance(urlReader, progressResult.toJsonString());
+            } else {
+                response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
+            }
         } else {
             response = Response.getErrorInstance(urlReader, "Информация о выполнении загрузки не найдена. Возможно она была завершена ранее.", Response.RESULT_FAIL);
         }

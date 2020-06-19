@@ -2,7 +2,6 @@ package ru.mobnius.localdb.ui;
 
 import android.os.Bundle;
 
-import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,9 +15,11 @@ import java.util.Objects;
 
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.StorageNameAdapter;
+import ru.mobnius.localdb.data.BaseDialogFragment;
+import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.model.StorageName;
 
-public class DialogDownloadFragment extends DialogFragment {
+public class DialogDownloadFragment extends BaseDialogFragment {
     private final OnDownloadStorageListener mListener;
 
     public DialogDownloadFragment(OnDownloadStorageListener listener) {
@@ -50,6 +51,12 @@ public class DialogDownloadFragment extends DialogFragment {
         super.onStart();
 
         Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(getDialog())).getWindow()).setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+    }
+
+    @SuppressWarnings("unused")
+    @Override
+    public int getExceptionCode() {
+        return ExceptionCode.DOWNLOAD_LIST;
     }
 
     public interface OnDownloadStorageListener {
