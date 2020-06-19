@@ -12,10 +12,10 @@ import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.utils.DateUtil;
 
 public class LogItemHolder extends RecyclerView.ViewHolder {
-    private TextView tvDate;
-    private TextView tvMessage;
+    private final TextView tvDate;
+    private final TextView tvMessage;
 
-    private Context mContext;
+    private final Context mContext;
 
     public LogItemHolder(Context context, @NonNull View itemView) {
         super(itemView);

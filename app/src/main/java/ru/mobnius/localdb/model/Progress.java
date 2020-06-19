@@ -2,13 +2,15 @@ package ru.mobnius.localdb.model;
 
 public class Progress {
 
-    public Progress(int current, int total) {
+    public Progress(int current, int total, String tableName) {
         this.current = current;
         this.total = total;
+        this.tableName = tableName;
     }
 
-    public int current;
-    public int total;
+    public final int current;
+    public final int total;
+    public final String tableName;
 
     public double getPercent() {
         double result = (double) (current * 100) / total;

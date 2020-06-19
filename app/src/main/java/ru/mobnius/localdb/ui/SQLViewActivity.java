@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import java.util.Objects;
 
 import ru.mobnius.localdb.AutoRunReceiver;
+import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.R;
 
 public class SQLViewActivity extends AppCompatActivity implements View.OnClickListener, TextWatcher {
@@ -58,7 +59,7 @@ public class SQLViewActivity extends AppCompatActivity implements View.OnClickLi
         if (v.getId() == R.id.sql_viewer_query) {
             tvList.setTextColor(Color.BLACK);
             String query = etQuery.getText().toString();
-            Database database = AutoRunReceiver.getDaoSession().getDatabase();
+            Database database = HttpService.getDaoSession().getDatabase();
             JSONArray array = getResults(database, query);
             if (array == null) {
                 return;

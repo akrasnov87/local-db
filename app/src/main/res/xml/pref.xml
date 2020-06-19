@@ -16,6 +16,35 @@
         android:summary="Перейти на экран построения запросов"
         android:title="SQL" />
 
+    <ListPreference
+        android:defaultValue="10000"
+        android:entries="@array/size"
+        android:entryValues="@array/size"
+        android:key="MBL_SIZE"
+        android:enabled="false"
+        android:title="Размер выборки" />
+
+    <PreferenceCategory
+        android:icon="@drawable/ic_baseline_settings_remote_24"
+        android:summary="Серверные настройки"
+        android:title="Администрирование">
+
+        <Preference
+            android:key="MBL_LOGIN"
+            android:summary="Логин для авторизации на сервере"
+            android:title="Логин" />
+
+        <Preference
+            android:key="MBL_NODE_URL"
+            android:summary="Адрес сервера приложений 1"
+            android:title="Адрес сервера приложений 1" />
+
+        <Preference
+            android:key="MBL_RPC_URL"
+            android:summary="Адрес сервера приложений 2"
+            android:title="Адрес сервера приложений 2" />
+    </PreferenceCategory>
+
     <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"
         android:summary="Включен режим отладки приложения"
@@ -26,6 +55,11 @@
             android:summary="Включить режим отладки"
             android:title="Включить" />
 
+        <Preference
+            android:key="MBL_LOGIN_RESET"
+            android:summary="Сбросить локальную информацию о логине и пароле"
+            android:title="Сбросить авторизацию" />
+
     </PreferenceCategory>
 
     <Preference
@@ -34,7 +68,7 @@
         android:title="Доступно обновление"
         app:icon="@drawable/ic_baseline_system_update_24"
         app:isPreferenceVisible="false"
-        app:summary="Информация о доступном обновлении"
-        tools:isPreferenceVisible="true" />
+        tools:isPreferenceVisible="true"
+        app:summary="Информация о доступном обновлении" />
 
 </PreferenceScreen>

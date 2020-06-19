@@ -9,7 +9,7 @@ import ru.mobnius.localdb.model.KeyValue;
  * Разбор запроса
  */
 public class UrlReader {
-    private String mRequest;
+    private final String mRequest;
     //GET /?idx=0 HTTP/1.1
     public UrlReader(String request) {
         mRequest = request;
@@ -65,7 +65,11 @@ public class UrlReader {
                             String[] data = kv.split("=");
                             KeyValue keyValue = new KeyValue();
                             keyValue.key = data[0];
-                            keyValue.value = data[1];
+                            try {
+                                keyValue.value = data[1];
+                            }catch (IndexOutOfBoundsException ignored) {
+
+                            }
 
                             values.add(keyValue);
                         }

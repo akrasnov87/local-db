@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/item_download_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="ФИАС"
+        android:textSize="@dimen/medium_text_size"
+        android:textColor="@color/colorHintDark"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <TextView
+        android:id="@+id/item_download_table"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        tools:text="UI_SV_FIAS"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/item_download_description"
+        app:layout_constraintEnd_toStartOf="@id/item_download_count"
+        android:layout_marginTop="4dp"
+        android:textSize="@dimen/small_text_size"
+        android:layout_marginEnd="8dp"
+        android:textColor="@color/colorHint"/>
+
+    <TextView
+        android:id="@+id/item_download_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="1 000"
+        app:layout_constraintTop_toTopOf="@id/item_download_table"
+        app:layout_constraintBottom_toBottomOf="@id/item_download_table"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

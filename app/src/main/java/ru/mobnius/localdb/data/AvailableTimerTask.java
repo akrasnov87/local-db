@@ -8,7 +8,7 @@ import java.util.TimerTask;
 
 public class AvailableTimerTask extends TimerTask {
 
-    private OnAvailableListener mListener;
+    private final OnAvailableListener mListener;
 
     public AvailableTimerTask(OnAvailableListener listener) {
         mListener = listener;

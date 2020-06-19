@@ -1,5 +1,9 @@
 package ru.mobnius.localdb;
 
+import ru.mobnius.localdb.data.PreferencesManager;
+
 public interface Names {
-    String UPDATE_URL = AutoRunReceiver.getNodeUrl() + "/localdb.apk";
+    String TAG = "LOCAL_DB";
+    String INT_FORMAT = "###,###,###";
+    String UPDATE_URL = PreferencesManager.getInstance().getNodeUrl() + "/localdb.apk";
 }

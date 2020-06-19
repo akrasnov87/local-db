@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import ru.mobnius.localdb.R;
@@ -17,7 +16,7 @@ import ru.mobnius.localdb.adapter.holder.LogItemHolder;
 import ru.mobnius.localdb.model.LogItem;
 
 public class LogAdapter extends RecyclerView.Adapter<LogItemHolder> {
-    private List<LogItem> mList;
+    private final List<LogItem> mList;
     private final Context mContext;
 
     public LogAdapter(Context context) {

@@ -13,7 +13,7 @@
         android:layout_marginBottom="8dp"
         android:autofillHints="no"
         android:hint="@string/enter_query"
-        android:inputType="text" />
+        android:inputType="textMultiLine" />
 
     <Button
         android:id="@+id/sql_viewer_query"

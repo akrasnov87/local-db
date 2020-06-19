@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +12,20 @@ import java.util.List;
 import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.OnResponseListener;
+import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.LogItem;
+import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.request.AuthRequestListener;
 import ru.mobnius.localdb.request.DefaultRequestListener;
 import ru.mobnius.localdb.request.OnRequestListener;
+import ru.mobnius.localdb.request.SyncRequestListener;
+import ru.mobnius.localdb.request.SyncStatusRequestListener;
+import ru.mobnius.localdb.request.SyncStopRequestListener;
+import ru.mobnius.localdb.request.TableRequestListener;
+import ru.mobnius.localdb.storage.DaoMaster;
+import ru.mobnius.localdb.storage.DaoSession;
+import ru.mobnius.localdb.storage.DbOpenHelper;
 import ru.mobnius.localdb.utils.UrlReader;
 
 public class HttpService extends Service
@@ -25,6 +36,7 @@ public class HttpService extends Service
     public static final int MANUAL = 2;
 
     private static final String MODE = "mode";
+    private static final String TABLE = "table";
 
     public static Intent getIntent(Context context, int mode) {
         Intent intent =  new Intent();
@@ -33,18 +45,30 @@ public class HttpService extends Service
         return intent;
     }
 
+    public static Intent getIntent(Context context, String tableName) {
+        Intent intent =  new Intent();
+        intent.setClass(context, HttpService.class);
+        intent.putExtra(MODE, MANUAL);
+        intent.putExtra(TABLE, tableName);
+        return intent;
+    }
+
     /**
      * Имя сервиса
      */
     public static final String SERVICE_NAME = "ru.mobnius.localdb.HttpService";
 
-    private static HttpServerThread sHttpServerThread;
+    private static DaoSession mDaoSession;
+    public static DaoSession getDaoSession() {
+        return mDaoSession;
+    }
 
-    private List<OnRequestListener> mRequestListeners;
+    private HttpServerThread sHttpServerThread;
+
+    private final List<OnRequestListener> mRequestListeners;
 
     public HttpService() {
         mRequestListeners = new ArrayList<>();
-        mRequestListeners.add(new DefaultRequestListener());
     }
 
     @Override
@@ -54,15 +78,33 @@ public class HttpService extends Service
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if(sHttpServerThread != null) {
-            sHttpServerThread.onDestroy();
-        }
+    public void onCreate() {
+        super.onCreate();
+
+        mDaoSession = new DaoMaster(new DbOpenHelper(getApplication(), "local-db.db").getWritableDb()).newSession();
+
+        mRequestListeners.add(new DefaultRequestListener());
+        mRequestListeners.add(new SyncRequestListener((App)getApplication()));
+        mRequestListeners.add(new SyncStatusRequestListener());
+        mRequestListeners.add(new AuthRequestListener());
+        mRequestListeners.add(new SyncStopRequestListener());
+        mRequestListeners.add(new TableRequestListener());
 
         sHttpServerThread = new HttpServerThread(this);
         sHttpServerThread.start();
-        String strMode;
+        Log.d(Names.TAG, "Http Service start");
 
+        // для возобновления после destroy
+        Progress progress = PreferencesManager.getInstance().getProgress();
+        if(progress != null) {
+            onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
+            onResponse(new UrlReader("GET /sync?table=" + progress.tableName + " HTTP/1.1"));
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String strMode;
         if(intent != null) {
             int mode = intent.getIntExtra(MODE, 0);
             switch (mode) {
@@ -82,7 +124,13 @@ public class HttpService extends Service
             strMode = "автоматически";
         }
 
-        ((App)getApplication()).onAddLog(new LogItem("служба и хост запущены " + strMode, false));
+        // запуск синхронизации через интерфейс
+        if(intent != null && intent.hasExtra(TABLE)) {
+            String table = intent.getStringExtra(TABLE);
+            onResponse(new UrlReader("GET /sync?table=" + table + " HTTP/1.1"));
+        } else {
+            ((App) getApplication()).onAddLog(new LogItem("служба и хост запущены " + strMode, false));
+        }
 
         return Service.START_STICKY;
     }
@@ -90,9 +138,8 @@ public class HttpService extends Service
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(sHttpServerThread != null) {
-            sHttpServerThread.onDestroy();
-        }
+        Log.d(Names.TAG, "Остановка сервиса");
+        sHttpServerThread.onDestroy();
     }
 
     /**
@@ -102,13 +149,19 @@ public class HttpService extends Service
      */
     @Override
     public Response onResponse(UrlReader urlReader) {
+        ((App)getApplication()).onHttpRequest(urlReader);
+
         for (OnRequestListener req:
              mRequestListeners) {
             if(req.isValid(urlReader.getParts()[1])) {
-                return req.getResponse(urlReader);
+                Response response = req.getResponse(urlReader);
+                ((App)getApplication()).onHttpResponse(response);
+                return response;
             }
         }
-        return new DefaultRequestListener(Response.RESULT_NOT_FOUNT, "NOT FOUND").getResponse(urlReader);
+        Response defaultResponse = new DefaultRequestListener(Response.RESULT_NOT_FOUNT, "NOT FOUND").getResponse(urlReader);
+        ((App)getApplication()).onHttpResponse(defaultResponse);
+        return defaultResponse;
     }
 
     @Override

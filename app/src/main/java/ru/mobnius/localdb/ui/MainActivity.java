@@ -1,24 +1,25 @@
 package ru.mobnius.localdb.ui;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -29,40 +30,52 @@ import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.LogAdapter;
 import ru.mobnius.localdb.data.AvailableTimerTask;
+import ru.mobnius.localdb.data.BaseActivity;
 import ru.mobnius.localdb.data.HttpServerThread;
+import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.component.MySnackBar;
 import ru.mobnius.localdb.model.LogItem;
+import ru.mobnius.localdb.model.Progress;
+import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
+import ru.mobnius.localdb.utils.UrlReader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends BaseActivity
         implements OnLogListener,
         AvailableTimerTask.OnAvailableListener,
-        View.OnClickListener {
+        View.OnClickListener,
+        OnHttpListener,
+        DialogDownloadFragment.OnDownloadStorageListener {
 
-    private static String TAG = "LOCAL_DB";
-
-    private boolean doubleBackToExitPressedOnce = false;
+    public static Intent getIntent(Context context) {
+        return new Intent(context, MainActivity.class);
+    }
 
     private LogAdapter mLogAdapter;
     private RecyclerView mRecyclerView;
     private Button btnStart;
     private Button btnStop;
     private UpdateFragment mUpdateFragment;
+    private DialogDownloadFragment mDialogDownloadFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.app_name);
-        getSupportActionBar().setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
+        Log.d(Names.TAG, "Запуск главного экрана");
 
         ((App)getApplication()).registryAvailableListener(this);
         ((App)getApplication()).registryLogListener(this);
+        ((App)getApplication()).registryHttpListener(this);
+
+        mUpdateFragment = (UpdateFragment)getSupportFragmentManager().findFragmentById(R.id.log_upload);
+
+        Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.app_name);
 
         mRecyclerView = findViewById(R.id.log_list);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -74,7 +87,9 @@ public class MainActivity extends AppCompatActivity
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
 
-        mUpdateFragment = (UpdateFragment)getSupportFragmentManager().findFragmentById(R.id.log_upload);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            alert(getString(R.string.android_8));
+        }
     }
 
     @Override
@@ -92,7 +107,8 @@ public class MainActivity extends AppCompatActivity
                 return true;
 
             case R.id.action_fias:
-                mUpdateFragment.startProcess("iserv", "iserv");
+                mDialogDownloadFragment = new DialogDownloadFragment(this);
+                mDialogDownloadFragment.show(getSupportFragmentManager(), "storage");
                 return true;
         }
 
@@ -102,6 +118,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+
+        Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
         if(PreferencesManager.getInstance().isDebug()) {
             btnStop.setVisibility(View.VISIBLE);
@@ -114,31 +132,11 @@ public class MainActivity extends AppCompatActivity
         new ServerAppVersionAsyncTask().execute();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            finishAffinity();
-            finish();
-            super.onBackPressed();
-            return;
-        }
-        doubleBackToExitPressedOnce = true;
-
-        Toast.makeText(this, "Нажмите повторно для выхода из приложения.", Toast.LENGTH_LONG).show();
-
-        int TOAST_DURATION = 2750;
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
-            }
-        }, TOAST_DURATION);
-    }
-
     protected void onDestroy() {
         super.onDestroy();
         ((App)getApplication()).unRegistryLogListener(this);
         ((App)getApplication()).unRegistryAvailableListener(this);
+        ((App)getApplication()).unRegistryHttpListener(this);
     }
 
     @Override
@@ -173,7 +171,55 @@ public class MainActivity extends AppCompatActivity
             case R.id.service_stop:
                 stopService(HttpService.getIntent(this, HttpService.MANUAL));
                 break;
+
+            case R.id.log_cancel:
+                String message = "После отмены процесс требуется выполнить заново. Остановить загрузку данных?";
+                confirm(message, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(DialogInterface.BUTTON_POSITIVE == which) {
+                            PreferencesManager.getInstance().setProgress(null);
+                            mUpdateFragment.stopProcess();
+                        }
+                    }
+                });
+                break;
         }
+    }
+
+    @Override
+    public void onHttpRequest(UrlReader reader) {
+
+    }
+
+    @Override
+    public void onHttpResponse(Response response) {
+
+    }
+
+    @Override
+    public void onDownLoadProgress(UrlReader reader, Progress progress) {
+        mUpdateFragment.updateProcess(progress);
+    }
+
+    @Override
+    public void onDownLoadFinish(String tableName, UrlReader reader) {
+        mUpdateFragment.stopProcess();
+    }
+
+    @Override
+    public void onDownloadStorage(final StorageName name) {
+        confirm("Загрузить таблицу " + name.getName() + "?", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if(which == DialogInterface.BUTTON_POSITIVE) {
+                    mDialogDownloadFragment.dismiss();
+
+                    mUpdateFragment.startProcess();
+                    startService(HttpService.getIntent(MainActivity.this, name.table));
+                }
+            }
+        });
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -191,18 +237,21 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
+            try {
+                if (VersionUtil.isUpgradeVersion(MainActivity.this, s, PreferencesManager.getInstance().isDebug())) {
+                    // тут доступно новая версия
+                    MySnackBar.make(mRecyclerView, "Доступна новая версия " + s, Snackbar.LENGTH_LONG).setAction("Загрузить", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String url = Names.UPDATE_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
+                        }
+                    }).show();
+                }
+            } catch (Exception ignored) {
 
-            if(VersionUtil.isUpgradeVersion(MainActivity.this, s, PreferencesManager.getInstance().isDebug())) {
-                // тут доступно новая версия
-                MySnackBar.make(mRecyclerView, "Доступна новая версия " + s, Snackbar.LENGTH_LONG).setAction("Загрузить", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        String url = Names.UPDATE_URL;
-                        Intent i = new Intent(Intent.ACTION_VIEW);
-                        i.setData(Uri.parse(url));
-                        startActivity(i);
-                    }
-                }).show();
             }
         }
     }

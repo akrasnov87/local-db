@@ -13,7 +13,7 @@ import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.UrlReader;
 
 public class HttpResponseThread extends Thread {
-    private Socket mSocket;
+    private final Socket mSocket;
     private OnLogListener mLogListener;
     private OnResponseListener mResponseListener;
 
@@ -39,13 +39,24 @@ public class HttpResponseThread extends Thread {
 
             if(mResponseListener != null && request != null) {
                 Response response = mResponseListener.onResponse(new UrlReader(request));
-                status = response.getStatus();
-                os.print(response.toResponseString());
+                if(response != null) {
+                    status = response.getStatus();
+                    os.print(response.toResponseString());
+                }else {
+                    String txt = "Результат неизвестен";
+                    os.print("HTTP/1.1 " + Response.RESULT_FAIL + "\r\n");
+                    os.print("Content-Type: " + Response.TEXT_PLAIN + "; charset=utf-8\r\n");
+                    os.print("Content-Length: " + txt.getBytes().length + "\r\n");
+                    os.print("\r\n");
+                    os.print(txt + "\r\n");
+
+                    status = Response.RESULT_FAIL;
+                }
             } else {
                 String txt = "Обработчик не определен";
                 os.print("HTTP/1.1 " + Response.RESULT_FAIL + "\r\n");
-                os.print("content-type: " + Response.TEXT_PLAIN + "\r\n; charset=utf-8");
-                os.print("content-length: " + txt.length() + "\r\n");
+                os.print("Content-Type: " + Response.TEXT_PLAIN + "; charset=utf-8\r\n");
+                os.print("Content-Length: " + txt.getBytes().length+ "\r\n");
                 os.print("\r\n");
                 os.print(txt + "\r\n");
 

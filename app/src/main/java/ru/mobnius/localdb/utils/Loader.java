@@ -10,14 +10,15 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-import ru.mobnius.localdb.AutoRunReceiver;
+import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.User;
 
 public class Loader {
     /**
      * время на проверку подключения к серверу в милисекундах
      */
-    private final static int SERVER_CONNECTION_TIMEOUT = 3000;
+    public final static int SERVER_CONNECTION_TIMEOUT = 3000;
 
     private static Loader sLoader;
 
@@ -40,7 +41,7 @@ public class Loader {
             byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
             int postDataLength = postData.length;
 
-            URL url = new URL(AutoRunReceiver.getRpcUrl() + "/auth");
+            URL url = new URL(PreferencesManager.getInstance().getRpcUrl() + "/auth");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             try {
 
@@ -76,17 +77,15 @@ public class Loader {
      * @param action имя таблицы
      * @param method метод
      * @param data данные для фильтрации
-     * @param classOfT тип возвращаемого результата
-     * @param <T> тип
      * @return результат
      */
-    public <T> T rpc(String action, String method, String data, Class<T> classOfT) {
+    public RPCResult[] rpc(String action, String method, String data) {
         String urlParams = "[{ \"action\": \"" + action + "\", \"method\": \"" + method + "\", \"data\": " + data + ", \"tid\": 0, \"type\": \"rpc\" }]";
         byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
         URL url;
         HttpURLConnection urlConnection = null;
         try {
-            url = new URL(AutoRunReceiver.getRpcUrl() + "/rpc");
+            url = new URL(PreferencesManager.getInstance().getRpcUrl() + "/rpc");
             urlConnection = (HttpURLConnection) url.openConnection();
 
             urlConnection.setRequestMethod("POST");
@@ -106,8 +105,7 @@ public class Loader {
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
             Scanner s = new Scanner(in).useDelimiter("\\A");
             String serverResult = s.hasNext() ? s.next() : "";
-            Gson gson = new Gson();
-            return gson.fromJson(serverResult, classOfT);
+            return RPCResult.createInstance(serverResult);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -126,7 +124,7 @@ public class Loader {
      * @throws IOException общая ошибка
      */
     public String version() throws IOException {
-        URL url = new URL(AutoRunReceiver.getNodeUrl() + "/download/localdb");
+        URL url = new URL(PreferencesManager.getInstance().getNodeUrl() + "/download/localdb");
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
 
@@ -155,9 +153,5 @@ public class Loader {
 
     public boolean isAuthorized() {
         return getUser() != null;
-    }
-
-    public void destroy() {
-        sLoader = null;
     }
 }

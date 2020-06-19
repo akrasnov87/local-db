@@ -1,15 +1,17 @@
 package ru.mobnius.localdb.ui;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreference;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -18,6 +20,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Objects;
 
 import ru.mobnius.localdb.Names;
@@ -59,14 +62,17 @@ public class SettingActivity extends AppCompatActivity {
             Preference.OnPreferenceClickListener {
 
         private final String debugSummary = "Режим отладки: %s";
-        private final String volumeSummary = "Уровень громкости по умолчанию: %s";
-        private final String nightSummary = "Минимальный уровень света: %s";
         private int clickToVersion = 0;
 
         private Preference pVersion;
         private Preference pServerVersion;
+        private Preference pLogin;
         private SwitchPreference spDebug;
         private Preference pSQLite;
+        private Preference pLoginReset;
+        private Preference pNodeUrl;
+        private Preference pRpcUrl;
+        private ListPreference lpSize;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -82,9 +88,21 @@ public class SettingActivity extends AppCompatActivity {
             pVersion = findPreference(PreferencesManager.APP_VERSION);
             Objects.requireNonNull(pVersion).setOnPreferenceClickListener(this);
 
+            pLogin = findPreference(PreferencesManager.LOGIN);
+            pNodeUrl = findPreference(PreferencesManager.NODE_URL);
+            pRpcUrl = findPreference(PreferencesManager.RPC_URL);
+
             spDebug = findPreference(PreferencesManager.DEBUG);
             Objects.requireNonNull(spDebug).setEnabled(PreferencesManager.getInstance().isDebug());
             spDebug.setOnPreferenceChangeListener(this);
+
+            pLoginReset = findPreference(PreferencesManager.LOGIN_RESET);
+            Objects.requireNonNull(pLoginReset).setOnPreferenceClickListener(this);
+            pLoginReset.setVisible(PreferencesManager.getInstance().isDebug());
+
+            lpSize = findPreference(PreferencesManager.SIZE);
+            Objects.requireNonNull(lpSize).setOnPreferenceChangeListener(this);
+            lpSize.setEnabled(PreferencesManager.getInstance().isDebug());
         }
 
         @Override
@@ -95,6 +113,14 @@ public class SettingActivity extends AppCompatActivity {
 
             spDebug.setSummary(String.format(debugSummary, PreferencesManager.getInstance().isDebug() ? "включен" : "отключен"));
             spDebug.setChecked(PreferencesManager.getInstance().isDebug());
+
+            String loginSummary = "Логин для авторизации на сервере: %s";
+            pLogin.setSummary(String.format(loginSummary, PreferencesManager.getInstance().getLogin()));
+
+            pNodeUrl.setSummary(PreferencesManager.getInstance().getNodeUrl());
+            pRpcUrl.setSummary(PreferencesManager.getInstance().getRpcUrl());
+            DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
+            lpSize.setSummary(df.format(PreferencesManager.getInstance().getSize()));
 
             new ServerAppVersionAsyncTask().execute();
         }
@@ -109,6 +135,9 @@ public class SettingActivity extends AppCompatActivity {
                         spDebug.setChecked(true);
                         spDebug.setEnabled(true);
                         pSQLite.setVisible(true);
+                        pLoginReset.setVisible(true);
+                        lpSize.setEnabled(true);
+
                         Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                         clickToVersion = 0;
                     }
@@ -118,6 +147,20 @@ public class SettingActivity extends AppCompatActivity {
                     Intent i = new Intent(getContext(), SQLViewActivity.class);
                     startActivity(i);
                     break;
+            }
+
+            if(PreferencesManager.LOGIN_RESET.equals(preference.getKey())) {
+                confirm(new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(which == DialogInterface.BUTTON_POSITIVE) {
+                            PreferencesManager.getInstance().setLogin(null);
+                            PreferencesManager.getInstance().setPassword(null);
+
+                            requireContext().startActivity(AuthActivity.getIntent(requireContext()));
+                        }
+                    }
+                });
             }
             return false;
         }
@@ -129,9 +172,30 @@ public class SettingActivity extends AppCompatActivity {
                 spDebug.setSummary(String.format(debugSummary, debugValue ? "включен" : "отключен"));
                 spDebug.setEnabled(debugValue);
                 pSQLite.setVisible(debugValue);
+                lpSize.setEnabled(debugValue);
+
                 PreferencesManager.getInstance().setDebug(debugValue);
+                pLoginReset.setVisible(debugValue);
+            }
+
+            if(PreferencesManager.SIZE.equals(preference.getKey())) {
+                DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
+                lpSize.setSummary(df.format(Integer.parseInt(String.valueOf(newValue))));
+
+                PreferencesManager.getInstance().setSize(Integer.parseInt(String.valueOf(newValue)));
             }
             return true;
+        }
+
+        protected void confirm(DialogInterface.OnClickListener listener) {
+            AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+            dialog.setTitle("Сообщение");
+            dialog.setMessage("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?");
+            dialog.setCancelable(false);
+            dialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.yes), listener);
+            dialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.no), listener);
+            dialog.setIcon(R.drawable.ic_baseline_warning_24);
+            dialog.show();
         }
 
         @SuppressLint("StaticFieldLeak")
@@ -151,19 +215,25 @@ public class SettingActivity extends AppCompatActivity {
                 super.onPostExecute(s);
 
                 if (pServerVersion != null) {
-                    if (!s.equals("0.0.0.0")) {
-                        if (VersionUtil.isUpgradeVersion(requireActivity(), s, PreferencesManager.getInstance().isDebug())) {
-                            pServerVersion.setVisible(true);
-                            pServerVersion.setSummary("Доступна новая версия " + s);
-                            pServerVersion.setIntent(new Intent().setAction(Intent.ACTION_VIEW).setData(
-                                    Uri.parse(Names.UPDATE_URL)));
+                    if(!s.equals("0.0.0.0")) {
+                        try {
+                            if (VersionUtil.isUpgradeVersion(requireActivity(), s, PreferencesManager.getInstance().isDebug())) {
+                                pServerVersion.setVisible(true);
+                                pServerVersion.setSummary("Доступна новая версия " + s);
+                                pServerVersion.setIntent(new Intent().setAction(Intent.ACTION_VIEW).setData(
+                                        Uri.parse(Names.UPDATE_URL)));
 
-                            if (pVersion != null) {
-                                pVersion.setSummary(VersionUtil.getVersionName(requireActivity()));
+                                if (pVersion != null) {
+                                    pVersion.setSummary(VersionUtil.getVersionName(requireActivity()));
+                                }
+
+                                return;
                             }
-                            return;
+                        }catch (Exception ignored) {
+
                         }
                     }
+
                     pServerVersion.setVisible(false);
                     if (pVersion != null) {
                         pVersion.setSummary("Установлена последняя версия " + VersionUtil.getVersionName(requireActivity()));
