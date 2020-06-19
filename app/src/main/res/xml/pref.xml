@@ -11,10 +11,10 @@
         app:summary="Общая информация о приложении" />
 
     <Preference
-        android:icon="@drawable/ic_sql_database_24"
+        android:icon="@drawable/ic_baseline_storage_24"
         android:key="MBL_SQL"
         android:summary="Перейти на экран построения запросов"
-        android:title="Перейти" />
+        android:title="SQL" />
 
     <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"
