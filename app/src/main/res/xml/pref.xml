@@ -10,18 +10,11 @@
         android:title="Версия"
         app:summary="Общая информация о приложении" />
 
-    <PreferenceCategory
-        android:key="MBL_SQL_CATEGORY"
+    <Preference
         android:icon="@drawable/ic_sql_database_24"
-        android:summary="Просмотр Базы данных"
-        android:title="SQLite">
-
-        <Preference
-            android:key="MBL_SQL"
-            android:summary="Перейти на экран построения запросов"
-            android:title="Перейти" />
-
-    </PreferenceCategory>
+        android:key="MBL_SQL"
+        android:summary="Перейти на экран построения запросов"
+        android:title="Перейти" />
 
     <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"
@@ -41,7 +34,7 @@
         android:title="Доступно обновление"
         app:icon="@drawable/ic_baseline_system_update_24"
         app:isPreferenceVisible="false"
-        tools:isPreferenceVisible="true"
-        app:summary="Информация о доступном обновлении" />
+        app:summary="Информация о доступном обновлении"
+        tools:isPreferenceVisible="true" />
 
 </PreferenceScreen>

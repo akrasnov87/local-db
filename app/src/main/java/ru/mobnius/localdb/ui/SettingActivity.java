@@ -59,7 +59,6 @@ public class SettingActivity extends AppCompatActivity {
             Preference.OnPreferenceClickListener {
 
         private final String debugSummary = "Режим отладки: %s";
-        private final String sqlSummary = "Просмотр базы данных: %s";
         private final String volumeSummary = "Уровень громкости по умолчанию: %s";
         private final String nightSummary = "Минимальный уровень света: %s";
         private int clickToVersion = 0;
@@ -68,7 +67,6 @@ public class SettingActivity extends AppCompatActivity {
         private Preference pServerVersion;
         private SwitchPreference spDebug;
         private Preference pSQLite;
-        private PreferenceCategory pcSQLite;
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -77,10 +75,6 @@ public class SettingActivity extends AppCompatActivity {
             pSQLite = findPreference(PreferencesManager.SQL);
             Objects.requireNonNull(pSQLite).setVisible(PreferencesManager.getInstance().isDebug());
             Objects.requireNonNull(pSQLite).setOnPreferenceClickListener(this);
-
-            pcSQLite = findPreference("MBL_SQL_CATEGORY");
-            Objects.requireNonNull(pSQLite).setEnabled(PreferencesManager.getInstance().isDebug());
-
 
             pServerVersion = findPreference(PreferencesManager.SERVER_APP_VERSION);
             Objects.requireNonNull(pServerVersion).setOnPreferenceClickListener(this);
@@ -102,7 +96,6 @@ public class SettingActivity extends AppCompatActivity {
             spDebug.setSummary(String.format(debugSummary, PreferencesManager.getInstance().isDebug() ? "включен" : "отключен"));
             spDebug.setChecked(PreferencesManager.getInstance().isDebug());
 
-            pcSQLite.setSummary(String.format(sqlSummary, PreferencesManager.getInstance().isDebug() ? "доступен" : "недоступен"));
             new ServerAppVersionAsyncTask().execute();
         }
 
@@ -115,9 +108,7 @@ public class SettingActivity extends AppCompatActivity {
                         PreferencesManager.getInstance().getSharedPreferences().edit().putBoolean(PreferencesManager.DEBUG, true).apply();
                         spDebug.setChecked(true);
                         spDebug.setEnabled(true);
-                        pSQLite.setEnabled(true);
                         pSQLite.setVisible(true);
-                        pcSQLite.setSummary(String.format(sqlSummary, "доступен"));
                         Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                         clickToVersion = 0;
                     }
@@ -136,7 +127,6 @@ public class SettingActivity extends AppCompatActivity {
             if (PreferencesManager.DEBUG.equals(preference.getKey())) {
                 boolean debugValue = Boolean.parseBoolean(String.valueOf(newValue));
                 spDebug.setSummary(String.format(debugSummary, debugValue ? "включен" : "отключен"));
-                pcSQLite.setSummary(String.format(sqlSummary, debugValue ?  "доступен" : "недоступен"));
                 spDebug.setEnabled(debugValue);
                 pSQLite.setVisible(debugValue);
                 PreferencesManager.getInstance().setDebug(debugValue);

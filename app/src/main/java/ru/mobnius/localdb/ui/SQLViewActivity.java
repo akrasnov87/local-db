@@ -43,7 +43,6 @@ public class SQLViewActivity extends AppCompatActivity implements View.OnClickLi
         etQuery = findViewById(R.id.sql_viewer_edit_text);
         etQuery.addTextChangedListener(this);
         tvList = findViewById(R.id.sql_viewer_main_list);
-        tvList.setMovementMethod(new ScrollingMovementMethod());
     }
 
     @Override

@@ -17,7 +17,7 @@
 
     <Button
         android:id="@+id/sql_viewer_query"
-        style="@style/ButtonStyle"
+        style="@style/AppTheme.ButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -25,13 +25,20 @@
         android:padding="4dp"
         android:text="@string/handle_query" />
 
-    <TextView
-        android:id="@+id/sql_viewer_main_list"
-        android:layout_width="wrap_content"
+    <ScrollView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:scrollbars="vertical"
-        tools:text="Ошибка"
-        tools:visibility="visible" />
+        android:fillViewport="true"
+        android:scrollbars="vertical">
+
+        <TextView
+            android:id="@+id/sql_viewer_main_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:scrollbars="vertical"
+            tools:text="Ошибка"
+            tools:visibility="visible" />
+    </ScrollView>
 
 </LinearLayout>
