@@ -57,29 +57,12 @@ public class TableRequestListener extends AuthFilterRequestListener
                 object.put("result", result);
                 array.put(object);
 
-                response = new Response(Response.RESULT_OK, urlReader.getParts()[2]);
-                response.setContentType(Response.APPLICATION_JSON);
-                response.setContent(array.toString(4));
-
-            }catch (Exception e) {
-                response = new Response(Response.RESULT_FAIL, urlReader.getParts()[2]);
-                response.setContentType(Response.APPLICATION_JSON);
-                ProgressResult progressResult = new ProgressResult();
-                progressResult.meta = new RpcMeta();
-                progressResult.meta.success = false;
-                progressResult.meta.msg = e.getMessage();
-
-                response.setContent(new Gson().toJson(progressResult));
+                response = Response.getInstance(urlReader, array.toString(4));
+            } catch (Exception e) {
+                response = Response.getErrorInstance(urlReader, e.getMessage(), Response.RESULT_FAIL);
             }
         } else {
-            response = new Response(Response.RESULT_FAIL, urlReader.getParts()[2]);
-            response.setContentType(Response.APPLICATION_JSON);
-            ProgressResult progressResult = new ProgressResult();
-            progressResult.meta = new RpcMeta();
-            progressResult.meta.success = false;
-            progressResult.meta.msg = "Информация о выполнении загрузки не найдена. Возможно она была завершена ранее.";
-
-            response.setContent(new Gson().toJson(progressResult));
+            response = Response.getErrorInstance(urlReader, "Информация о выполнении загрузки не найдена. Возможно она была завершена ранее.",Response.RESULT_FAIL);
         }
 
         return response;

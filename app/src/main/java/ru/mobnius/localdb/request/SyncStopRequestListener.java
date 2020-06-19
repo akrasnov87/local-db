@@ -34,26 +34,12 @@ public class SyncStopRequestListener extends AuthFilterRequestListener
         }
 
         if(PreferencesManager.getInstance().getProgress() != null) {
-            response = new Response(Response.RESULT_OK, urlReader.getParts()[2]);
-            response.setContentType(Response.APPLICATION_JSON);
-            ProgressResult progressResult = new ProgressResult();
-            progressResult.result = new ProgressRecords();
-            progressResult.result.records = new Progress[1];
-            progressResult.result.records[0] = PreferencesManager.getInstance().getProgress();
-            progressResult.result.total = 1;
-            progressResult.meta = new RpcMeta();
-            progressResult.meta.success = true;
             PreferencesManager.getInstance().setProgress(null);
-            response.setContent(new Gson().toJson(progressResult));
-        } else {
-            response = new Response(Response.RESULT_FAIL, urlReader.getParts()[2]);
-            response.setContentType(Response.APPLICATION_JSON);
-            ProgressResult progressResult = new ProgressResult();
-            progressResult.meta = new RpcMeta();
-            progressResult.meta.success = false;
-            progressResult.meta.msg = "Информация о выполнении загрузки не найдена. Возможно она была завершена ранее.";
 
-            response.setContent(new Gson().toJson(progressResult));
+            ProgressResult progressResult = ProgressResult.getInstance(PreferencesManager.getInstance().getProgress());
+            response = Response.getInstance(urlReader, progressResult.toJsonString());
+        } else {
+            response = Response.getErrorInstance(urlReader, "Информация о выполнении загрузки не найдена. Возможно она была завершена ранее.", Response.RESULT_FAIL);
         }
         return response;
     }

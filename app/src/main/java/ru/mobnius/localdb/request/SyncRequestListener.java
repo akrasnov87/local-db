@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.rpc.RpcMeta;
@@ -50,20 +51,9 @@ public class SyncRequestListener extends AuthFilterRequestListener
         if(tableName != null) {
             new LoadAsyncTask(tableName, this).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
 
-            response = new Response(Response.RESULT_OK, urlReader.getParts()[2]);
-            response.setContentType(Response.APPLICATION_JSON);
-            ProgressResult progressResult = new ProgressResult();
-            progressResult.meta = new RpcMeta();
-            progressResult.meta.success = true;
-            response.setContent(new Gson().toJson(progressResult));
+            response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
         } else {
-            response = new Response(Response.RESULT_FAIL, urlReader.getParts()[2]);
-            response.setContentType(Response.APPLICATION_JSON);
-            ProgressResult progressResult = new ProgressResult();
-            progressResult.meta = new RpcMeta();
-            progressResult.meta.success = false;
-            progressResult.meta.msg = "Не все параметры запроса указаны";
-            response.setContent(new Gson().toJson(progressResult));
+            response = Response.getErrorInstance(urlReader, "Не все параметры запроса указаны", Response.RESULT_FAIL);
         }
 
         return response;

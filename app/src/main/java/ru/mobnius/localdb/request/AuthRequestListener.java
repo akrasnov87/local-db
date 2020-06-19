@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.data.PreferencesManager;
-import ru.mobnius.localdb.model.AuthResult;
+import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.rpc.RpcMeta;
 import ru.mobnius.localdb.utils.UrlReader;
@@ -41,24 +41,9 @@ public class AuthRequestListener
             PreferencesManager.getInstance().setNodeUrl(node);
             PreferencesManager.getInstance().setRpcUrl(rpc);
 
-            response = new Response(Response.RESULT_OK, urlReader.getParts()[2]);
-            response.setContentType(Response.APPLICATION_JSON);
-
-            AuthResult result = new AuthResult();
-            result.meta = new RpcMeta();
-            result.meta.success = true;
-
-            response.setContent(new Gson().toJson(result));
+            response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
         } else {
-            response = new Response(Response.RESULT_FAIL, urlReader.getParts()[2]);
-            response.setContentType(Response.APPLICATION_JSON);
-
-            AuthResult result = new AuthResult();
-            result.meta = new RpcMeta();
-            result.meta.success = false;
-            result.meta.msg = "Инфоврмация об авторизации не передана полностью";
-
-            response.setContent(new Gson().toJson(result));
+            response = Response.getErrorInstance(urlReader, "Инфоврмация об авторизации не передана полностью", Response.RESULT_FAIL);
         }
         return response;
     }
