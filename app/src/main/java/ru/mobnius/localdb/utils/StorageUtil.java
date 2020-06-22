@@ -2,8 +2,6 @@ package ru.mobnius.localdb.utils;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
-import android.util.Log;
 
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.database.Database;
@@ -14,11 +12,10 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Objects;
 
 import dalvik.system.DexFile;
+import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.SqlInsertFromJSONObject;
-import ru.mobnius.localdb.data.SqlUpdateFromJSONObject;
 import ru.mobnius.localdb.data.Storage;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.StorageName;
@@ -55,11 +52,11 @@ public class StorageUtil {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.error(e);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(e);
         }
 
         return storageNames.toArray(new StorageName[0]);
@@ -90,7 +87,7 @@ public class StorageUtil {
                         }
                     }
                     catch(Exception e) {
-                        e.printStackTrace();
+                        Logger.error(e);
                     }
                 }
             }
@@ -102,7 +99,7 @@ public class StorageUtil {
     }
 
     @SuppressWarnings("rawtypes")
-    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean isAppend) {
+    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert) {
         Database db = daoSession.getDatabase();
         AbstractDao abstractDao = null;
 
@@ -117,44 +114,49 @@ public class StorageUtil {
             return;
         }
 
-        if(!isAppend) {
+        if(removeBeforeInsert) {
             db.execSQL("delete from " + tableName);
-            // таким образом очищаем кэш http://greenrobot.org/greendao/documentation/sessions/
-            abstractDao.detachAll();
         }
 
         if (result.result.records.length > 0) {
-            db.beginTransaction();
             JSONObject firstObject = result.result.records[0];
             SqlInsertFromJSONObject sqlInsert = new SqlInsertFromJSONObject(firstObject, tableName, abstractDao);
+
+            int idx = 0;
+            int max = 100;
+            List<Object> values = new ArrayList<>(max);
             try {
-                for (JSONObject object : result.result.records) {
-                    try {
-                        db.execSQL(sqlInsert.convertToQuery(), sqlInsert.getValues(object));
-                    } catch (SQLiteConstraintException e) {
-                        Log.e("SYNC_ERROR", Objects.requireNonNull(e.getMessage()));
-                        // тут нужно обновить запись
-                        String pkColumnName = "";
-                        for (AbstractDao a : daoSession.getAllDaos()) {
-                            if (a.getTablename().equals(tableName)) {
-                                pkColumnName = a.getPkProperty().columnName;
-                                break;
-                            }
+                for (JSONObject o : result.result.records) {
+                    if(idx == 0) {
+                        db.beginTransaction();
+                    }
+                    values.addAll(sqlInsert.getValues(o));
+
+                    idx++;
+
+                    if(idx >= max) {
+                        try {
+                            db.execSQL(sqlInsert.convertToQuery(idx), values.toArray(new Object[0]));
+                            db.setTransactionSuccessful();
+                        } finally {
+                            db.endTransaction();
                         }
-                        if (pkColumnName.isEmpty()) {
-                            throw new Exception("Колонка для первичного ключа, таблицы " + tableName + " не найден.");
-                        } else {
-                            // тут обновление будет только у тех записей у которых не было изменений.
-                            SqlUpdateFromJSONObject sqlUpdate = new SqlUpdateFromJSONObject(firstObject, tableName, pkColumnName, abstractDao);
-                            db.execSQL(sqlUpdate.convertToQuery(), sqlUpdate.getValues(object));
-                        }
+                        idx = 0;
+                        values.clear();
                     }
                 }
-                db.setTransactionSuccessful();
             } catch (Exception e) {
-                e.printStackTrace();
+                Logger.error(e);
+            } finally {
+                if(idx > 0) {
+                    try {
+                        db.execSQL(sqlInsert.convertToQuery(idx), values.toArray(new Object[0]));
+                        db.setTransactionSuccessful();
+                    } finally {
+                        db.endTransaction();
+                    }
+                }
             }
-            db.endTransaction();
         }
     }
 

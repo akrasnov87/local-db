@@ -24,6 +24,7 @@ public class PreferencesManager {
     public static final String NODE_URL = "MBL_NODE_URL";
     public static final String RPC_URL = "MBL_RPC_URL";
     public static final String SIZE = "MBL_SIZE";
+    public static final String GENERATED_ERROR = "MBL_GENERATED_ERROR";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -105,7 +106,7 @@ public class PreferencesManager {
     }
 
     public int getSize() {
-        String value = getSharedPreferences().getString(SIZE, "100000");
+        String value = getSharedPreferences().getString(SIZE, "10000");
         return Integer.parseInt(Objects.requireNonNull(value));
     }
 }

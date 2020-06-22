@@ -10,18 +10,12 @@
         android:title="Версия"
         app:summary="Общая информация о приложении" />
 
-    <Preference
-        android:icon="@drawable/ic_baseline_storage_24"
-        android:key="MBL_SQL"
-        android:summary="Перейти на экран построения запросов"
-        android:title="SQL" />
-
     <ListPreference
         android:defaultValue="10000"
+        android:enabled="false"
         android:entries="@array/size"
         android:entryValues="@array/size"
         android:key="MBL_SIZE"
-        android:enabled="false"
         android:title="Размер выборки" />
 
     <PreferenceCategory
@@ -45,6 +39,12 @@
             android:title="Адрес сервера приложений 2" />
     </PreferenceCategory>
 
+    <Preference
+        android:icon="@drawable/ic_baseline_storage_24"
+        android:key="MBL_SQL"
+        android:summary="Перейти на экран построения запросов"
+        android:title="SQL" />
+
     <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"
         android:summary="Включен режим отладки приложения"
@@ -54,6 +54,11 @@
             android:key="MBL_DEBUG"
             android:summary="Включить режим отладки"
             android:title="Включить" />
+
+        <Preference
+            android:key="MBL_GENERATED_ERROR"
+            android:summary="Генерация исключения для проверки механизма обработки ошибок. Внимание будет перезапуск приложения!!!"
+            android:title="Создать исключение" />
 
         <Preference
             android:key="MBL_LOGIN_RESET"
@@ -68,7 +73,7 @@
         android:title="Доступно обновление"
         app:icon="@drawable/ic_baseline_system_update_24"
         app:isPreferenceVisible="false"
-        tools:isPreferenceVisible="true"
-        app:summary="Информация о доступном обновлении" />
+        app:summary="Информация о доступном обновлении"
+        tools:isPreferenceVisible="true" />
 
 </PreferenceScreen>

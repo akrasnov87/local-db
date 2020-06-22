@@ -9,6 +9,7 @@ import android.util.Log;
 import java.util.Timer;
 
 import ru.mobnius.localdb.data.AvailableTimerTask;
+import ru.mobnius.localdb.data.SendErrorTimerTask;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.utils.ServiceUtil;
 
@@ -21,6 +22,7 @@ public class AutoRunReceiver extends BroadcastReceiver
     @Override
     public void onReceive(Context context, Intent intent) {
         mContext = context;
+        Logger.setContext(context);
 
         Log.d(Names.TAG, "Receive");
         context.startService(HttpService.getIntent(context, HttpService.AUTO));
@@ -29,6 +31,12 @@ public class AutoRunReceiver extends BroadcastReceiver
         AvailableTimerTask availableTimerTask = new AvailableTimerTask(this);
         int TIMEOUT = 1000;
         timer.schedule(availableTimerTask, 1000, TIMEOUT);
+
+        // отправка ошибок
+        Timer timerSend = new Timer();
+        SendErrorTimerTask sendErrorTimerTask = new SendErrorTimerTask();
+        timerSend.schedule(sendErrorTimerTask, 1000, 60 * 1000);
+
         ((App)mContext).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
     }
 

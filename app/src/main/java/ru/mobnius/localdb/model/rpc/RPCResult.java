@@ -4,6 +4,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import ru.mobnius.localdb.Logger;
+
 /**
  * Результат RPC вызова
  */
@@ -19,7 +21,7 @@ public class RPCResult {
      * @param obj объект для обработки данных
      * @return Возвращается объект
      */
-    private static RPCResult processingJSONObject(JSONObject obj){
+    private static RPCResult processingJSONObject(JSONObject obj) {
         RPCResult result;
         try {
             result = new RPCResult();
@@ -55,7 +57,7 @@ public class RPCResult {
                                 innerObj.put("value", array.get(i));
                                 records.records[i] = innerObj;
                             } catch (Exception inner) {
-                                inner.printStackTrace();
+                                Logger.error(inner);
                             }
                         }
                     }
@@ -100,7 +102,7 @@ public class RPCResult {
             }
             return result;
         }catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(e);
             return null;
         }
     }

@@ -6,6 +6,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.TimerTask;
 
+import ru.mobnius.localdb.Logger;
+
 public class AvailableTimerTask extends TimerTask {
 
     private final OnAvailableListener mListener;
@@ -27,7 +29,7 @@ public class AvailableTimerTask extends TimerTask {
             new BufferedInputStream(urlConnection.getInputStream());
             available = true;
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error(e);
         } finally {
             if(urlConnection != null) {
                 urlConnection.disconnect();

@@ -2,7 +2,6 @@ package ru.mobnius.localdb.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -25,11 +24,16 @@ import java.util.Objects;
 
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
+import ru.mobnius.localdb.data.ExceptionInterceptActivity;
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.data.exception.ExceptionCode;
+import ru.mobnius.localdb.data.exception.ExceptionGroup;
+import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
+import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
-public class SettingActivity extends AppCompatActivity {
+public class SettingActivity extends ExceptionInterceptActivity {
 
     public static Intent getIntent(Context context) {
         return new Intent(context, SettingActivity.class);
@@ -57,9 +61,15 @@ public class SettingActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public int getExceptionCode() {
+        return ExceptionCode.SETTING;
+    }
+
     public static class PrefFragment extends PreferenceFragmentCompat implements
             Preference.OnPreferenceChangeListener,
-            Preference.OnPreferenceClickListener {
+            Preference.OnPreferenceClickListener,
+            OnExceptionIntercept {
 
         private final String debugSummary = "Режим отладки: %s";
         private int clickToVersion = 0;
@@ -73,6 +83,14 @@ public class SettingActivity extends AppCompatActivity {
         private Preference pNodeUrl;
         private Preference pRpcUrl;
         private ListPreference lpSize;
+        private Preference pCreateError;
+        private ServerAppVersionAsyncTask mServerAppVersionAsyncTask;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            onExceptionIntercept();
+        }
 
         @Override
         public void onCreatePreferences(Bundle bundle, String s) {
@@ -103,6 +121,10 @@ public class SettingActivity extends AppCompatActivity {
             lpSize = findPreference(PreferencesManager.SIZE);
             Objects.requireNonNull(lpSize).setOnPreferenceChangeListener(this);
             lpSize.setEnabled(PreferencesManager.getInstance().isDebug());
+
+            pCreateError = findPreference(PreferencesManager.GENERATED_ERROR);
+            Objects.requireNonNull(pCreateError).setVisible(PreferencesManager.getInstance().isDebug());
+            pCreateError.setOnPreferenceClickListener(this);
         }
 
         @Override
@@ -121,8 +143,10 @@ public class SettingActivity extends AppCompatActivity {
             pRpcUrl.setSummary(PreferencesManager.getInstance().getRpcUrl());
             DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
             lpSize.setSummary(df.format(PreferencesManager.getInstance().getSize()));
+            lpSize.setValue(String.valueOf(PreferencesManager.getInstance().getSize()));
 
-            new ServerAppVersionAsyncTask().execute();
+            mServerAppVersionAsyncTask = new ServerAppVersionAsyncTask();
+            mServerAppVersionAsyncTask.execute();
         }
 
         @Override
@@ -137,6 +161,7 @@ public class SettingActivity extends AppCompatActivity {
                         pSQLite.setVisible(true);
                         pLoginReset.setVisible(true);
                         lpSize.setEnabled(true);
+                        pCreateError.setVisible(true);
 
                         Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                         clickToVersion = 0;
@@ -147,22 +172,27 @@ public class SettingActivity extends AppCompatActivity {
                     Intent i = new Intent(getContext(), SQLViewActivity.class);
                     startActivity(i);
                     break;
-            }
 
-            if(PreferencesManager.LOGIN_RESET.equals(preference.getKey())) {
-                confirm(new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if(which == DialogInterface.BUTTON_POSITIVE) {
-                            PreferencesManager.getInstance().setLogin(null);
-                            PreferencesManager.getInstance().setPassword(null);
+                case PreferencesManager.GENERATED_ERROR:
+                    //noinspection ResultOfMethodCallIgnored
+                    Integer.parseInt("Проверка обработки ошибок");
+                    break;
 
-                            requireContext().startActivity(AuthActivity.getIntent(requireContext()));
+                case PreferencesManager.LOGIN_RESET:
+                    confirm(new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == DialogInterface.BUTTON_POSITIVE) {
+                                PreferencesManager.getInstance().setLogin(null);
+                                PreferencesManager.getInstance().setPassword(null);
+
+                                requireContext().startActivity(AuthActivity.getIntent(requireContext()));
+                            }
                         }
-                    }
-                });
+                    });
+                    break;
             }
-            return true;
+            return false;
         }
 
         @Override
@@ -173,12 +203,12 @@ public class SettingActivity extends AppCompatActivity {
                 spDebug.setEnabled(debugValue);
                 pSQLite.setVisible(debugValue);
                 lpSize.setEnabled(debugValue);
-
+                pCreateError.setVisible(debugValue);
                 PreferencesManager.getInstance().setDebug(debugValue);
                 pLoginReset.setVisible(debugValue);
             }
 
-            if(PreferencesManager.SIZE.equals(preference.getKey())) {
+            if (PreferencesManager.SIZE.equals(preference.getKey())) {
                 DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
                 lpSize.setSummary(df.format(Integer.parseInt(String.valueOf(newValue))));
 
@@ -198,6 +228,28 @@ public class SettingActivity extends AppCompatActivity {
             dialog.show();
         }
 
+        @Override
+        public void onExceptionIntercept() {
+            Thread.setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler(), getExceptionGroup(), getExceptionCode(), getContext()));
+        }
+
+        @Override
+        public String getExceptionGroup() {
+            return ExceptionGroup.SETTING;
+        }
+
+        @Override
+        public int getExceptionCode() {
+            return ExceptionCode.SETTING;
+        }
+
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+            mServerAppVersionAsyncTask.cancel(true);
+            mServerAppVersionAsyncTask = null;
+        }
+
         @SuppressLint("StaticFieldLeak")
         private class ServerAppVersionAsyncTask extends AsyncTask<Void, Void, String> {
 
@@ -215,7 +267,7 @@ public class SettingActivity extends AppCompatActivity {
                 super.onPostExecute(s);
 
                 if (pServerVersion != null) {
-                    if(!s.equals("0.0.0.0")) {
+                    if (!s.equals("0.0.0.0")) {
                         try {
                             if (VersionUtil.isUpgradeVersion(requireActivity(), s, PreferencesManager.getInstance().isDebug())) {
                                 pServerVersion.setVisible(true);
@@ -229,11 +281,10 @@ public class SettingActivity extends AppCompatActivity {
 
                                 return;
                             }
-                        }catch (Exception ignored) {
+                        } catch (Exception ignored) {
 
                         }
                     }
-
                     pServerVersion.setVisible(false);
                     if (pVersion != null) {
                         pVersion.setSummary("Установлена последняя версия " + VersionUtil.getVersionName(requireActivity()));

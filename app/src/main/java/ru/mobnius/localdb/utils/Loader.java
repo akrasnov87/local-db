@@ -2,17 +2,24 @@ package ru.mobnius.localdb.utils;
 
 import com.google.gson.Gson;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Scanner;
 
+import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.User;
+import ru.mobnius.localdb.storage.ClientErrors;
+import ru.mobnius.localdb.storage.DaoSession;
 
 public class Loader {
     /**
@@ -63,7 +70,7 @@ public class Loader {
 
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Logger.error(e);
             } finally {
                 urlConnection.disconnect();
             }
@@ -107,7 +114,7 @@ public class Loader {
             String serverResult = s.hasNext() ? s.next() : "";
             return RPCResult.createInstance(serverResult);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error(e);
         } finally {
             if(urlConnection != null) {
                 urlConnection.disconnect();
@@ -141,6 +148,53 @@ public class Loader {
         }
 
         return "0.0.0.0";
+    }
+
+    /**
+     * Отправка ошибок на сервер
+     */
+    public void sendErrors(DaoSession daoSession) {
+        if(daoSession.getClientErrorsDao().count() > 0) {
+            List<ClientErrors> items = daoSession.getClientErrorsDao().loadAll();
+            String urlParams = new Gson().toJson(items);
+            byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
+            URL url;
+            HttpURLConnection urlConnection = null;
+            try {
+                url = new URL(PreferencesManager.getInstance().getNodeUrl() + "/local-db-error");
+                urlConnection = (HttpURLConnection) url.openConnection();
+
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                urlConnection.setRequestProperty("Accept","application/json");
+                urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                urlConnection.setDoOutput(true);
+                urlConnection.setInstanceFollowRedirects( false );
+                urlConnection.setUseCaches(false);
+                urlConnection.setConnectTimeout(SERVER_CONNECTION_TIMEOUT);
+
+                urlConnection.getOutputStream().write(postData);
+
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                Scanner s = new Scanner(in).useDelimiter("\\A");
+                String serverResult = s.hasNext() ? s.next() : "";
+
+                JSONObject jsonObject = new JSONObject(serverResult);
+                boolean success = jsonObject.getJSONObject("meta").getBoolean("success");
+
+                if(success) {
+                    daoSession.getClientErrorsDao().deleteAll();
+                } else {
+                    Logger.error(new Exception(jsonObject.getJSONObject("meta").getString("msg")));
+                }
+            } catch (IOException | JSONException e) {
+                Logger.error(e);
+            } finally {
+                if(urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            }
+        }
     }
 
     /**

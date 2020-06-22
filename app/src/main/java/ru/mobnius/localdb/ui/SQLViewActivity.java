@@ -30,6 +30,7 @@ import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.data.BaseActivity;
 import ru.mobnius.localdb.data.SqlQueryAsyncTask;
+import ru.mobnius.localdb.data.exception.ExceptionCode;
 
 public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQueryAsyncTask.OnSqlQuery {
     private EditText etQuery;
@@ -108,6 +109,11 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
             miQuery.setEnabled(false);
             miQuery.getIcon().setAlpha(50);
         }
+    }
+
+    @Override
+    public int getExceptionCode() {
+        return ExceptionCode.SQL_ACTIVITY;
     }
 }
 

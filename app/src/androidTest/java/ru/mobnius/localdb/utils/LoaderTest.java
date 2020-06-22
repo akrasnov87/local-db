@@ -10,7 +10,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Date;
 
+import ru.mobnius.localdb.data.exception.ExceptionCode;
+import ru.mobnius.localdb.data.exception.ExceptionGroup;
+import ru.mobnius.localdb.data.exception.ExceptionModel;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.storage.DaoMaster;
 import ru.mobnius.localdb.storage.DaoSession;
@@ -20,12 +24,12 @@ import ru.mobnius.localdb.storage.FiasDao;
 import static org.junit.Assert.*;
 
 public class LoaderTest {
-
+    private DaoSession mDaoSession;
+    private Context mContext;
     @Before
     public void setUp() {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        DaoSession daoSession = new DaoMaster(new DbOpenHelper(context, "loader-test.db").getWritableDb()).newSession();
-        daoSession.getFiasDao().deleteAll();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mDaoSession = new DaoMaster(new DbOpenHelper(mContext, "loader-test.db").getWritableDb()).newSession();
     }
 
     @Test
@@ -44,6 +48,8 @@ public class LoaderTest {
 
     @Test
     public void rpc() throws JSONException {
+        mDaoSession.getFiasDao().deleteAll();
+
         Loader loader = Loader.getInstance();
         loader.auth("iserv", "iserv");
         RPCResult[] results = loader.rpc("Domain." + FiasDao.TABLENAME, "Query", "[{}]");
@@ -58,5 +64,12 @@ public class LoaderTest {
         results = loader.rpc("Domain.UI_SV_FIAS", "Query", "[{ \"start\": 100, \"limit\": 100, \"sort\": [{ \"property\": \"LINK\", \"direction\": \"ASC\" }] }]");
         JSONObject two = results[0].result.records[0];
         assertNotEquals(first.getString("LINK"), two.getString("LINK"));
+    }
+
+    @Test
+    public void sendErrorsTest() {
+        ExceptionModel model = ExceptionModel.getInstance(new Date(), "Ошибка", ExceptionGroup.NONE, ExceptionCode.ALL);
+        mDaoSession.getClientErrorsDao().insert(model.toDbItem(mContext));
+        Loader.getInstance().sendErrors(mDaoSession);
     }
 }

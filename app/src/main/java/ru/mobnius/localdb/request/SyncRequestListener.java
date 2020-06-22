@@ -12,6 +12,7 @@ import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.data.LoadAsyncTask;
+import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**
@@ -45,11 +46,17 @@ public class SyncRequestListener extends AuthFilterRequestListener
         // TODO: 17.06.2020 нужно достать из запроса логин и пароль
         String tableName = urlReader.getParam("table");
         if(tableName != null) {
-            PreferencesManager.getInstance().setProgress(null);
+            if(NetworkUtil.isNetworkAvailable(mApp)) {
+                if(urlReader.getParam("restore") == null) {
+                    PreferencesManager.getInstance().setProgress(null);
+                }
 
-            new LoadAsyncTask(tableName, this).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                new LoadAsyncTask(tableName, this).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
 
-            response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+                response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+            } else {
+                response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
+            }
         } else {
             response = Response.getErrorInstance(urlReader, "Не все параметры запроса указаны", Response.RESULT_FAIL);
         }

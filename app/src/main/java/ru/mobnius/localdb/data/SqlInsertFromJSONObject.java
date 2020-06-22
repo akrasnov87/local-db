@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import ru.mobnius.localdb.utils.StorageUtil;
 
@@ -44,15 +45,21 @@ public class SqlInsertFromJSONObject{
 
     /**
      * запрос в БД для вставки
+     * @param count количество
      * @return возвращается запрос
      */
-    public String convertToQuery() {
+    public String convertToQuery(int count) {
         StringBuilder builder = new StringBuilder();
         for (String field : fields) {
             builder.append(StorageUtil.toSqlField(field)).append(",");
         }
 
-        return "INSERT INTO " + tableName + "("+builder.substring(0, builder.length() - 1) + ")" + " VALUES(" + params + ")";
+        StringBuilder paramsBuilder = new StringBuilder();
+        for(int i = 0; i < count; i++) {
+            paramsBuilder.append("(").append(params).append("),");
+        }
+
+        return "INSERT INTO " + tableName + "("+builder.substring(0, builder.length() - 1) + ")" + " VALUES " + paramsBuilder.substring(0, paramsBuilder.length() - 1) + ";";
     }
 
     /**
@@ -61,11 +68,11 @@ public class SqlInsertFromJSONObject{
      * @return Массив значений полей
      * @throws JSONException исключение
      */
-    public Object[] getValues(JSONObject object) throws JSONException {
-        Object[] values = new Object[fields.length];
+    public List<Object> getValues(JSONObject object) throws JSONException {
+        List<Object> values = new ArrayList<>(fields.length);
 
-        for (int i = 0; i < fields.length; i++) {
-            values[i] = object.has(fields[i]) ? object.get(fields[i]) : null;
+        for (String field : fields) {
+            values.add(object.has(field) ? object.get(field) : null);
         }
         return values;
     }

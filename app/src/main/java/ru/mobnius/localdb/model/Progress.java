@@ -8,7 +8,7 @@ public class Progress {
         this.tableName = tableName;
     }
 
-    public final int current;
+    public int current;
     public final int total;
     public final String tableName;
 
