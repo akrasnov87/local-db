@@ -6,6 +6,10 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,11 +23,19 @@ public abstract class BaseActivity extends ExceptionInterceptActivity {
     private final int REQUEST_PERMISSIONS = 1;
     private int mPermissionLength = 0;
     private boolean doubleBackToExitPressedOnce = false;
-    private AlertDialog mDialog;
+    private ProgressBar mProgressBar;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        View view = findViewById(android.R.id.content).getRootView();
+
+        mProgressBar = new ProgressBar(this);
+        mProgressBar.setVisibility(View.GONE);
+
+        if(view instanceof ViewGroup) {
+            ((ViewGroup)view).addView(mProgressBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
         // предназначено для привязки перехвата ошибок
         onExceptionIntercept();
     }
@@ -106,16 +118,11 @@ public abstract class BaseActivity extends ExceptionInterceptActivity {
                 .setPositiveButton("OK", null).show();
     }
 
-    protected void startProgress(Drawable drawable, String message) {
-        mDialog = new AlertDialog.Builder(this).setTitle(message)
-                .setIcon(drawable)
-                .setMessage("")
-                .setCancelable(false)
-                .create();
-        mDialog.show();
+    protected void startProgress() {
+        mProgressBar.setVisibility(View.VISIBLE);
     }
 
     protected void stopProgress() {
-        mDialog.dismiss();
+        mProgressBar.setVisibility(View.GONE);
     }
 }

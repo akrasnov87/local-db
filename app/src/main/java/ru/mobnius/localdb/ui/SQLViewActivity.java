@@ -55,7 +55,7 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
             case R.id.sql_query_action:
                 String query = etQuery.getText().toString();
                 Database database = HttpService.getDaoSession().getDatabase();
-                startProgress(getDrawable(R.drawable.ic_query_24dp), "Подождите идет чтение БД");
+                startProgress();
                 SqlQueryAsyncTask asyncTask = new SqlQueryAsyncTask(database, this);
                 asyncTask.execute(query);
                 setIconEnabled(false);

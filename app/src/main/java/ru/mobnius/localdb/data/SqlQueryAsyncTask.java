@@ -5,7 +5,6 @@ import android.database.SQLException;
 import android.os.AsyncTask;
 
 import org.greenrobot.greendao.database.Database;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,11 +26,9 @@ public class SqlQueryAsyncTask extends AsyncTask<String, Void, String> {
             isError = true;
             return e.toString();
         }
-        JSONArray resultSet = new JSONArray();
         cursor.moveToFirst();
-        int maxCount = 0;
-        while (!cursor.isAfterLast()&&maxCount<1000) {
-            maxCount++;
+        StringBuilder sb = new StringBuilder();
+        while (!cursor.isAfterLast()&&sb.length()<4096) {
             int totalColumn = cursor.getColumnCount();
             JSONObject rowObject = new JSONObject();
             for (int i = 0; i < totalColumn; i++) {
@@ -48,22 +45,20 @@ public class SqlQueryAsyncTask extends AsyncTask<String, Void, String> {
                     }
                 }
             }
-            resultSet.put(rowObject);
+            try {
+                sb.append(rowObject.toString(4));
+            } catch (JSONException e) {
+                isError = true;
+                return e.toString();
+            }
             cursor.moveToNext();
         }
         cursor.close();
-        String s;
-        if (resultSet.length()==0){
+        if (sb.length()==0){
             isError = true;
             return  "Результат запроса пуст";
         }
-        try {
-            s = resultSet.toString(4);
-        } catch (JSONException e) {
-            isError = true;
-            return e.toString();
-        }
-        return s;
+        return sb.toString();
     }
 
     @Override
