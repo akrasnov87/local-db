@@ -14,4 +14,5 @@
     <string name="android_8">В android версии 8 и выше запрещено выполнение приложений, которые работают в фоне (background). Чтобы сервер был доступен, требуется всегда держать приложение «Local Db» в активном состоянии</string>
     <string name="handle_query">Обработать запрос</string>
     <string name="enter_query">Введите запрос</string>
+    <string name="make_query">Сделать запрос</string>
 </resources>

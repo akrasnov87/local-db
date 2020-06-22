@@ -162,7 +162,7 @@ public class SettingActivity extends AppCompatActivity {
                     }
                 });
             }
-            return false;
+            return true;
         }
 
         @Override

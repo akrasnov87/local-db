@@ -3,42 +3,48 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/sql_viewer_edit_text"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:autofillHints="no"
-        android:hint="@string/enter_query"
-        android:inputType="textMultiLine" />
+        android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/sql_viewer_query"
-        style="@style/AppTheme.ButtonStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:enabled="false"
-        android:padding="4dp"
-        android:text="@string/handle_query" />
+        <EditText
+            android:id="@+id/sql_viewer_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:autofillHints="no"
+            android:gravity="start"
+            android:hint="@string/enter_query"
+            android:inputType="textMultiLine"
+            android:maxLines="4"
+            android:padding="8dp" />
+
+        <ProgressBar
+            android:id="@+id/sql_viewer_progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:visibility="gone"
+            android:elevation="2dp" />
+    </RelativeLayout>
 
     <ScrollView
+        android:id="@+id/sql_viewer_scroll_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fillViewport="true"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:padding="8dp"
         android:scrollbars="vertical">
 
         <TextView
             android:id="@+id/sql_viewer_main_list"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:scrollbars="vertical"
-            tools:text="Ошибка"
-            tools:visibility="visible" />
-    </ScrollView>
+            tools:text="Ошибка" />
 
+    </ScrollView>
 </LinearLayout>
