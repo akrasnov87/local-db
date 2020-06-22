@@ -5,31 +5,19 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <RelativeLayout
+
+    <EditText
+        android:id="@+id/sql_viewer_edit_text"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <EditText
-            android:id="@+id/sql_viewer_edit_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:autofillHints="no"
-            android:gravity="start"
-            android:hint="@string/enter_query"
-            android:inputType="textMultiLine"
-            android:maxLines="4"
-            android:padding="8dp" />
-
-        <ProgressBar
-            android:id="@+id/sql_viewer_progress_bar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:visibility="gone"
-            android:elevation="2dp" />
-    </RelativeLayout>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:autofillHints="no"
+        android:gravity="start"
+        android:hint="@string/enter_query"
+        android:inputType="textMultiLine"
+        android:maxLines="4"
+        android:padding="8dp" />
 
     <ScrollView
         android:id="@+id/sql_viewer_scroll_view"
@@ -43,7 +31,6 @@
             android:id="@+id/sql_viewer_main_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
             tools:text="Ошибка" />
 
     </ScrollView>

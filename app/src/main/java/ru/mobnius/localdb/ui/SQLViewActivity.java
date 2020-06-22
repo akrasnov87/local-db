@@ -75,7 +75,6 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
         return super.onOptionsItemSelected(item);
     }
 
-
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
     }
@@ -85,7 +84,6 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
         if (miQuery != null) {
             setIconEnabled(s.length() != 0);
         }
-
     }
 
     @Override
