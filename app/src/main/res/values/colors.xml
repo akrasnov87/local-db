@@ -12,6 +12,7 @@
 
     <color name="colorPrimaryText">#212121</color>
     <color name="colorSecondaryText">#FFFFFF</color>
+    <color name="colorErrorText">#EF5350</color>
 
     <color name="colorHintDark">#435761</color>
     <color name="colorHint">#7f97a2</color>

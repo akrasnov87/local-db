@@ -12,23 +12,34 @@ public class SqlQueryAsyncTask extends AsyncTask<String, Void, String> {
     private Database mDatabase;
     private OnSqlQuery mListener;
     private boolean isError = false;
-     public SqlQueryAsyncTask(Database database, OnSqlQuery listener){
-         mDatabase = database;
-         mListener = listener;
-     }
+
+    public SqlQueryAsyncTask(Database database, OnSqlQuery listener) {
+        mDatabase = database;
+        mListener = listener;
+    }
 
     @Override
     protected String doInBackground(String... strings) {
+        return getQueryResult(strings[0]);
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+        mListener.onSqlQueryCompleted(s, isError);
+    }
+
+    private String getQueryResult(String query) {
         Cursor cursor;
         try {
-            cursor = mDatabase.rawQuery(strings[0], null);
+            cursor = mDatabase.rawQuery(query, null);
         } catch (SQLException e) {
             isError = true;
             return e.toString();
         }
         cursor.moveToFirst();
         StringBuilder sb = new StringBuilder();
-        while (!cursor.isAfterLast()&&sb.length()<4096) {
+        while (!cursor.isAfterLast() && sb.length() < 4096) {
             int totalColumn = cursor.getColumnCount();
             JSONObject rowObject = new JSONObject();
             for (int i = 0; i < totalColumn; i++) {
@@ -54,17 +65,11 @@ public class SqlQueryAsyncTask extends AsyncTask<String, Void, String> {
             cursor.moveToNext();
         }
         cursor.close();
-        if (sb.length()==0){
+        if (sb.length() == 0) {
             isError = true;
-            return  "Результат запроса пуст";
+            return "Результат запроса пуст";
         }
         return sb.toString();
-    }
-
-    @Override
-    protected void onPostExecute(String s) {
-        super.onPostExecute(s);
-        mListener.onSqlQueryCompleted(s, isError);
     }
 
     public interface OnSqlQuery {

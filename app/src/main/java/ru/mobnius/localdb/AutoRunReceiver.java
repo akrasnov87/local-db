@@ -18,6 +18,8 @@ public class AutoRunReceiver extends BroadcastReceiver
 
     private Context mContext;
 
+
+
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     @Override
     public void onReceive(Context context, Intent intent) {

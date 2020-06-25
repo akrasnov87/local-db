@@ -1,6 +1,5 @@
 package ru.mobnius.localdb.ui;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -83,7 +82,7 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
     @Override
     public void onSqlQueryCompleted(final String queryResult, final boolean isError) {
         tvList.setText(queryResult);
-        tvList.setTextColor(isError ? Color.RED : Color.BLACK);
+        tvList.setTextColor(getResources().getColor(isError ? R.color.colorErrorText: R.color.colorPrimaryText));
         setIconEnabled(true);
         etQuery.addTextChangedListener(SQLViewActivity.this);
         stopProgress();

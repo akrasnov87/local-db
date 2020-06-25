@@ -1,10 +1,15 @@
 package ru.mobnius.localdb;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,14 +51,14 @@ public class HttpService extends Service
     private static final String TABLE = "table";
 
     public static Intent getIntent(Context context, int mode) {
-        Intent intent =  new Intent();
+        Intent intent = new Intent();
         intent.setClass(context, HttpService.class);
         intent.putExtra(MODE, mode);
         return intent;
     }
 
     public static Intent getIntent(Context context, String tableName) {
-        Intent intent =  new Intent();
+        Intent intent = new Intent();
         intent.setClass(context, HttpService.class);
         intent.putExtra(MODE, MANUAL);
         intent.putExtra(TABLE, tableName);
@@ -66,6 +71,7 @@ public class HttpService extends Service
     public static final String SERVICE_NAME = "ru.mobnius.localdb.HttpService";
 
     private static DaoSession mDaoSession;
+
     public static DaoSession getDaoSession() {
         return mDaoSession;
     }
@@ -88,13 +94,21 @@ public class HttpService extends Service
     public void onCreate() {
         super.onCreate();
         onExceptionIntercept();
+        NotificationChannel channel = null;
+        String channelId = "httpServiceClient";
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            channel = new NotificationChannel(channelId, "ltnChannel", NotificationManager.IMPORTANCE_DEFAULT);
 
+            ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+            Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle("").setContentText("").build();
+            startForeground(1, notification);
+        }
         mDaoSession = new DaoMaster(new DbOpenHelper(getApplication(), "local-db.db").getWritableDb()).newSession();
         ExceptionUtils.saveLocalException(this, mDaoSession);
 
         mRequestListeners.add(new DefaultRequestListener());
-        mRequestListeners.add(new SyncRequestListener((App)getApplication()));
-        mRequestListeners.add(new SyncStatusRequestListener((App)getApplication()));
+        mRequestListeners.add(new SyncRequestListener((App) getApplication()));
+        mRequestListeners.add(new SyncStatusRequestListener((App) getApplication()));
         mRequestListeners.add(new AuthRequestListener());
         mRequestListeners.add(new SyncStopRequestListener());
         mRequestListeners.add(new TableRequestListener());
@@ -106,7 +120,7 @@ public class HttpService extends Service
 
         // для возобновления после destroy
         Progress progress = PreferencesManager.getInstance().getProgress();
-        if(progress != null) {
+        if (progress != null) {
             onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
             onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
         }
@@ -115,7 +129,7 @@ public class HttpService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String strMode;
-        if(intent != null) {
+        if (intent != null) {
             int mode = intent.getIntExtra(MODE, 0);
             switch (mode) {
                 case AUTO:
@@ -135,7 +149,7 @@ public class HttpService extends Service
         }
 
         // запуск синхронизации через интерфейс
-        if(intent != null && intent.hasExtra(TABLE)) {
+        if (intent != null && intent.hasExtra(TABLE)) {
             String table = intent.getStringExtra(TABLE);
             onResponse(new UrlReader("GET /sync?table=" + table + " HTTP/1.1"));
         } else {
@@ -154,29 +168,30 @@ public class HttpService extends Service
 
     /**
      * Обработчик для HTTP запросов
+     *
      * @param urlReader служебный класс для анализа строки запроса
      * @return результат запроса
      */
     @Override
     public Response onResponse(UrlReader urlReader) {
-        ((App)getApplication()).onHttpRequest(urlReader);
+        ((App) getApplication()).onHttpRequest(urlReader);
 
-        for (OnRequestListener req:
-             mRequestListeners) {
-            if(req.isValid(urlReader.getParts()[1])) {
+        for (OnRequestListener req :
+                mRequestListeners) {
+            if (req.isValid(urlReader.getParts()[1])) {
                 Response response = req.getResponse(urlReader);
-                ((App)getApplication()).onHttpResponse(response);
+                ((App) getApplication()).onHttpResponse(response);
                 return response;
             }
         }
         Response defaultResponse = new DefaultRequestListener(Response.RESULT_NOT_FOUNT, "NOT FOUND").getResponse(urlReader);
-        ((App)getApplication()).onHttpResponse(defaultResponse);
+        ((App) getApplication()).onHttpResponse(defaultResponse);
         return defaultResponse;
     }
 
     @Override
     public void onAddLog(LogItem item) {
-        ((App)getApplication()).onAddLog(item);
+        ((App) getApplication()).onAddLog(item);
     }
 
     /**
@@ -188,9 +203,10 @@ public class HttpService extends Service
 
     /**
      * Группа ошибки из IExceptionGroup
+     *
      * @return строка
      */
-    public String getExceptionGroup(){
+    public String getExceptionGroup() {
         return ExceptionGroup.SERVICE;
     }
 

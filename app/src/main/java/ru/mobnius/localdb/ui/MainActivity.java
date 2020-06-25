@@ -14,6 +14,8 @@ import com.google.android.material.snackbar.Snackbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Environment;
+import android.os.StatFs;
 import android.util.Log;
 import android.view.View;
 
@@ -21,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -43,6 +46,7 @@ import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
+import ru.mobnius.localdb.utils.StorageUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
@@ -120,7 +124,6 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
-
         if(PreferencesManager.getInstance().getProgress() != null) {
             mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress());
         }
@@ -218,6 +221,7 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onDownloadStorage(final StorageName name) {
+
         if(NetworkUtil.isNetworkAvailable(this)) {
             confirm("Убедительсь в стабильном подключении к сети интернет. Загрузить таблицу " + name.getName() + "?", new DialogInterface.OnClickListener() {
                 @Override
@@ -273,4 +277,5 @@ public class MainActivity extends BaseActivity
             }
         }
     }
+
 }
