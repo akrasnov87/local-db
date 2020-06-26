@@ -50,7 +50,10 @@ public class HttpService extends Service
     private static final String MODE = "mode";
     private static final String TABLE = "table";
 
+    private static SyncRequestListener mSyncRequestListener;
+
     public static Intent getIntent(Context context, int mode) {
+
         Intent intent = new Intent();
         intent.setClass(context, HttpService.class);
         intent.putExtra(MODE, mode);
@@ -62,6 +65,8 @@ public class HttpService extends Service
         intent.setClass(context, HttpService.class);
         intent.putExtra(MODE, MANUAL);
         intent.putExtra(TABLE, tableName);
+        SyncRequestListener.OnSpaceOver mSpaceOverListener = (SyncRequestListener.OnSpaceOver) context;
+        mSyncRequestListener.addOnSpaceOverListener(mSpaceOverListener);
         return intent;
     }
 
@@ -107,7 +112,8 @@ public class HttpService extends Service
         ExceptionUtils.saveLocalException(this, mDaoSession);
 
         mRequestListeners.add(new DefaultRequestListener());
-        mRequestListeners.add(new SyncRequestListener((App) getApplication()));
+        mSyncRequestListener = new SyncRequestListener((App) getApplication());
+        mRequestListeners.add(mSyncRequestListener);
         mRequestListeners.add(new SyncStatusRequestListener((App) getApplication()));
         mRequestListeners.add(new AuthRequestListener());
         mRequestListeners.add(new SyncStopRequestListener());

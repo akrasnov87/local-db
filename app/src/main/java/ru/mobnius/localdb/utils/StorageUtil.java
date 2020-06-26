@@ -2,6 +2,7 @@ package ru.mobnius.localdb.utils;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteFullException;
 
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.database.Database;
@@ -19,13 +20,15 @@ import ru.mobnius.localdb.data.SqlInsertFromJSONObject;
 import ru.mobnius.localdb.data.Storage;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.StorageName;
+import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.storage.DaoSession;
 
 public class StorageUtil {
 
     /**
      * Получение списка хранилищ для загрузки данных
-     * @param context текущий контекст
+     *
+     * @param context     текущий контекст
      * @param packageName имя пакета
      * @return Список хранилищ
      */
@@ -64,8 +67,9 @@ public class StorageUtil {
 
     /**
      * Преобразование результата запроса в JSON
+     *
      * @param database БД
-     * @param query запрос
+     * @param query    запрос
      * @return объект JSON
      */
     public static JSONArray getResults(Database database, String query) {
@@ -76,17 +80,15 @@ public class StorageUtil {
             int totalColumn = cursor.getColumnCount();
             JSONObject rowObject = new JSONObject();
 
-            for(int i = 0;  i < totalColumn; i++) {
-                if(cursor.getColumnName(i) != null) {
-                    try
-                    {
-                        if(cursor.getString(i) != null) {
+            for (int i = 0; i < totalColumn; i++) {
+                if (cursor.getColumnName(i) != null) {
+                    try {
+                        if (cursor.getString(i) != null) {
                             rowObject.put(cursor.getColumnName(i), cursor.getString(i));
                         } else {
-                            rowObject.put( cursor.getColumnName(i), "");
+                            rowObject.put(cursor.getColumnName(i), "");
                         }
-                    }
-                    catch(Exception e) {
+                    } catch (Exception e) {
                         Logger.error(e);
                     }
                 }
@@ -99,7 +101,7 @@ public class StorageUtil {
     }
 
     @SuppressWarnings("rawtypes")
-    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert) {
+    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert, SyncRequestListener.OnSpaceOver listener) {
         Database db = daoSession.getDatabase();
         AbstractDao abstractDao = null;
 
@@ -114,7 +116,7 @@ public class StorageUtil {
             return;
         }
 
-        if(removeBeforeInsert) {
+        if (removeBeforeInsert) {
             db.execSQL("delete from " + tableName);
         }
 
@@ -127,19 +129,26 @@ public class StorageUtil {
             List<Object> values = new ArrayList<>(max);
             try {
                 for (JSONObject o : result.result.records) {
-                    if(idx == 0) {
+                    if (idx == 0) {
                         db.beginTransaction();
                     }
                     values.addAll(sqlInsert.getValues(o));
 
                     idx++;
 
-                    if(idx >= max) {
+                    if (idx >= max) {
                         try {
                             db.execSQL(sqlInsert.convertToQuery(idx), values.toArray(new Object[0]));
                             db.setTransactionSuccessful();
+                        } catch (SQLiteFullException e) {
+                            listener.onSpaceFinished(e.getMessage());
                         } finally {
-                            db.endTransaction();
+                            try {
+                                db.endTransaction();
+                            } catch (IllegalStateException e) {
+                                Logger.error(e);
+                                listener.onSpaceFinished(e.getMessage());
+                            }
                         }
                         idx = 0;
                         values.clear();
@@ -148,12 +157,19 @@ public class StorageUtil {
             } catch (Exception e) {
                 Logger.error(e);
             } finally {
-                if(idx > 0) {
+                if (idx > 0) {
                     try {
                         db.execSQL(sqlInsert.convertToQuery(idx), values.toArray(new Object[0]));
                         db.setTransactionSuccessful();
+                    } catch (SQLiteFullException e) {
+                        listener.onSpaceFinished(e.getMessage());
                     } finally {
-                        db.endTransaction();
+                        try {
+                            db.endTransaction();
+                        } catch (IllegalStateException e) {
+                            Logger.error(e);
+                            listener.onSpaceFinished(e.getMessage());
+                        }
                     }
                 }
             }

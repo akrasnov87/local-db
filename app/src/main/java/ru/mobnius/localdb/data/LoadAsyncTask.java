@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.rpc.RPCResult;
+import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.StorageUtil;
@@ -14,11 +15,13 @@ import ru.mobnius.localdb.utils.StorageUtil;
  */
 public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
     private final OnLoadListener mListener;
+    private final SyncRequestListener.OnSpaceOver mSpaceOverListener;
     private final String mTableName;
 
-    public LoadAsyncTask(String tableName, OnLoadListener listener) {
+    public LoadAsyncTask(String tableName, OnLoadListener listener, SyncRequestListener.OnSpaceOver spaceOverListener) {
         mListener = listener;
         mTableName = tableName;
+        mSpaceOverListener = spaceOverListener;
     }
 
     @Override
@@ -41,7 +44,7 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
         RPCResult result = results[0];
         int total = result.result.total;
         publishProgress(new Progress(progress.current, total, mTableName));
-        StorageUtil.processing(daoSession, result, mTableName, removeBeforeInsert);
+        StorageUtil.processing(daoSession, result, mTableName, removeBeforeInsert, mSpaceOverListener);
 
         for(int i = (progress.current + size); i < total; i += size) {
             if(PreferencesManager.getInstance().getProgress() == null) {
@@ -53,7 +56,7 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
                 break;
             }
             result = results[0];
-            StorageUtil.processing(daoSession, result, mTableName, false);
+            StorageUtil.processing(daoSession, result, mTableName, false, mSpaceOverListener);
             publishProgress(new Progress(i, total, mTableName));
         }
         return null;

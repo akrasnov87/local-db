@@ -22,6 +22,8 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +46,7 @@ import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.StorageName;
+import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.StorageUtil;
@@ -55,7 +58,7 @@ public class MainActivity extends BaseActivity
         AvailableTimerTask.OnAvailableListener,
         View.OnClickListener,
         OnHttpListener,
-        DialogDownloadFragment.OnDownloadStorageListener {
+        DialogDownloadFragment.OnDownloadStorageListener, SyncRequestListener.OnSpaceOver {
 
     public static Intent getIntent(Context context) {
         return new Intent(context, MainActivity.class);
@@ -65,6 +68,7 @@ public class MainActivity extends BaseActivity
     private RecyclerView mRecyclerView;
     private Button btnStart;
     private Button btnStop;
+    private TextView tvError;
     private UpdateFragment mUpdateFragment;
     private DialogDownloadFragment mDialogDownloadFragment;
     private ServerAppVersionAsyncTask mServerAppVersionAsyncTask;
@@ -87,7 +91,7 @@ public class MainActivity extends BaseActivity
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mLogAdapter = new LogAdapter(this);
         mRecyclerView.setAdapter(mLogAdapter);
-
+        tvError = findViewById(R.id.activity_main_error_message);
         btnStart = findViewById(R.id.service_start);
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
@@ -242,6 +246,12 @@ public class MainActivity extends BaseActivity
     @Override
     public int getExceptionCode() {
         return ExceptionCode.MAIN;
+    }
+
+    @Override
+    public void onSpaceFinished(String message) {
+        tvError.setVisibility(View.VISIBLE);
+        tvError.setText(message);
     }
 
     @SuppressLint("StaticFieldLeak")
