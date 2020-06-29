@@ -36,6 +36,7 @@
         <activity android:name=".ui.SettingActivity"
             android:label="@string/settings"/>
         <activity android:name=".ui.SQLViewActivity" />
+        <activity android:name=".ui.ExceptionActivity" />
 
         <receiver android:name=".AutoRunReceiver">
             <intent-filter>
