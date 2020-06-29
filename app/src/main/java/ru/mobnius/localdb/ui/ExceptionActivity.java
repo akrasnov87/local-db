@@ -19,7 +19,7 @@ import java.util.Objects;
 public class ExceptionActivity extends AppCompatActivity {
     public final static String EXCEPTION_MESSAGE_KEY = "exception_message_key";
 
-    public static Intent getExceptionActivityIntent(Context context, String exceptionMessage){
+    public static Intent getExceptionActivityIntent(Context context, String exceptionMessage) {
         Intent intent = new Intent(context, ExceptionActivity.class);
         intent.putExtra(EXCEPTION_MESSAGE_KEY, exceptionMessage);
         return intent;
@@ -29,7 +29,7 @@ public class ExceptionActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-        if (getIntent().hasExtra(EXCEPTION_MESSAGE_KEY)){
+        if (getIntent().hasExtra(EXCEPTION_MESSAGE_KEY)) {
             String message = getIntent().getStringExtra(EXCEPTION_MESSAGE_KEY);
             String formattedMessage = message;
             if (message != null) {
@@ -47,7 +47,7 @@ public class ExceptionActivity extends AppCompatActivity {
             scroller.addView(exceptionTV);
             layout.addView(scroller, params);
             setContentView(layout);
-        }else {
+        } else {
             Toast.makeText(this, "Не удалось получить текст ошибки", Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -55,8 +55,8 @@ public class ExceptionActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home){
-            onBackPressed();
+        if (item.getItemId() == android.R.id.home) {
+            startActivity(MainActivity.getIntent(this));
         }
         return super.onOptionsItemSelected(item);
     }

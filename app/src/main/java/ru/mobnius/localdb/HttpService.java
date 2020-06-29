@@ -53,7 +53,6 @@ public class HttpService extends Service
     private static SyncRequestListener mSyncRequestListener;
 
     public static Intent getIntent(Context context, int mode) {
-
         Intent intent = new Intent();
         intent.setClass(context, HttpService.class);
         intent.putExtra(MODE, mode);
@@ -98,7 +97,6 @@ public class HttpService extends Service
     @Override
     public void onCreate() {
         super.onCreate();
-        onExceptionIntercept();
         NotificationChannel channel = null;
         String channelId = "httpServiceClient";
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -108,6 +106,7 @@ public class HttpService extends Service
             Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle("").setContentText("").build();
             startForeground(1, notification);
         }
+        onExceptionIntercept();
         mDaoSession = new DaoMaster(new DbOpenHelper(getApplication(), "local-db.db").getWritableDb()).newSession();
         ExceptionUtils.saveLocalException(this, mDaoSession);
 

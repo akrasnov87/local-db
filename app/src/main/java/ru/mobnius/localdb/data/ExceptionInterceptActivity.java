@@ -6,8 +6,8 @@ import java.io.File;
 
 import ru.mobnius.localdb.data.exception.ExceptionGroup;
 import ru.mobnius.localdb.data.exception.FileExceptionManager;
-import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
 import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
+import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
 import ru.mobnius.localdb.ui.ExceptionActivity;
 
 /**
@@ -39,6 +39,7 @@ public abstract class ExceptionInterceptActivity extends AppCompatActivity imple
 
     /**
      * Числовой код ошибки из IExceptionCode
+     *
      * @return строка
      */
     public abstract int getExceptionCode();
