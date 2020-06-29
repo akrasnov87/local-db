@@ -8,24 +8,18 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-
-import com.google.android.material.snackbar.Snackbar;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Environment;
-import android.os.StatFs;
-import android.util.Log;
-import android.view.View;
+import com.google.android.material.snackbar.Snackbar;
 
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -49,7 +43,6 @@ import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
-import ru.mobnius.localdb.utils.StorageUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
@@ -79,11 +72,11 @@ public class MainActivity extends BaseActivity
         setContentView(R.layout.activity_main);
         Log.d(Names.TAG, "Запуск главного экрана");
 
-        ((App)getApplication()).registryAvailableListener(this);
-        ((App)getApplication()).registryLogListener(this);
-        ((App)getApplication()).registryHttpListener(this);
+        ((App) getApplication()).registryAvailableListener(this);
+        ((App) getApplication()).registryLogListener(this);
+        ((App) getApplication()).registryHttpListener(this);
 
-        mUpdateFragment = (UpdateFragment)getSupportFragmentManager().findFragmentById(R.id.log_upload);
+        mUpdateFragment = (UpdateFragment) getSupportFragmentManager().findFragmentById(R.id.log_upload);
 
         Objects.requireNonNull(getSupportActionBar()).setTitle(R.string.app_name);
 
@@ -97,7 +90,7 @@ public class MainActivity extends BaseActivity
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             alert(getString(R.string.android_8));
         }
     }
@@ -128,13 +121,13 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if(PreferencesManager.getInstance().getProgress() != null) {
+        if (PreferencesManager.getInstance().getProgress() != null) {
             mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress());
         }
 
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
-        if(PreferencesManager.getInstance().isDebug()) {
+        if (PreferencesManager.getInstance().isDebug()) {
             btnStop.setVisibility(View.VISIBLE);
             btnStart.setVisibility(View.VISIBLE);
         } else {
@@ -148,11 +141,13 @@ public class MainActivity extends BaseActivity
 
     protected void onDestroy() {
         super.onDestroy();
-        mServerAppVersionAsyncTask.cancel(true);
-        mServerAppVersionAsyncTask = null;
-        ((App)getApplication()).unRegistryLogListener(this);
-        ((App)getApplication()).unRegistryAvailableListener(this);
-        ((App)getApplication()).unRegistryHttpListener(this);
+        if (mServerAppVersionAsyncTask != null) {
+            mServerAppVersionAsyncTask.cancel(true);
+            mServerAppVersionAsyncTask = null;
+        }
+        ((App) getApplication()).unRegistryLogListener(this);
+        ((App) getApplication()).unRegistryAvailableListener(this);
+        ((App) getApplication()).unRegistryHttpListener(this);
     }
 
     @Override
@@ -193,7 +188,7 @@ public class MainActivity extends BaseActivity
                 confirm(message, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if(DialogInterface.BUTTON_POSITIVE == which) {
+                        if (DialogInterface.BUTTON_POSITIVE == which) {
                             PreferencesManager.getInstance().setProgress(null);
                             mUpdateFragment.stopProcess();
                         }
@@ -226,12 +221,15 @@ public class MainActivity extends BaseActivity
     @Override
     public void onDownloadStorage(final StorageName name) {
 
-        if(NetworkUtil.isNetworkAvailable(this)) {
+        if (NetworkUtil.isNetworkAvailable(this)) {
             confirm("Убедительсь в стабильном подключении к сети интернет. Загрузить таблицу " + name.getName() + "?", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     if (which == DialogInterface.BUTTON_POSITIVE) {
                         mDialogDownloadFragment.dismiss();
+                        if (tvError.isShown()) {
+                            tvError.setVisibility(View.GONE);
+                        }
 
                         mUpdateFragment.startProcess();
                         startService(HttpService.getIntent(MainActivity.this, name.table));

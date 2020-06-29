@@ -2,6 +2,7 @@ package ru.mobnius.localdb.utils;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
 
 import org.greenrobot.greendao.AbstractDao;
@@ -18,9 +19,8 @@ import dalvik.system.DexFile;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.SqlInsertFromJSONObject;
 import ru.mobnius.localdb.data.Storage;
-import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.StorageName;
-import ru.mobnius.localdb.request.SyncRequestListener;
+import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.storage.DaoSession;
 
 public class StorageUtil {
@@ -101,7 +101,7 @@ public class StorageUtil {
     }
 
     @SuppressWarnings("rawtypes")
-    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert, SyncRequestListener.OnSpaceOver listener) {
+    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert) throws SQLiteFullException, SQLiteConstraintException {
         Database db = daoSession.getDatabase();
         AbstractDao abstractDao = null;
 
@@ -140,14 +140,11 @@ public class StorageUtil {
                         try {
                             db.execSQL(sqlInsert.convertToQuery(idx), values.toArray(new Object[0]));
                             db.setTransactionSuccessful();
-                        } catch (SQLiteFullException e) {
-                            listener.onSpaceFinished(e.getMessage());
                         } finally {
-                            try {
-                                db.endTransaction();
-                            } catch (IllegalStateException e) {
+                            try{
+                            db.endTransaction();
+                            }catch (IllegalStateException e){
                                 Logger.error(e);
-                                listener.onSpaceFinished(e.getMessage());
                             }
                         }
                         idx = 0;
@@ -161,20 +158,18 @@ public class StorageUtil {
                     try {
                         db.execSQL(sqlInsert.convertToQuery(idx), values.toArray(new Object[0]));
                         db.setTransactionSuccessful();
-                    } catch (SQLiteFullException e) {
-                        listener.onSpaceFinished(e.getMessage());
                     } finally {
-                        try {
+                        try{
                             db.endTransaction();
-                        } catch (IllegalStateException e) {
+                        }catch (IllegalStateException e){
                             Logger.error(e);
-                            listener.onSpaceFinished(e.getMessage());
                         }
                     }
                 }
             }
         }
     }
+
 
     public static String toSqlField(String column) {
         return column.toUpperCase().replace("_", "__");

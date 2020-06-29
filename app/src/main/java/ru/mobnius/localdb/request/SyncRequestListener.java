@@ -25,7 +25,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
     private final App mApp;
     private UrlReader mUrlReader;
     private OnSpaceOver mSpaceOverListener;
-
     public SyncRequestListener(App app) {
         mApp = app;
     }
@@ -56,7 +55,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 if (urlReader.getParam("restore") == null) {
                     PreferencesManager.getInstance().setProgress(null);
                 }
-
                     new LoadAsyncTask(tableName, this, mSpaceOverListener).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
 
                 response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
