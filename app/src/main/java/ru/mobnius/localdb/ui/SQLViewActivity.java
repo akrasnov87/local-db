@@ -1,5 +1,6 @@
 package ru.mobnius.localdb.ui;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -56,7 +57,7 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
                 Database database = HttpService.getDaoSession().getDatabase();
                 startProgress();
                 SqlQueryAsyncTask asyncTask = new SqlQueryAsyncTask(database, this);
-                asyncTask.execute(query);
+                asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, query);
                 setIconEnabled(false);
                 etQuery.removeTextChangedListener(this);
                 break;

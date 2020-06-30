@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -36,6 +37,7 @@ import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.component.MySnackBar;
 import ru.mobnius.localdb.data.exception.ExceptionCode;
+import ru.mobnius.localdb.data.exception.FileExceptionManager;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
@@ -69,6 +71,7 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         Log.d(Names.TAG, "Запуск главного экрана");
 
@@ -90,9 +93,10 @@ public class MainActivity extends BaseActivity
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            alert(getString(R.string.android_8));
-        }
+
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          //  alert(getString(R.string.android_8));
+       // }
     }
 
     @Override

@@ -56,8 +56,8 @@ public class ExceptionActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            startActivity(MainActivity.getIntent(this));
+            onBackPressed();
         }
-        return super.onOptionsItemSelected(item);
+        return true;
     }
 }

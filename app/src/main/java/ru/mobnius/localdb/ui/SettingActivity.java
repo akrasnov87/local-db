@@ -162,7 +162,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
                         pLoginReset.setVisible(true);
                         lpSize.setEnabled(true);
                         pCreateError.setVisible(true);
-
+                        spDebug.setSummary(String.format(debugSummary,  "включен" ));
                         Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                         clickToVersion = 0;
                     }

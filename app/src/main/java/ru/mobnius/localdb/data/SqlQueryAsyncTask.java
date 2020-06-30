@@ -20,19 +20,9 @@ public class SqlQueryAsyncTask extends AsyncTask<String, Void, String> {
 
     @Override
     protected String doInBackground(String... strings) {
-        return getQueryResult(strings[0]);
-    }
-
-    @Override
-    protected void onPostExecute(String s) {
-        super.onPostExecute(s);
-        mListener.onSqlQueryCompleted(s, isError);
-    }
-
-    private String getQueryResult(String query) {
         Cursor cursor;
         try {
-            cursor = mDatabase.rawQuery(query, null);
+            cursor = mDatabase.rawQuery(strings[0], null);
         } catch (SQLException e) {
             isError = true;
             return e.toString();
@@ -70,6 +60,12 @@ public class SqlQueryAsyncTask extends AsyncTask<String, Void, String> {
             return "Результат запроса пуст";
         }
         return sb.toString();
+    }
+
+    @Override
+    protected void onPostExecute(String s) {
+        super.onPostExecute(s);
+        mListener.onSqlQueryCompleted(s, isError);
     }
 
     public interface OnSqlQuery {

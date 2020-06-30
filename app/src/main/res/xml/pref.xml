@@ -47,7 +47,7 @@
 
     <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"
-        android:summary="Включен режим отладки приложения"
+        android:summary="Включение режима отладки приложения"
         android:title="Режим отладки">
 
         <SwitchPreference
