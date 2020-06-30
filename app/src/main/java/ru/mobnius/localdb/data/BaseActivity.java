@@ -125,4 +125,8 @@ public abstract class BaseActivity extends ExceptionInterceptActivity {
     protected void stopProgress() {
         mProgressBar.setVisibility(View.GONE);
     }
+
+    public void returnToPrevious(){
+        super.onBackPressed();
+    }
 }

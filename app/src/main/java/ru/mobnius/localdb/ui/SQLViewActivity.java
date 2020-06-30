@@ -49,7 +49,7 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                onBackPressed();
+                returnToPrevious();
                 break;
             case R.id.sql_query_action:
                 String query = etQuery.getText().toString();
@@ -102,5 +102,6 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
     public int getExceptionCode() {
         return ExceptionCode.SQL_ACTIVITY;
     }
+
 }
 

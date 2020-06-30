@@ -33,7 +33,7 @@ public class ExceptionActivity extends AppCompatActivity {
             String message = getIntent().getStringExtra(EXCEPTION_MESSAGE_KEY);
             String formattedMessage = message;
             if (message != null) {
-                formattedMessage = message.replace("\\n", "\r\n");
+                formattedMessage = message.replace("\\n", "\n");
             }
             LinearLayout layout = new LinearLayout(this);
             layout.setGravity(Gravity.START);
