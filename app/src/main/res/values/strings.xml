@@ -15,4 +15,5 @@
     <string name="handle_query">Обработать запрос</string>
     <string name="enter_query">Введите запрос</string>
     <string name="make_query">Сделать запрос</string>
+    <string name="close">Закрыть</string>
 </resources>

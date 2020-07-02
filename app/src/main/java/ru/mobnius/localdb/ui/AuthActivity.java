@@ -37,25 +37,10 @@ public class AuthActivity extends BaseActivity {
         super.onResume();
 
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
-        String message = "";
-        File root = FileExceptionManager.getInstance(this).getRootCatalog();
-        String[] files = root.list();
-        if (files != null) {
-            for (String fileName : files) {
-                byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
-                if (bytes != null) {
-                    message = new String(bytes);
 
-                }
-            }
-        }
-        if (!message.isEmpty()) {
-            startActivity(ExceptionActivity.getExceptionActivityIntent(this, message));
-        } else {
             if (PreferencesManager.getInstance().isAuthorized()) {
                 startActivity(MainActivity.getIntent(this));
             }
-        }
     }
 
     @Override

@@ -29,6 +29,7 @@ import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.request.AuthRequestListener;
 import ru.mobnius.localdb.request.DefaultRequestListener;
 import ru.mobnius.localdb.request.ErrorRequestListener;
+import ru.mobnius.localdb.request.InfoRequestListener;
 import ru.mobnius.localdb.request.OnRequestListener;
 import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.request.SyncStatusRequestListener;
@@ -118,6 +119,7 @@ public class HttpService extends Service
         mRequestListeners.add(new SyncStopRequestListener());
         mRequestListeners.add(new TableRequestListener());
         mRequestListeners.add(new ErrorRequestListener());
+        mRequestListeners.add(new InfoRequestListener(this));
 
         sHttpServerThread = new HttpServerThread(this);
         sHttpServerThread.start();

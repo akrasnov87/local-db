@@ -6,13 +6,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -64,6 +64,7 @@ public class MainActivity extends BaseActivity
     private Button btnStart;
     private Button btnStop;
     private TextView tvError;
+    private ScrollView svError;
     private UpdateFragment mUpdateFragment;
     private DialogDownloadFragment mDialogDownloadFragment;
     private ServerAppVersionAsyncTask mServerAppVersionAsyncTask;
@@ -88,15 +89,30 @@ public class MainActivity extends BaseActivity
         mLogAdapter = new LogAdapter(this);
         mRecyclerView.setAdapter(mLogAdapter);
         tvError = findViewById(R.id.activity_main_error_message);
+        svError = findViewById(R.id.activity_main_scroll_view);
+        Button btnCloseError = findViewById(R.id.activity_main_close_error);
+        btnCloseError.setOnClickListener(this);
         btnStart = findViewById(R.id.service_start);
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
-
-
+        String message = "";
+        File root = FileExceptionManager.getInstance(this).getRootCatalog();
+        String[] files = root.list();
+        if (files != null) {
+            for (String fileName : files) {
+                byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
+                if (bytes != null) {
+                    message = new String(bytes);
+                    message = "При последнем запуске приложения возникла следующая критическая ошибка:\n" + message;
+                    tvError.setText(message);
+                    svError.setVisibility(View.VISIBLE);
+                }
+            }
+        }
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-          //  alert(getString(R.string.android_8));
-       // }
+        //  alert(getString(R.string.android_8));
+        // }
     }
 
     @Override
@@ -179,6 +195,9 @@ public class MainActivity extends BaseActivity
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.activity_main_close_error:
+                svError.setVisibility(View.GONE);
+                break;
             case R.id.service_start:
                 startService(HttpService.getIntent(this, HttpService.MANUAL));
                 break;
@@ -231,8 +250,8 @@ public class MainActivity extends BaseActivity
                 public void onClick(DialogInterface dialog, int which) {
                     if (which == DialogInterface.BUTTON_POSITIVE) {
                         mDialogDownloadFragment.dismiss();
-                        if (tvError.isShown()) {
-                            tvError.setVisibility(View.GONE);
+                        if (svError.isShown()) {
+                            svError.setVisibility(View.GONE);
                         }
 
                         mUpdateFragment.startProcess();
@@ -252,7 +271,7 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onSpaceFinished(String message) {
-        tvError.setVisibility(View.VISIBLE);
+        svError.setVisibility(View.VISIBLE);
         tvError.setText(message);
     }
 
