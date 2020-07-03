@@ -18,11 +18,11 @@ import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.OnResponseListener;
 import ru.mobnius.localdb.data.PreferencesManager;
-import ru.mobnius.localdb.data.exception.ExceptionUtils;
 import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.data.exception.ExceptionGroup;
-import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
+import ru.mobnius.localdb.data.exception.ExceptionUtils;
 import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
+import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
@@ -65,8 +65,10 @@ public class HttpService extends Service
         intent.setClass(context, HttpService.class);
         intent.putExtra(MODE, MANUAL);
         intent.putExtra(TABLE, tableName);
-        SyncRequestListener.OnSpaceOver mSpaceOverListener = (SyncRequestListener.OnSpaceOver) context;
-        mSyncRequestListener.addOnSpaceOverListener(mSpaceOverListener);
+        if (context instanceof SyncRequestListener.OnSpaceOverListener && mSyncRequestListener != null) {
+            SyncRequestListener.OnSpaceOverListener mSpaceOverListener = (SyncRequestListener.OnSpaceOverListener) context;
+            mSyncRequestListener.addOnSpaceOverListener(mSpaceOverListener);
+        }
         return intent;
     }
 

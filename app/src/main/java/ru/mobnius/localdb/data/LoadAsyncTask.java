@@ -3,7 +3,6 @@ package ru.mobnius.localdb.data;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
 import android.os.AsyncTask;
-import android.text.style.StyleSpan;
 
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
@@ -19,11 +18,11 @@ import ru.mobnius.localdb.utils.StorageUtil;
  */
 public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
     private final OnLoadListener mListener;
-    private final SyncRequestListener.OnSpaceOver mSpaceOverListener;
+    private final SyncRequestListener.OnSpaceOverListener mSpaceOverListener;
     private final String mTableName;
     private String isError = "";
 
-    public LoadAsyncTask(String tableName, OnLoadListener listener, SyncRequestListener.OnSpaceOver spaceOverListener) {
+    public LoadAsyncTask(String tableName, OnLoadListener listener, SyncRequestListener.OnSpaceOverListener spaceOverListener) {
         mListener = listener;
         mTableName = tableName;
         mSpaceOverListener = spaceOverListener;
@@ -92,7 +91,7 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        if (!isError.isEmpty()) {
+        if (!isError.isEmpty() && mSpaceOverListener != null) {
             mSpaceOverListener.onSpaceFinished(isError);
         }
         PreferencesManager.getInstance().setProgress(null);

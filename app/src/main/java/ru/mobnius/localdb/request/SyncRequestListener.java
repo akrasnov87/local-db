@@ -12,7 +12,6 @@ import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.data.LoadAsyncTask;
-import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
@@ -24,12 +23,12 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     private final App mApp;
     private UrlReader mUrlReader;
-    private OnSpaceOver mSpaceOverListener;
+    private OnSpaceOverListener mSpaceOverListener;
     public SyncRequestListener(App app) {
         mApp = app;
     }
 
-    public void addOnSpaceOverListener(OnSpaceOver spaceOverListener) {
+    public void addOnSpaceOverListener(OnSpaceOverListener spaceOverListener) {
         mSpaceOverListener = spaceOverListener;
     }
 
@@ -79,7 +78,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
         mApp.onDownLoadFinish(tableName, mUrlReader);
     }
 
-    public interface OnSpaceOver {
+    public interface OnSpaceOverListener {
         void onSpaceFinished(String message);
 
     }

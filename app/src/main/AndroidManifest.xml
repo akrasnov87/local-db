@@ -36,12 +36,11 @@
         <activity android:name=".ui.SettingActivity"
             android:label="@string/settings"/>
         <activity android:name=".ui.SQLViewActivity" />
-        <activity android:name=".ui.ExceptionActivity" />
 
         <receiver android:name=".AutoRunReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>

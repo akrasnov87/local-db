@@ -53,7 +53,7 @@ public class MainActivity extends BaseActivity
         AvailableTimerTask.OnAvailableListener,
         View.OnClickListener,
         OnHttpListener,
-        DialogDownloadFragment.OnDownloadStorageListener, SyncRequestListener.OnSpaceOver {
+        DialogDownloadFragment.OnDownloadStorageListener, SyncRequestListener.OnSpaceOverListener {
 
     public static Intent getIntent(Context context) {
         return new Intent(context, MainActivity.class);

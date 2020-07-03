@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 
 import java.util.Timer;
@@ -27,7 +28,11 @@ public class AutoRunReceiver extends BroadcastReceiver
         Logger.setContext(context);
 
         Log.d(Names.TAG, "Receive");
-        context.startService(HttpService.getIntent(context, HttpService.AUTO));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(HttpService.getIntent(context, HttpService.AUTO));
+        } else {
+            context.startService(HttpService.getIntent(context, HttpService.AUTO));
+        }
 
         Timer timer = new Timer();
         AvailableTimerTask availableTimerTask = new AvailableTimerTask(this);

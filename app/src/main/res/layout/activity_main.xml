@@ -26,6 +26,7 @@
                 android:layout_alignParentStart="true"
                 android:background="@color/colorErrorText"
                 android:padding="4dp"
+                tools:text="тут текст ошибки"
                 android:textColor="@color/colorSecondaryText" />
 
             <Button
