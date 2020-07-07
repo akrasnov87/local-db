@@ -35,9 +35,8 @@ public class InfoRequestListener extends AuthFilterRequestListener implements On
             return response;
         }
         try {
-            JSONArray array = new JSONArray();
             JSONObject meta = new JSONObject();
-            JSONObject result = new JSONObject();
+            JSONObject data = new JSONObject();
             JSONObject object = new JSONObject();
 
             meta.put("success", true);
@@ -48,14 +47,15 @@ public class InfoRequestListener extends AuthFilterRequestListener implements On
             File f = mContext.getDatabasePath("local-db.db");
             long dbSize = f.length();
             String dbSizeInMB = dbSize / 1048576 + " MB";
-            result.put("db_size", dbSizeInMB);
-            result.put("version", version);
-
+            JSONArray array = new JSONArray();
+            data.put("db_size", dbSizeInMB);
+            data.put("version", version);
+            array.put(data);
+            JSONObject result = new JSONObject();
+            result.put("records", array);
             object.put("result", result);
 
-            array.put(object);
-
-            response = Response.getInstance(urlReader, array.toString(4));
+            response = Response.getInstance(urlReader, object.toString());
         } catch (Exception e) {
             response = Response.getErrorInstance(urlReader, e.getMessage(), Response.RESULT_FAIL);
         }

@@ -1,5 +1,6 @@
 package ru.mobnius.localdb.request;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
 import java.util.regex.Matcher;
@@ -23,13 +24,8 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     private final App mApp;
     private UrlReader mUrlReader;
-    private OnSpaceOverListener mSpaceOverListener;
     public SyncRequestListener(App app) {
         mApp = app;
-    }
-
-    public void addOnSpaceOverListener(OnSpaceOverListener spaceOverListener) {
-        mSpaceOverListener = spaceOverListener;
     }
 
     @Override
@@ -54,7 +50,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 if (urlReader.getParam("restore") == null) {
                     PreferencesManager.getInstance().setProgress(null);
                 }
-                    new LoadAsyncTask(tableName, this, mSpaceOverListener).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                    new LoadAsyncTask(tableName, this, mApp).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
 
                 response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
             } else {
@@ -76,10 +72,5 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
-    }
-
-    public interface OnSpaceOverListener {
-        void onSpaceFinished(String message);
-
     }
 }

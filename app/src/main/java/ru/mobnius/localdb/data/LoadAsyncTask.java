@@ -1,14 +1,20 @@
 package ru.mobnius.localdb.data;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
 import android.os.AsyncTask;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import java.io.File;
 
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.rpc.RPCResult;
-import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.StorageUtil;
@@ -18,14 +24,15 @@ import ru.mobnius.localdb.utils.StorageUtil;
  */
 public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
     private final OnLoadListener mListener;
-    private final SyncRequestListener.OnSpaceOverListener mSpaceOverListener;
+    @SuppressLint("StaticFieldLeak")
+    private Context mContext;
     private final String mTableName;
     private String isError = "";
 
-    public LoadAsyncTask(String tableName, OnLoadListener listener, SyncRequestListener.OnSpaceOverListener spaceOverListener) {
+    public LoadAsyncTask(String tableName, OnLoadListener listener, Context context) {
         mListener = listener;
         mTableName = tableName;
-        mSpaceOverListener = spaceOverListener;
+        mContext = context;
     }
 
     @Override
@@ -65,11 +72,18 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
                 break;
             }
             result = results[0];
-            try {
-                StorageUtil.processing(daoSession, result, mTableName, false);
-            } catch (SQLiteFullException | SQLiteConstraintException e) {
-                isError = "Ошибка: недостаточно места в хранилище телефона. Удалось загрузить: " + i + " записей (" + e.getMessage() + ")";
+
+            File cacheDir = mContext.getCacheDir();
+            if (cacheDir.getUsableSpace() * 100 / cacheDir.getTotalSpace() <= 10) {
+                isError = "Ошибка: в хранилище телефона осталось свободно менее 10%. Удалось загрузить: " + i + " записей (очистите место и повторите загрузку)";
                 return null;
+            } else {
+                try {
+                    StorageUtil.processing(daoSession, result, mTableName, false);
+                } catch (SQLiteFullException | SQLiteConstraintException e) {
+                    isError = "Ошибка: недостаточно места в хранилище телефона. Удалось загрузить: " + i + " записей (" + e.getMessage() + ")";
+                    return null;
+                }
             }
             publishProgress(new Progress(i, total, mTableName));
         }
@@ -91,8 +105,10 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        if (!isError.isEmpty() && mSpaceOverListener != null) {
-            mSpaceOverListener.onSpaceFinished(isError);
+        if (!isError.isEmpty()) {
+            Intent intent = new Intent("ErrorMessage");
+            intent.putExtra("Message", isError);
+            LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         }
         PreferencesManager.getInstance().setProgress(null);
         mListener.onLoadFinish(mTableName);

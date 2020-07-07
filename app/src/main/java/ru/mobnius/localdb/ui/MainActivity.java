@@ -1,9 +1,11 @@
 package ru.mobnius.localdb.ui;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -15,6 +17,7 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -42,7 +45,6 @@ import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.StorageName;
-import ru.mobnius.localdb.request.SyncRequestListener;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
@@ -53,7 +55,7 @@ public class MainActivity extends BaseActivity
         AvailableTimerTask.OnAvailableListener,
         View.OnClickListener,
         OnHttpListener,
-        DialogDownloadFragment.OnDownloadStorageListener, SyncRequestListener.OnSpaceOverListener {
+        DialogDownloadFragment.OnDownloadStorageListener{
 
     public static Intent getIntent(Context context) {
         return new Intent(context, MainActivity.class);
@@ -110,6 +112,9 @@ public class MainActivity extends BaseActivity
                 }
             }
         }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiver, new IntentFilter("ErrorMessage"));
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         //  alert(getString(R.string.android_8));
         // }
@@ -269,12 +274,6 @@ public class MainActivity extends BaseActivity
         return ExceptionCode.MAIN;
     }
 
-    @Override
-    public void onSpaceFinished(String message) {
-        svError.setVisibility(View.VISIBLE);
-        tvError.setText(message);
-    }
-
     @SuppressLint("StaticFieldLeak")
     private class ServerAppVersionAsyncTask extends AsyncTask<Void, Void, String> {
 
@@ -308,5 +307,13 @@ public class MainActivity extends BaseActivity
             }
         }
     }
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String message = intent.getStringExtra("Message");
+            svError.setVisibility(View.VISIBLE);
+            tvError.setText(message);
+        }
+    };
 
 }
