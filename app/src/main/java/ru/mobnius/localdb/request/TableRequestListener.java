@@ -2,12 +2,9 @@ package ru.mobnius.localdb.request;
 
 import android.net.Uri;
 
-import org.greenrobot.greendao.AbstractDao;
-import org.greenrobot.greendao.Property;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,8 +34,7 @@ public class TableRequestListener extends AuthFilterRequestListener
         }
 
         String tableName = urlReader.getParam("name");
-        String htmlQuery = urlReader.getParam("query");
-        String query = validQuery(htmlQuery);
+        String query = urlReader.getParam("query");
 
         if(tableName != null && query != null) {
             try {
@@ -55,7 +51,6 @@ public class TableRequestListener extends AuthFilterRequestListener
 
                 object.put("result", result);
 
-
                 response = Response.getInstance(urlReader, object.toString());
             } catch (Exception e) {
                 response = Response.getErrorInstance(urlReader, e.getMessage(), Response.RESULT_FAIL);
@@ -65,18 +60,5 @@ public class TableRequestListener extends AuthFilterRequestListener
         }
 
         return response;
-    }
-
-    private String validQuery(String query){
-        Collection<AbstractDao<?,?>> list = HttpService.getDaoSession().getAllDaos();
-        for (AbstractDao dao :list) {
-            Property [] properties = dao.getProperties();
-            for (Property column : properties) {
-                if (query.contains(column.name)){
-                    query = query.replace(column.name, column.columnName);
-                }
-            }
-        }
-        return query;
     }
 }

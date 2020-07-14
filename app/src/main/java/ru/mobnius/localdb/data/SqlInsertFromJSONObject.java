@@ -34,7 +34,7 @@ public class SqlInsertFromJSONObject{
 
         while (keys.hasNext()) {
             String name = keys.next();
-            if (isColumnExists(abstractDao, StorageUtil.toSqlField(name).toLowerCase())) {
+            if (isColumnExists(abstractDao, name.toLowerCase())) {
                 builder.append("?,");
                 tempFields.add(name);
             }
@@ -51,7 +51,7 @@ public class SqlInsertFromJSONObject{
     public String convertToQuery(int count) {
         StringBuilder builder = new StringBuilder();
         for (String field : fields) {
-            builder.append(StorageUtil.toSqlField(field)).append(",");
+            builder.append(field).append(",");
         }
 
         StringBuilder paramsBuilder = new StringBuilder();

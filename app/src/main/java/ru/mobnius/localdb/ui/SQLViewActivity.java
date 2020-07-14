@@ -25,7 +25,7 @@ import ru.mobnius.localdb.data.exception.ExceptionCode;
 public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQueryAsyncTask.OnSqlQuery {
     private EditText etQuery;
     private TextView tvList;
-    private MenuItem miQuery;
+    private MenuItem miStartQuery;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,7 +41,7 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.sql_query_menu, menu);
-        miQuery = menu.findItem(R.id.sql_query_action);
+        miStartQuery = menu.findItem(R.id.sql_query_action);
         setIconEnabled(etQuery.getText().length() != 0);
         return super.onCreateOptionsMenu(menu);
     }
@@ -71,7 +71,7 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-        if (miQuery != null) {
+        if (miStartQuery != null) {
             setIconEnabled(s.length() != 0);
         }
     }
@@ -91,11 +91,11 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
 
     private void setIconEnabled(boolean enabled) {
         if (enabled) {
-            miQuery.setEnabled(true);
-            miQuery.getIcon().setAlpha(200);
+            miStartQuery.setEnabled(true);
+            miStartQuery.getIcon().setAlpha(200);
         } else {
-            miQuery.setEnabled(false);
-            miQuery.getIcon().setAlpha(50);
+            miStartQuery.setEnabled(false);
+            miStartQuery.getIcon().setAlpha(50);
         }
     }
 

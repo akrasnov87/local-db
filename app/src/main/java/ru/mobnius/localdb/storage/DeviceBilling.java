@@ -2,6 +2,7 @@ package ru.mobnius.localdb.storage;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;
 
@@ -11,9 +12,15 @@ public class DeviceBilling {
     @Id
     public String LINK;
 
+    @Property(nameInDb = "F_Registr_Pts")
     public String F_Registr_Pts;
+
+    @Property(nameInDb = "C_Serial_Number")
     public String C_Serial_Number;
+
+    @Property(nameInDb = "B_EE")
     public String B_EE;
+
     @Generated(hash = 181201448)
     public DeviceBilling(String LINK, String F_Registr_Pts, String C_Serial_Number,
             String B_EE) {

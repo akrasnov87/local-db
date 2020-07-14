@@ -1,18 +1,24 @@
 package ru.mobnius.localdb.request;
 
-import android.os.AsyncTask;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Names;
+import ru.mobnius.localdb.data.LoadAsyncTask;
+import ru.mobnius.localdb.data.OnResponseListener;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
@@ -24,8 +30,20 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     private final App mApp;
     private UrlReader mUrlReader;
+    private LoadAsyncTask mLoadAsyncTask;
+
     public SyncRequestListener(App app) {
         mApp = app;
+        BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(Names.CANCEL_TASK_TAG) && mLoadAsyncTask != null) {
+                    mLoadAsyncTask.cancel(false);
+                }
+            }
+        };
+        LocalBroadcastManager.getInstance(mApp).registerReceiver(
+                mMessageReceiver, new IntentFilter(Names.CANCEL_TASK_TAG));
     }
 
     @Override
@@ -50,9 +68,24 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 if (urlReader.getParam("restore") == null) {
                     PreferencesManager.getInstance().setProgress(null);
                 }
-                    new LoadAsyncTask(tableName, this, mApp).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-
-                response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+                if (mLoadAsyncTask == null) {
+                    mLoadAsyncTask = new LoadAsyncTask(tableName, this, mApp);
+                    mLoadAsyncTask.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                    response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+                } else {
+                    if (mLoadAsyncTask.isCancelled()) {
+                        mLoadAsyncTask = new LoadAsyncTask(tableName, this, mApp);
+                        mLoadAsyncTask.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                        response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+                    } else {
+                        String attention = "Подождите, завершается предыдущая синхронизация";
+                        mLoadAsyncTask.cancel(false);
+                        Intent intent = new Intent(Names.ASYNC_NOT_CANCELLED_TAG);
+                        intent.putExtra(Names.ASYNC_NOT_CANCELLED_TEXT, attention);
+                        LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
+                        response = Response.getErrorInstance(urlReader, attention, Response.RESULT_FAIL);
+                    }
+                }
             } else {
                 response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
             }

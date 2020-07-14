@@ -4,10 +4,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
+import android.os.Looper;
 
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.database.Database;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.annotation.Annotation;
@@ -84,7 +86,16 @@ public class StorageUtil {
                 if (cursor.getColumnName(i) != null) {
                     try {
                         if (cursor.getString(i) != null) {
-                            rowObject.put(cursor.getColumnName(i), cursor.getString(i));
+                            if (isJSONValid(cursor.getString(i))) {
+                                try {
+                                    JSONObject object = new JSONObject(cursor.getString(i));
+                                    rowObject.put(cursor.getColumnName(i), object);
+                                }catch (JSONException e){
+                                    Logger.error(e);
+                                }
+                            } else {
+                                rowObject.put(cursor.getColumnName(i), cursor.getString(i));
+                            }
                         } else {
                             rowObject.put(cursor.getColumnName(i), "");
                         }
@@ -141,9 +152,9 @@ public class StorageUtil {
                             db.execSQL(sqlInsert.convertToQuery(idx), values.toArray(new Object[0]));
                             db.setTransactionSuccessful();
                         } finally {
-                            try{
-                            db.endTransaction();
-                            }catch (IllegalStateException e){
+                            try {
+                                db.endTransaction();
+                            } catch (IllegalStateException e) {
                                 Logger.error(e);
                             }
                         }
@@ -159,9 +170,9 @@ public class StorageUtil {
                         db.execSQL(sqlInsert.convertToQuery(idx), values.toArray(new Object[0]));
                         db.setTransactionSuccessful();
                     } finally {
-                        try{
+                        try {
                             db.endTransaction();
-                        }catch (IllegalStateException e){
+                        } catch (IllegalStateException e) {
                             Logger.error(e);
                         }
                     }
@@ -170,8 +181,13 @@ public class StorageUtil {
         }
     }
 
-
-    public static String toSqlField(String column) {
-        return column.toUpperCase().replace("_", "__");
+    public static boolean isJSONValid(String test) {
+        try {
+            new JSONObject(test);
+        } catch (JSONException ex) {
+            return false;
+        }
+        return true;
     }
+
 }

@@ -55,7 +55,7 @@ public class MainActivity extends BaseActivity
         AvailableTimerTask.OnAvailableListener,
         View.OnClickListener,
         OnHttpListener,
-        DialogDownloadFragment.OnDownloadStorageListener{
+        DialogDownloadFragment.OnDownloadStorageListener {
 
     public static Intent getIntent(Context context) {
         return new Intent(context, MainActivity.class);
@@ -114,7 +114,13 @@ public class MainActivity extends BaseActivity
         }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter("ErrorMessage"));
+                mMessageReceiver, new IntentFilter(Names.ERROR_TAG));
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiver, new IntentFilter(Names.ASYNC_NOT_CANCELLED_TAG));
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiver, new IntentFilter(Names.ASYNC_CANCELLED_TAG));
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiver, new IntentFilter(Names.CANCEL_TASK_TAG));
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         //  alert(getString(R.string.android_8));
         // }
@@ -217,6 +223,8 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (DialogInterface.BUTTON_POSITIVE == which) {
+                            Intent intent = new Intent(Names.CANCEL_TASK_TAG);
+                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
                             PreferencesManager.getInstance().setProgress(null);
                             mUpdateFragment.stopProcess();
                         }
@@ -307,13 +315,31 @@ public class MainActivity extends BaseActivity
             }
         }
     }
+
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String message = intent.getStringExtra("Message");
-            svError.setVisibility(View.VISIBLE);
-            tvError.setText(message);
+            switch (Objects.requireNonNull(intent.getAction())) {
+                case Names.ERROR_TAG:
+                    svError.setVisibility(View.VISIBLE);
+                    tvError.setText(intent.getStringExtra(Names.ERROR_TEXT));
+                    break;
+                case Names.ASYNC_NOT_CANCELLED_TAG:
+                    svError.setVisibility(View.VISIBLE);
+                    tvError.setText(intent.getStringExtra(Names.ASYNC_NOT_CANCELLED_TEXT));
+                    if (mUpdateFragment != null && mUpdateFragment.isVisible()) {
+                        mUpdateFragment.stopProcess();
+                    }
+                    break;
+                case Names.ASYNC_CANCELLED_TAG:
+                    svError.setVisibility(View.GONE);
+                    break;
+                case Names.CANCEL_TASK_TAG:
+                    if (mUpdateFragment != null && mUpdateFragment.isVisible()) {
+                        mUpdateFragment.stopProcess();
+                    }
+                    break;
+            }
         }
     };
-
 }

@@ -2,6 +2,7 @@ package ru.mobnius.localdb.storage;
 
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
+import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;
 
@@ -10,8 +11,14 @@ import ru.mobnius.localdb.data.Storage;
 public class NetworkRoutes {
 
     public String LINK;
+
+    @Property(nameInDb = "F_Parent")
     public String F_Parent;
+
+    @Property(nameInDb = "C_Network_Path")
     public String C_Network_Path;
+
+    @Property(nameInDb = "F_Prev_Item_Types")
     public String F_Prev_Item_Types;
 
     @Generated(hash = 10540881)

@@ -111,7 +111,7 @@ public class HttpService extends Service
         mRequestListeners.add(new SyncRequestListener((App) getApplication()));
         mRequestListeners.add(new SyncStatusRequestListener((App) getApplication()));
         mRequestListeners.add(new AuthRequestListener());
-        mRequestListeners.add(new SyncStopRequestListener());
+        mRequestListeners.add(new SyncStopRequestListener((App) getApplication()));
         mRequestListeners.add(new TableRequestListener());
         mRequestListeners.add(new ErrorRequestListener());
         mRequestListeners.add(new InfoRequestListener(this));

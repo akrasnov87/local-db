@@ -18,6 +18,7 @@ public class RPCResult {
 
     /**
      * обработка JSONObject
+     *
      * @param obj объект для обработки данных
      * @return Возвращается объект
      */
@@ -31,7 +32,7 @@ public class RPCResult {
             meta.success = metaJSONObject.getBoolean("success");
             try {
                 meta.msg = metaJSONObject.getString("msg");
-            }catch (Exception ignored){
+            } catch (Exception ignored) {
 
             }
             result.meta = meta;
@@ -84,24 +85,31 @@ public class RPCResult {
 
     /**
      * создание экземпляра
+     *
      * @param requestResult результат запроса
      * @return обработанный объект
      */
     public static RPCResult[] createInstance(String requestResult) {
         try {
             RPCResult[] result;
-            if(requestResult.indexOf("[") ==0){
-                JSONArray array = new JSONArray(requestResult);
+            if (requestResult.indexOf("[") == 0) {
+                JSONArray array;
+                try {
+                    array = new JSONArray(requestResult);
+                } catch (JSONException e) {
+                    Logger.error(e);
+                    return null;
+                }
                 result = new RPCResult[array.length()];
-                for(int i = 0; i < array.length(); i++){
+                for (int i = 0; i < array.length(); i++) {
                     result[i] = processingJSONObject(array.getJSONObject(i));
                 }
-            }else {
+            } else {
                 result = new RPCResult[1];
                 result[0] = processingJSONObject(new JSONObject(requestResult));
             }
             return result;
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.error(e);
             return null;
         }

@@ -13,21 +13,24 @@ import java.io.File;
 
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
+import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.StorageUtil;
+import ru.mobnius.localdb.utils.UrlReader;
 
 /**
  * Загрузка данных с сервера
  */
 public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
+
     private final OnLoadListener mListener;
     @SuppressLint("StaticFieldLeak")
     private Context mContext;
     private final String mTableName;
-    private String isError = "";
+    private String errorMessage = "";
 
     public LoadAsyncTask(String tableName, OnLoadListener listener, Context context) {
         mListener = listener;
@@ -52,36 +55,45 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
         DaoSession daoSession = HttpService.getDaoSession();
 
         RPCResult[] results = rpc(mTableName, progress.current, size);
+        if (results == null) {
+            cancel(false);
+            return null;
+        }
         RPCResult result = results[0];
         int total = result.result.total;
         publishProgress(new Progress(progress.current, total, mTableName));
         try {
             StorageUtil.processing(daoSession, result, mTableName, removeBeforeInsert);
         } catch (SQLiteFullException | SQLiteConstraintException e) {
-            isError = e.getMessage();
+            errorMessage = e.getMessage();
             Logger.error(e);
+            cancel(true);
             return null;
         }
         for (int i = (progress.current + size); i < total; i += size) {
             if (PreferencesManager.getInstance().getProgress() == null) {
                 // значит принудительно все было остановлено
+                cancel(true);
                 break;
             }
             results = rpc(mTableName, i, size);
             if (results == null) {
+                cancel(true);
                 break;
             }
             result = results[0];
 
             File cacheDir = mContext.getCacheDir();
-            if (cacheDir.getUsableSpace() * 100 / cacheDir.getTotalSpace() <= 10) {
-                isError = "Ошибка: в хранилище телефона осталось свободно менее 10%. Удалось загрузить: " + i + " записей (очистите место и повторите загрузку)";
+            if (cacheDir.getUsableSpace() * 100 / cacheDir.getTotalSpace() <= 1) {
+                errorMessage = "Ошибка: в хранилище телефона осталось свободно менее 1%. Удалось загрузить: " + i + " записей (очистите место и повторите загрузку)";
+                cancel(false);
                 return null;
             } else {
                 try {
                     StorageUtil.processing(daoSession, result, mTableName, false);
                 } catch (SQLiteFullException | SQLiteConstraintException e) {
-                    isError = "Ошибка: недостаточно места в хранилище телефона. Удалось загрузить: " + i + " записей (" + e.getMessage() + ")";
+                    errorMessage = "Ошибка: недостаточно места в хранилище телефона. Удалось загрузить: " + i + " записей (" + e.getMessage() + ")";
+                    cancel(true);
                     return null;
                 }
             }
@@ -105,13 +117,20 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        if (!isError.isEmpty()) {
-            Intent intent = new Intent("ErrorMessage");
-            intent.putExtra("Message", isError);
+        if (!errorMessage.isEmpty()) {
+            Intent intent = new Intent(Names.ERROR_TAG);
+            intent.putExtra(Names.ERROR_TEXT, errorMessage);
             LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         }
         PreferencesManager.getInstance().setProgress(null);
         mListener.onLoadFinish(mTableName);
+    }
+
+    @Override
+    protected void onCancelled() {
+        super.onCancelled();
+        Intent intent = new Intent(Names.ASYNC_CANCELLED_TAG);
+        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
     }
 
     public interface OnLoadListener {

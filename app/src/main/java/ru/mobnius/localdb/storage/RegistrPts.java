@@ -3,6 +3,7 @@ package ru.mobnius.localdb.storage;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;
 
@@ -12,15 +13,20 @@ public class RegistrPts {
     @Id
     public String LINK;
 
+    @Property(nameInDb = "C_Name")
     public String C_Name;
-    public String N_code;
+
+    @Property(nameInDb = "N_Code")
+    public String N_Code;
+
+    @Property(nameInDb = "B_EE")
     public String B_EE;
 
-    @Generated(hash = 427330321)
-    public RegistrPts(String LINK, String C_Name, String N_code, String B_EE) {
+    @Generated(hash = 1259861301)
+    public RegistrPts(String LINK, String C_Name, String N_Code, String B_EE) {
         this.LINK = LINK;
         this.C_Name = C_Name;
-        this.N_code = N_code;
+        this.N_Code = N_Code;
         this.B_EE = B_EE;
     }
 
@@ -44,13 +50,6 @@ public class RegistrPts {
         this.C_Name = C_Name;
     }
 
-    public String getN_code() {
-        return this.N_code;
-    }
-
-    public void setN_code(String N_code) {
-        this.N_code = N_code;
-    }
 
     public String getB_EE() {
         return this.B_EE;
@@ -58,6 +57,14 @@ public class RegistrPts {
 
     public void setB_EE(String B_EE) {
         this.B_EE = B_EE;
+    }
+
+    public String getN_Code() {
+        return this.N_Code;
+    }
+
+    public void setN_Code(String N_Code) {
+        this.N_Code = N_Code;
     }
 
 }
