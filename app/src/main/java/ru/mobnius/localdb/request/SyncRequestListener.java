@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.data.LoadAsyncTask;
-import ru.mobnius.localdb.data.OnResponseListener;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Progress;
@@ -38,7 +37,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().equals(Names.CANCEL_TASK_TAG) && mLoadAsyncTask != null) {
-                    mLoadAsyncTask.cancel(false);
+                    mLoadAsyncTask.cancel(true);
                 }
             }
         };
@@ -79,7 +78,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
                         response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
                     } else {
                         String attention = "Подождите, завершается предыдущая синхронизация";
-                        mLoadAsyncTask.cancel(false);
+                        mLoadAsyncTask.cancel(true);
                         Intent intent = new Intent(Names.ASYNC_NOT_CANCELLED_TAG);
                         intent.putExtra(Names.ASYNC_NOT_CANCELLED_TEXT, attention);
                         LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
@@ -92,7 +91,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
         } else {
             response = Response.getErrorInstance(urlReader, "Не все параметры запроса указаны", Response.RESULT_FAIL);
         }
-
         return response;
     }
 

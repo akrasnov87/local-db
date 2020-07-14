@@ -2,7 +2,11 @@
 package ru.mobnius.localdb.request;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteDatabase;
 
+import org.greenrobot.greendao.database.Database;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -10,6 +14,7 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.UrlReader;
 import ru.mobnius.localdb.utils.VersionUtil;
@@ -42,7 +47,6 @@ public class InfoRequestListener extends AuthFilterRequestListener implements On
             meta.put("success", true);
 
             object.put("meta", meta);
-
             String version = VersionUtil.getVersionName(mContext);
             File f = mContext.getDatabasePath("local-db.db");
             long dbSize = f.length();

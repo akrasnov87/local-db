@@ -26,12 +26,22 @@ public class NetworkUtil {
             // Network is present and connected
             isAvailable = true;
         }
-        return isAvailable;
+        if (isAvailable) {
+            try {
+                InetAddress ipAddr = InetAddress.getByName("www.google.com");
+                return !ipAddr.equals("");
+
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return  false;
     }
 
     /**
      * Get IP address from first non-localhost interface
-     * @return  address or empty string
+     *
+     * @return address or empty string
      */
     public static String getIPv4Address() {
         try {
@@ -49,7 +59,8 @@ public class NetworkUtil {
                     }
                 }
             }
-        } catch (Exception ignored) { } // for now eat exceptions
+        } catch (Exception ignored) {
+        } // for now eat exceptions
         return "";
     }
 }
