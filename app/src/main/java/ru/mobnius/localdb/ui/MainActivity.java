@@ -66,6 +66,7 @@ public class MainActivity extends BaseActivity
     private Button btnStart;
     private Button btnStop;
     private TextView tvError;
+    private MenuItem miSyncDB;
     private ScrollView svError;
     private UpdateFragment mUpdateFragment;
     private DialogDownloadFragment mDialogDownloadFragment;
@@ -106,7 +107,11 @@ public class MainActivity extends BaseActivity
                 byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
                 if (bytes != null) {
                     message = new String(bytes);
+                    if (message.length()>2000){
+                        message = message.substring(0, 1000)+".........\n"+ message.substring(message.length()-1000, message.length()-1);
+                    }
                     message = "При последнем запуске приложения возникла следующая критическая ошибка:\n" + message;
+
                     tvError.setText(message);
                     svError.setVisibility(View.VISIBLE);
                 }
@@ -130,6 +135,7 @@ public class MainActivity extends BaseActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        miSyncDB = menu.findItem(R.id.action_fias);
         return true;
     }
 
@@ -154,7 +160,11 @@ public class MainActivity extends BaseActivity
         super.onResume();
         if (PreferencesManager.getInstance().getProgress() != null) {
             mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress());
+            setMenuItemVisible(false);
+        } else {
+            setMenuItemVisible(true);
         }
+
 
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
@@ -227,6 +237,7 @@ public class MainActivity extends BaseActivity
                             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
                             PreferencesManager.getInstance().setProgress(null);
                             mUpdateFragment.stopProcess();
+                            setMenuItemVisible(true);
                         }
                     }
                 });
@@ -252,6 +263,7 @@ public class MainActivity extends BaseActivity
     @Override
     public void onDownLoadFinish(String tableName, UrlReader reader) {
         mUpdateFragment.stopProcess();
+        setMenuItemVisible(true);
     }
 
     @Override
@@ -268,6 +280,7 @@ public class MainActivity extends BaseActivity
                         }
 
                         mUpdateFragment.startProcess();
+                        setMenuItemVisible(false);
                         startService(HttpService.getIntent(MainActivity.this, name.table));
                     }
                 }
@@ -342,4 +355,10 @@ public class MainActivity extends BaseActivity
             }
         }
     };
+
+    private void setMenuItemVisible(boolean visible) {
+        if (miSyncDB != null) {
+            miSyncDB.setVisible(visible);
+        }
+    }
 }

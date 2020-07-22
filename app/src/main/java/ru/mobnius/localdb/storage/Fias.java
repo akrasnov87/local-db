@@ -3,6 +3,7 @@ package ru.mobnius.localdb.storage;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;
@@ -18,6 +19,7 @@ public class Fias {
     public String F_Street;
 
     @Property(nameInDb = "C_Full_Address")
+    @Index
     public String C_Full_Address;
 
     @Property(nameInDb = "C_House_Number")

@@ -4,8 +4,13 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.Socket;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,17 +31,11 @@ public class NetworkUtil {
             // Network is present and connected
             isAvailable = true;
         }
-        if (isAvailable) {
-            try {
-                InetAddress ipAddr = InetAddress.getByName("www.google.com");
-                return !ipAddr.equals("");
 
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return  false;
+        return isAvailable;
     }
+
+
 
     /**
      * Get IP address from first non-localhost interface

@@ -1,9 +1,21 @@
 package ru.mobnius.localdb.request;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
+import ru.mobnius.localdb.Logger;
+import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
@@ -17,9 +29,25 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
         implements OnRequestListener {
 
     private final App mApp;
+    private String message = "";
 
     public SyncStatusRequestListener(App app) {
         mApp = app;
+        BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(Names.ERROR_TAG)) {
+                    message = intent.getStringExtra(Names.ERROR_TEXT);
+                    if (message.length()>100){
+                        message = message.substring(0, 100);
+                    }
+                    message = "В LocalDB произошла ошибка: "+ message +"... Попробуйте повторить синхронизацию";
+
+                }
+            }
+        };
+        LocalBroadcastManager.getInstance(mApp).registerReceiver(
+                mMessageReceiver, new IntentFilter(Names.ERROR_TAG));
     }
 
     @Override
@@ -32,12 +60,29 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
     @Override
     public Response getResponse(UrlReader urlReader) {
         Response response = super.getResponse(urlReader);
-        if(response != null) {
+        if (response != null) {
             return response;
         }
+        if (!message.isEmpty()){
 
-        if(PreferencesManager.getInstance().getProgress() != null) {
-            if(NetworkUtil.isNetworkAvailable(mApp)) {
+            try {
+                JSONObject object = new JSONObject();
+                JSONObject meta = new JSONObject();
+                JSONObject error = new JSONObject();
+
+                meta.put("success", true);
+                error.put("ldberror", message);
+                object.put("meta", meta);
+                object.put("result", error);
+                response = Response.getInstance(urlReader, object.toString());
+                message = "";
+                return response;
+            } catch (JSONException e) {
+                Logger.error(e);
+            }
+        }
+        if (PreferencesManager.getInstance().getProgress() != null) {
+            if (NetworkUtil.isNetworkAvailable(mApp)) {
                 ProgressResult progressResult = ProgressResult.getInstance(PreferencesManager.getInstance().getProgress());
                 response = Response.getInstance(urlReader, progressResult.toJsonString());
             } else {

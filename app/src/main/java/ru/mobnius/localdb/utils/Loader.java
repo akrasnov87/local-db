@@ -109,7 +109,10 @@ public class Loader {
             urlConnection.setConnectTimeout(SERVER_CONNECTION_TIMEOUT);
 
             urlConnection.getOutputStream().write(postData);
-
+            int status = urlConnection.getResponseCode();
+            if (status/100 == 4 || status/100 == 5){
+                return null;
+            }
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
             Scanner s = new Scanner(in).useDelimiter("\\A");
             String serverResult = s.hasNext() ? s.next() : "";

@@ -1,6 +1,7 @@
 package ru.mobnius.localdb;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ru.mobnius.localdb.data.AvailableTimerTask;
+import ru.mobnius.localdb.data.ConnectionChecker;
 import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.PreferencesManager;
@@ -29,6 +31,7 @@ public class App extends Application implements
         OnExceptionIntercept {
 
     private AutoRunReceiver mAutoRunReceiver;
+    private ConnectionChecker mConnectionReceiver;
 
     private List<OnLogListener> mLogListeners;
     private List<AvailableTimerTask.OnAvailableListener> mAvailableListeners;
@@ -45,6 +48,9 @@ public class App extends Application implements
         mHttpListeners = new ArrayList<>();
 
         PreferencesManager.createInstance(this, PreferencesManager.NAME);
+
+        mConnectionReceiver = new ConnectionChecker();
+        registerReceiver(mConnectionReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
         mAutoRunReceiver = new AutoRunReceiver();
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -75,6 +81,9 @@ public class App extends Application implements
     public void unRegistryAvailableListener(AvailableTimerTask.OnAvailableListener listener) {
         mAvailableListeners.remove(listener);
     }
+    public ConnectionChecker getConnectionReceiver(){
+        return mConnectionReceiver;
+    }
 
     @Override
     public void onAddLog(LogItem item) {
@@ -93,7 +102,8 @@ public class App extends Application implements
     @Override
     public void onTerminate() {
         Log.d(Names.TAG, "Остановка приложения");
-        unregisterReceiver(mAutoRunReceiver);
+        unregisterReceiver( mAutoRunReceiver);
+        unregisterReceiver( mConnectionReceiver);
         super.onTerminate();
     }
 

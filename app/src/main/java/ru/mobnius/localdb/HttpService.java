@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat;
 import java.util.ArrayList;
 import java.util.List;
 
+import ru.mobnius.localdb.data.ConnectionChecker;
 import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.OnResponseListener;

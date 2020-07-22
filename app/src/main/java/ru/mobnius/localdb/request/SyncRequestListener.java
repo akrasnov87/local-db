@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Names;
+import ru.mobnius.localdb.data.ConnectionChecker;
 import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.DefaultResult;
@@ -25,19 +26,22 @@ import ru.mobnius.localdb.utils.UrlReader;
  * запуск синхронизации
  */
 public class SyncRequestListener extends AuthFilterRequestListener
-        implements LoadAsyncTask.OnLoadListener {
+        implements LoadAsyncTask.OnLoadListener, ConnectionChecker.CheckConnection {
 
     private final App mApp;
     private UrlReader mUrlReader;
     private LoadAsyncTask mLoadAsyncTask;
+    private String mTableName;
 
     public SyncRequestListener(App app) {
         mApp = app;
+        mApp.getConnectionReceiver().setListener(this);
         BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().equals(Names.CANCEL_TASK_TAG) && mLoadAsyncTask != null) {
                     mLoadAsyncTask.cancel(true);
+                    mLoadAsyncTask = null;
                 }
             }
         };
@@ -72,18 +76,13 @@ public class SyncRequestListener extends AuthFilterRequestListener
                     mLoadAsyncTask.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                     response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
                 } else {
-                    if (mLoadAsyncTask.isCancelled()) {
-                        mLoadAsyncTask = new LoadAsyncTask(tableName, this, mApp);
-                        mLoadAsyncTask.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-                        response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
-                    } else {
-                        String attention = "Подождите, завершается предыдущая синхронизация";
-                        mLoadAsyncTask.cancel(true);
-                        Intent intent = new Intent(Names.ASYNC_NOT_CANCELLED_TAG);
-                        intent.putExtra(Names.ASYNC_NOT_CANCELLED_TEXT, attention);
-                        LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
-                        response = Response.getErrorInstance(urlReader, attention, Response.RESULT_FAIL);
-                    }
+                    String attention = "Подождите, завершается предыдущая синхронизация";
+                    mLoadAsyncTask.cancel(true);
+                    mLoadAsyncTask = null;
+                    Intent intent = new Intent(Names.ASYNC_NOT_CANCELLED_TAG);
+                    intent.putExtra(Names.ASYNC_NOT_CANCELLED_TEXT, attention);
+                    LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
+                    response = Response.getErrorInstance(urlReader, attention, Response.RESULT_FAIL);
                 }
             } else {
                 response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
@@ -103,5 +102,26 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
+        mLoadAsyncTask.cancel(true);
+        mLoadAsyncTask = null;
+        mTableName = "";
     }
+
+    @Override
+    public void onConnectionChange(boolean isConnected) {
+        if (!isConnected) {
+            if (mLoadAsyncTask != null) {
+                mTableName = mLoadAsyncTask.getTableName();
+                mLoadAsyncTask.cancel(true);
+                mLoadAsyncTask = null;
+            }
+        } else {
+            if (mTableName != null && !mTableName.isEmpty()) {
+                mLoadAsyncTask = new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp);
+                mLoadAsyncTask.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                mTableName = "";
+            }
+        }
+    }
+
 }
