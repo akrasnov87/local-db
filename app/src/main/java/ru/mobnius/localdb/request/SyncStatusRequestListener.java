@@ -10,12 +10,14 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.Names;
+import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
@@ -36,9 +38,9 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
         BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(Names.ERROR_TAG)) {
-                    message = intent.getStringExtra(Names.ERROR_TEXT);
-                    if (message.length()>100){
+                if (Objects.equals(intent.getAction(), Tags.ERROR_TAG)) {
+                    message = intent.getStringExtra(Tags.ERROR_TEXT);
+                    if (message != null && message.length() > 100) {
                         message = message.substring(0, 100);
                     }
                     message = "В LocalDB произошла ошибка: "+ message +"... Попробуйте повторить синхронизацию";
@@ -47,7 +49,7 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
             }
         };
         LocalBroadcastManager.getInstance(mApp).registerReceiver(
-                mMessageReceiver, new IntentFilter(Names.ERROR_TAG));
+                mMessageReceiver, new IntentFilter(Tags.ERROR_TAG));
     }
 
     @Override

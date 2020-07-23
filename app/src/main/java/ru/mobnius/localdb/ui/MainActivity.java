@@ -31,6 +31,7 @@ import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
+import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.adapter.LogAdapter;
 import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.BaseActivity;
@@ -119,13 +120,13 @@ public class MainActivity extends BaseActivity
         }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter(Names.ERROR_TAG));
+                mMessageReceiver, new IntentFilter(Tags.ERROR_TAG));
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter(Names.ASYNC_NOT_CANCELLED_TAG));
+                mMessageReceiver, new IntentFilter(Tags.ASYNC_NOT_CANCELLED_TAG));
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter(Names.ASYNC_CANCELLED_TAG));
+                mMessageReceiver, new IntentFilter(Tags.ASYNC_CANCELLED_TAG));
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter(Names.CANCEL_TASK_TAG));
+                mMessageReceiver, new IntentFilter(Tags.CANCEL_TASK_TAG));
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         //  alert(getString(R.string.android_8));
         // }
@@ -233,7 +234,7 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (DialogInterface.BUTTON_POSITIVE == which) {
-                            Intent intent = new Intent(Names.CANCEL_TASK_TAG);
+                            Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
                             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
                             PreferencesManager.getInstance().setProgress(null);
                             mUpdateFragment.stopProcess();
@@ -333,21 +334,21 @@ public class MainActivity extends BaseActivity
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (Objects.requireNonNull(intent.getAction())) {
-                case Names.ERROR_TAG:
+                case Tags.ERROR_TAG:
                     svError.setVisibility(View.VISIBLE);
-                    tvError.setText(intent.getStringExtra(Names.ERROR_TEXT));
+                    tvError.setText(intent.getStringExtra(Tags.ERROR_TEXT));
                     break;
-                case Names.ASYNC_NOT_CANCELLED_TAG:
+                case Tags.ASYNC_NOT_CANCELLED_TAG:
                     svError.setVisibility(View.VISIBLE);
-                    tvError.setText(intent.getStringExtra(Names.ASYNC_NOT_CANCELLED_TEXT));
+                    tvError.setText(intent.getStringExtra(Tags.ASYNC_NOT_CANCELLED_TEXT));
                     if (mUpdateFragment != null && mUpdateFragment.isVisible()) {
                         mUpdateFragment.stopProcess();
                     }
                     break;
-                case Names.ASYNC_CANCELLED_TAG:
+                case Tags.ASYNC_CANCELLED_TAG:
                     svError.setVisibility(View.GONE);
                     break;
-                case Names.CANCEL_TASK_TAG:
+                case Tags.CANCEL_TASK_TAG:
                     if (mUpdateFragment != null && mUpdateFragment.isVisible()) {
                         mUpdateFragment.stopProcess();
                     }

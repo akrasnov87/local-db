@@ -8,7 +8,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ru.mobnius.localdb.Names;
+import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
@@ -34,7 +34,7 @@ public class SyncStopRequestListener extends AuthFilterRequestListener
 
     @Override
     public Response getResponse(UrlReader urlReader) {
-        Intent intent = new Intent(Names.CANCEL_TASK_TAG);
+        Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
         LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         Response response = super.getResponse(urlReader);
         if(response != null) {

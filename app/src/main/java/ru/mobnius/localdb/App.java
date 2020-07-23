@@ -1,7 +1,6 @@
 package ru.mobnius.localdb;
 
 import android.app.Application;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;

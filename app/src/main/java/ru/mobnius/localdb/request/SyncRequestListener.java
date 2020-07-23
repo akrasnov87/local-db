@@ -1,9 +1,6 @@
 package ru.mobnius.localdb.request;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -13,6 +10,7 @@ import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Names;
+import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.ConnectionChecker;
 import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
@@ -30,23 +28,11 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     private final App mApp;
     private UrlReader mUrlReader;
-    private LoadAsyncTask mLoadAsyncTask;
     private String mTableName;
 
     public SyncRequestListener(App app) {
         mApp = app;
         mApp.getConnectionReceiver().setListener(this);
-        BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(Names.CANCEL_TASK_TAG) && mLoadAsyncTask != null) {
-                    mLoadAsyncTask.cancel(true);
-                    mLoadAsyncTask = null;
-                }
-            }
-        };
-        LocalBroadcastManager.getInstance(mApp).registerReceiver(
-                mMessageReceiver, new IntentFilter(Names.CANCEL_TASK_TAG));
     }
 
     @Override
@@ -66,24 +52,19 @@ public class SyncRequestListener extends AuthFilterRequestListener
         mUrlReader = urlReader;
         // TODO: 17.06.2020 нужно достать из запроса логин и пароль
         String tableName = urlReader.getParam("table");
+        mTableName = tableName;
         if (tableName != null) {
             if (NetworkUtil.isNetworkAvailable(mApp)) {
                 if (urlReader.getParam("restore") == null) {
                     PreferencesManager.getInstance().setProgress(null);
                 }
-                if (mLoadAsyncTask == null) {
-                    mLoadAsyncTask = new LoadAsyncTask(tableName, this, mApp);
-                    mLoadAsyncTask.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-                    response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
-                } else {
-                    String attention = "Подождите, завершается предыдущая синхронизация";
-                    mLoadAsyncTask.cancel(true);
-                    mLoadAsyncTask = null;
-                    Intent intent = new Intent(Names.ASYNC_NOT_CANCELLED_TAG);
-                    intent.putExtra(Names.ASYNC_NOT_CANCELLED_TEXT, attention);
-                    LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
-                    response = Response.getErrorInstance(urlReader, attention, Response.RESULT_FAIL);
-                }
+                Intent intent1 = new Intent(Tags.CANCEL_TASK_TAG);
+                LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent1);
+                Intent intent = new Intent(Tags.ASYNC_NOT_CANCELLED_TAG);
+                intent.putExtra(Tags.ASYNC_NOT_CANCELLED_TEXT, "Заканчивается предыдущая синхронизация");
+                LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
+                new LoadAsyncTask(tableName, this, mApp).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
             } else {
                 response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
             }
@@ -102,24 +83,18 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
-        mLoadAsyncTask.cancel(true);
-        mLoadAsyncTask = null;
         mTableName = "";
     }
 
     @Override
     public void onConnectionChange(boolean isConnected) {
         if (!isConnected) {
-            if (mLoadAsyncTask != null) {
-                mTableName = mLoadAsyncTask.getTableName();
-                mLoadAsyncTask.cancel(true);
-                mLoadAsyncTask = null;
-            }
+            Intent intent1 = new Intent(Tags.CANCEL_TASK_TAG);
+            LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent1);
         } else {
             if (mTableName != null && !mTableName.isEmpty()) {
-                mLoadAsyncTask = new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp);
-                mLoadAsyncTask.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-                mTableName = "";
+                new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp)
+                        .execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
             }
         }
     }
