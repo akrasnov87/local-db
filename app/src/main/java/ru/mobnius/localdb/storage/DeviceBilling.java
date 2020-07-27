@@ -2,6 +2,7 @@ package ru.mobnius.localdb.storage;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;
@@ -10,6 +11,9 @@ import ru.mobnius.localdb.data.Storage;
 @Storage(description = "Приборы", table = "ED_Device_Billing")
 public class DeviceBilling {
     @Id
+    @Index
+    public Long id;
+
     public String LINK;
 
     @Property(nameInDb = "F_Registr_Pts")
@@ -21,9 +25,10 @@ public class DeviceBilling {
     @Property(nameInDb = "B_EE")
     public String B_EE;
 
-    @Generated(hash = 181201448)
-    public DeviceBilling(String LINK, String F_Registr_Pts, String C_Serial_Number,
-            String B_EE) {
+    @Generated(hash = 69085697)
+    public DeviceBilling(Long id, String LINK, String F_Registr_Pts,
+            String C_Serial_Number, String B_EE) {
+        this.id = id;
         this.LINK = LINK;
         this.F_Registr_Pts = F_Registr_Pts;
         this.C_Serial_Number = C_Serial_Number;
@@ -55,5 +60,11 @@ public class DeviceBilling {
     }
     public void setB_EE(String B_EE) {
         this.B_EE = B_EE;
+    }
+    public Long getId() {
+        return this.id;
+    }
+    public void setId(Long id) {
+        this.id = id;
     }
 }

@@ -52,9 +52,12 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, String> {
     @Override
     protected String doInBackground(String... strings) {
         String message = "";
-        if (!isCancelled()) {
             Loader loader = Loader.getInstance();
-            loader.auth(strings[0], strings[1]);
+            boolean isAuthorized  = loader.auth(strings[0], strings[1]);
+            if (!isAuthorized){
+                message = "Неудалось получить ответ от сервера. Возможно пароль введен неверно, попробуйте авторизоваться повторно";
+                return message;
+            }
             // нужно ли просто добавлять или удалить все, а затем заливать
             boolean removeBeforeInsert = PreferencesManager.getInstance().getProgress() == null;
 
@@ -66,13 +69,15 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, String> {
             publishProgress(progress);
 
             DaoSession daoSession = HttpService.getDaoSession();
-            RPCResult[] results = null;
+            RPCResult[] results;
             try {
                 results = rpc(mTableName, progress.current, size);
             } catch (FileNotFoundException e) {
                 Logger.error(e);
                 message = e.getMessage();
+                return message;
             }
+
             if (results == null) {
                 message = "Не удалось установить соединение с сервером при старте загрузки";
                 return message;
@@ -127,8 +132,6 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, String> {
                 publishProgress(new Progress(i, total, mTableName));
             }
             return message;
-        }
-        return "Завершается предыдущая загрузка";
     }
 
     private RPCResult[] rpc(String tableName, int start, int limit) throws FileNotFoundException {
@@ -159,16 +162,6 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, String> {
         mListener.onLoadFinish(mTableName);
     }
 
-    @Override
-    protected void onCancelled() {
-        super.onCancelled();
-        Intent intent = new Intent(Tags.ASYNC_CANCELLED_TAG);
-        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-    }
-
-    public String getTableName() {
-        return mTableName;
-    }
 
     public interface OnLoadListener {
         /**

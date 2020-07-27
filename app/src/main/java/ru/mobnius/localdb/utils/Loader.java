@@ -43,7 +43,8 @@ public class Loader {
 
     }
 
-    public void auth(String login, String password) {
+    public boolean auth(String login, String password) {
+        boolean authSuccess = false;
         try {
             String urlParams = String.format("UserName=%s&Password=%s", login, password);
             byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
@@ -60,7 +61,12 @@ public class Loader {
                 urlConnection.setInstanceFollowRedirects(false);
                 urlConnection.setUseCaches(false);
                 urlConnection.getOutputStream().write(postData);
-
+                int status = urlConnection.getResponseCode();
+                if (status/100 == 4 || status/100 == 5){
+                    return false;
+                }else {
+                    authSuccess = true;
+                }
                 InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                 Scanner s = new Scanner(in).useDelimiter("\\A");
                 String responseText = s.hasNext() ? s.next() : "";
@@ -78,6 +84,7 @@ public class Loader {
         } catch (Exception ignored) {
 
         }
+        return authSuccess;
     }
 
     /**

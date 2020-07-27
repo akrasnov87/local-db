@@ -122,8 +122,6 @@ public class MainActivity extends BaseActivity
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 mMessageReceiver, new IntentFilter(Tags.ERROR_TAG));
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter(Tags.ASYNC_NOT_CANCELLED_TAG));
-        LocalBroadcastManager.getInstance(this).registerReceiver(
                 mMessageReceiver, new IntentFilter(Tags.ASYNC_CANCELLED_TAG));
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 mMessageReceiver, new IntentFilter(Tags.CANCEL_TASK_TAG));
@@ -165,7 +163,9 @@ public class MainActivity extends BaseActivity
         } else {
             setMenuItemVisible(true);
         }
-
+        if(mUpdateFragment.isVisible()){
+            setMenuItemVisible(false);
+        }
 
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
@@ -337,13 +337,6 @@ public class MainActivity extends BaseActivity
                 case Tags.ERROR_TAG:
                     svError.setVisibility(View.VISIBLE);
                     tvError.setText(intent.getStringExtra(Tags.ERROR_TEXT));
-                    break;
-                case Tags.ASYNC_NOT_CANCELLED_TAG:
-                    svError.setVisibility(View.VISIBLE);
-                    tvError.setText(intent.getStringExtra(Tags.ASYNC_NOT_CANCELLED_TEXT));
-                    if (mUpdateFragment != null && mUpdateFragment.isVisible()) {
-                        mUpdateFragment.stopProcess();
-                    }
                     break;
                 case Tags.ASYNC_CANCELLED_TAG:
                     svError.setVisibility(View.GONE);

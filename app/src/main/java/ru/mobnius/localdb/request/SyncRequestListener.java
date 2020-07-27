@@ -1,6 +1,7 @@
 package ru.mobnius.localdb.request;
 
 import android.content.Intent;
+import android.os.Handler;
 import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -28,7 +29,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     private final App mApp;
     private UrlReader mUrlReader;
-    private String mTableName;
+    private String mTableName ="";
 
     public SyncRequestListener(App app) {
         mApp = app;
@@ -58,11 +59,8 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 if (urlReader.getParam("restore") == null) {
                     PreferencesManager.getInstance().setProgress(null);
                 }
-                Intent intent1 = new Intent(Tags.CANCEL_TASK_TAG);
-                LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent1);
-                Intent intent = new Intent(Tags.ASYNC_NOT_CANCELLED_TAG);
-                intent.putExtra(Tags.ASYNC_NOT_CANCELLED_TEXT, "Заканчивается предыдущая синхронизация");
-                LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
+                Intent cancelPreviousTask = new Intent(Tags.CANCEL_TASK_TAG);
+                LocalBroadcastManager.getInstance(mApp).sendBroadcast(cancelPreviousTask);
                 new LoadAsyncTask(tableName, this, mApp).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                 response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
             } else {
@@ -83,6 +81,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
+        PreferencesManager.getInstance().setProgress(null);
         mTableName = "";
     }
 
@@ -92,9 +91,14 @@ public class SyncRequestListener extends AuthFilterRequestListener
             Intent intent1 = new Intent(Tags.CANCEL_TASK_TAG);
             LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent1);
         } else {
-            if (mTableName != null && !mTableName.isEmpty()) {
-                new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp)
-                        .execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+            if (!mTableName.isEmpty()) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp)
+                                .execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                    }
+                }, 7000);
             }
         }
     }

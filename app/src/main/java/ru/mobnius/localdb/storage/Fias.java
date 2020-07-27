@@ -12,7 +12,12 @@ import ru.mobnius.localdb.data.Storage;
 @Entity(nameInDb = "UI_SV_FIAS")
 @Storage(description = "ФИАС", table = "UI_SV_FIAS")
 public class Fias {
+
+
     @Id
+    @Index
+    public Long id;
+
     public String LINK;
 
     @Property(nameInDb = "F_Street")
@@ -31,9 +36,10 @@ public class Fias {
     public Fias() {
     }
 
-    @Generated(hash = 1534843169)
-    public Fias(String LINK, String F_Street, String C_Full_Address,
+    @Generated(hash = 141554181)
+    public Fias(Long id, String LINK, String F_Street, String C_Full_Address,
             String C_House_Number, String C_Building_Number) {
+        this.id = id;
         this.LINK = LINK;
         this.F_Street = F_Street;
         this.C_Full_Address = C_Full_Address;
@@ -79,5 +85,13 @@ public class Fias {
 
     public void setC_Building_Number(String C_Building_Number) {
         this.C_Building_Number = C_Building_Number;
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

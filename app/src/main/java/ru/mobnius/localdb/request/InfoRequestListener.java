@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 
+import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.database.Database;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -54,11 +55,14 @@ public class InfoRequestListener extends AuthFilterRequestListener implements On
             JSONArray array = new JSONArray();
             data.put("db_size", dbSizeInMB);
             data.put("version", version);
+            for (AbstractDao dao:HttpService.getDaoSession().getAllDaos()) {
+                long count = dao.count();
+                data.put(dao.getTablename(), dao.count());
+            }
             array.put(data);
             JSONObject result = new JSONObject();
             result.put("records", array);
             object.put("result", result);
-
             response = Response.getInstance(urlReader, object.toString());
         } catch (Exception e) {
             response = Response.getErrorInstance(urlReader, e.getMessage(), Response.RESULT_FAIL);

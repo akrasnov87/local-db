@@ -74,6 +74,7 @@ public class StorageUtil {
      * @param query    запрос
      * @return объект JSON
      */
+
     public static JSONArray getResults(Database database, String query) {
         Cursor cursor = database.rawQuery(query, null);
         JSONArray resultSet = new JSONArray();
@@ -110,6 +111,7 @@ public class StorageUtil {
         cursor.close();
         return resultSet;
     }
+
 
     @SuppressWarnings("rawtypes")
     public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert) throws SQLiteFullException, SQLiteConstraintException {
