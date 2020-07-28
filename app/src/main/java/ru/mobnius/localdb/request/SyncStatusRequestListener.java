@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Logger;
-import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;

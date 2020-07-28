@@ -1,6 +1,8 @@
 package ru.mobnius.localdb.request;
 
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 
@@ -29,7 +31,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     private final App mApp;
     private UrlReader mUrlReader;
-    private String mTableName ="";
+    private String mTableName = "";
 
     public SyncRequestListener(App app) {
         mApp = app;
@@ -95,8 +97,8 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp)
-                                .execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                        new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp).
+                                executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                     }
                 }, 7000);
             }

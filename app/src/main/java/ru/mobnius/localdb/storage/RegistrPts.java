@@ -14,8 +14,6 @@ public class RegistrPts {
 
     @Id
     @Index
-    public Long id;
-
     public String LINK;
 
     @Property(nameInDb = "C_Name")
@@ -27,10 +25,8 @@ public class RegistrPts {
     @Property(nameInDb = "B_EE")
     public String B_EE;
 
-    @Generated(hash = 356838656)
-    public RegistrPts(Long id, String LINK, String C_Name, String N_Code,
-            String B_EE) {
-        this.id = id;
+    @Generated(hash = 1259861301)
+    public RegistrPts(String LINK, String C_Name, String N_Code, String B_EE) {
         this.LINK = LINK;
         this.C_Name = C_Name;
         this.N_Code = N_Code;
@@ -73,13 +69,4 @@ public class RegistrPts {
     public void setN_Code(String N_Code) {
         this.N_Code = N_Code;
     }
-
-    public Long getId() {
-        return this.id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
 }

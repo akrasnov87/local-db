@@ -2,6 +2,7 @@ package ru.mobnius.localdb.storage;
 
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
+import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;
@@ -10,6 +11,7 @@ import ru.mobnius.localdb.data.Storage;
 @Storage(description = "Схема Сети", table = "ED_Network_Routes")
 public class NetworkRoutes {
 
+    @Index
     public String LINK;
 
     @Property(nameInDb = "F_Parent")

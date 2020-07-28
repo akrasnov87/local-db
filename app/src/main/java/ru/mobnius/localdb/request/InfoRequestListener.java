@@ -2,12 +2,8 @@
 package ru.mobnius.localdb.request;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.database.sqlite.SQLiteDatabase;
 
 import org.greenrobot.greendao.AbstractDao;
-import org.greenrobot.greendao.database.Database;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
