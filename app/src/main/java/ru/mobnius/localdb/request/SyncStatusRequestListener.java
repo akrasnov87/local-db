@@ -30,7 +30,8 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
         implements OnRequestListener {
 
     private final App mApp;
-    private String message = "";
+    private String errorMessage = "";
+    private String rowCountMessage = "";
 
     public SyncStatusRequestListener(App app) {
         mApp = app;
@@ -38,17 +39,21 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (Objects.equals(intent.getAction(), Tags.ERROR_TAG)) {
-                    message = intent.getStringExtra(Tags.ERROR_TEXT);
-                    if (message != null && message.length() > 100) {
-                        message = message.substring(0, 100);
+                    errorMessage = intent.getStringExtra(Tags.ERROR_TEXT);
+                    if (errorMessage != null && errorMessage.length() > 100) {
+                        errorMessage = errorMessage.substring(0, 100);
                     }
-                    message = "В LocalDB произошла ошибка: "+ message +"... Попробуйте повторить синхронизацию";
-
+                    errorMessage = "В LocalDB произошла ошибка: "+ errorMessage +"... Попробуйте повторить синхронизацию";
+                }
+                if (Objects.equals(intent.getAction(), Tags.COUNT_TAG)){
+                   rowCountMessage = intent.getStringExtra(Tags.COUNT_TEXT);
                 }
             }
         };
         LocalBroadcastManager.getInstance(mApp).registerReceiver(
                 mMessageReceiver, new IntentFilter(Tags.ERROR_TAG));
+        LocalBroadcastManager.getInstance(mApp).registerReceiver(
+                mMessageReceiver, new IntentFilter(Tags.COUNT_TAG));
     }
 
     @Override
@@ -64,7 +69,7 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
         if (response != null) {
             return response;
         }
-        if (!message.isEmpty()){
+        if (!errorMessage.isEmpty()){
 
             try {
                 JSONObject object = new JSONObject();
@@ -72,11 +77,28 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
                 JSONObject error = new JSONObject();
 
                 meta.put("success", true);
-                error.put("ldberror", message);
+                error.put("ldberror", errorMessage);
                 object.put("meta", meta);
                 object.put("result", error);
                 response = Response.getInstance(urlReader, object.toString());
-                message = "";
+                errorMessage = "";
+                return response;
+            } catch (JSONException e) {
+                Logger.error(e);
+            }
+        }
+        if(!rowCountMessage.isEmpty()){
+            try {
+                JSONObject object = new JSONObject();
+                JSONObject meta = new JSONObject();
+                JSONObject error = new JSONObject();
+
+                meta.put("success", true);
+                error.put("count", rowCountMessage);
+                object.put("meta", meta);
+                object.put("result", error);
+                response = Response.getInstance(urlReader, object.toString());
+                rowCountMessage = "";
                 return response;
             } catch (JSONException e) {
                 Logger.error(e);

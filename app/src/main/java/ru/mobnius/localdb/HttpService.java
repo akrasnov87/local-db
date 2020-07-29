@@ -28,6 +28,7 @@ import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.request.AuthRequestListener;
+import ru.mobnius.localdb.request.CountQueryListener;
 import ru.mobnius.localdb.request.DefaultRequestListener;
 import ru.mobnius.localdb.request.ErrorRequestListener;
 import ru.mobnius.localdb.request.InfoRequestListener;
@@ -116,6 +117,7 @@ public class HttpService extends Service
         mRequestListeners.add(new TableRequestListener());
         mRequestListeners.add(new ErrorRequestListener());
         mRequestListeners.add(new InfoRequestListener(this));
+        mRequestListeners.add(new CountQueryListener());
 
         sHttpServerThread = new HttpServerThread(this);
         sHttpServerThread.start();
@@ -162,6 +164,7 @@ public class HttpService extends Service
         return Service.START_STICKY;
     }
 
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -191,6 +194,7 @@ public class HttpService extends Service
         ((App) getApplication()).onHttpResponse(defaultResponse);
         return defaultResponse;
     }
+
 
     @Override
     public void onAddLog(LogItem item) {

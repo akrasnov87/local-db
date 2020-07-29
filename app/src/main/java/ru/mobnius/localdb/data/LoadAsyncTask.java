@@ -32,11 +32,13 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, String> {
     @SuppressLint("StaticFieldLeak")
     private Context mContext;
     private final String mTableName;
+    private boolean mRemoveBeforeInsert;
 
-    public LoadAsyncTask(String tableName, OnLoadListener listener, Context context) {
+    public LoadAsyncTask(String tableName, OnLoadListener listener, Context context, boolean removeBeforeInsert) {
         mListener = listener;
         mTableName = tableName;
         mContext = context;
+        mRemoveBeforeInsert = removeBeforeInsert;
         BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -60,7 +62,9 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, String> {
             }
             // нужно ли просто добавлять или удалить все, а затем заливать
             boolean removeBeforeInsert = PreferencesManager.getInstance().getProgress() == null;
-
+            if (mRemoveBeforeInsert){
+                removeBeforeInsert = true;
+            }
             int size = PreferencesManager.getInstance().getSize();
             Progress progress = PreferencesManager.getInstance().getProgress() != null ? PreferencesManager.getInstance().getProgress() : new Progress(0, 1, mTableName);
             if (!removeBeforeInsert) {

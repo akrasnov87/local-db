@@ -6,8 +6,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -120,10 +122,16 @@ public class Loader {
             if (status/100 == 4 || status/100 == 5){
                 return null;
             }
-            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-            Scanner s = new Scanner(in).useDelimiter("\\A");
-            String serverResult = s.hasNext() ? s.next() : "";
-            return RPCResult.createInstance(serverResult);
+            InputStream stream = urlConnection.getInputStream();
+            InputStreamReader reader = new InputStreamReader(stream);
+            BufferedReader br = new BufferedReader(reader);
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line+"\n");
+            }
+            br.close();
+            return RPCResult.createInstance(sb.toString());
         } catch (IOException e) {
             Logger.error(e);
         } finally {
