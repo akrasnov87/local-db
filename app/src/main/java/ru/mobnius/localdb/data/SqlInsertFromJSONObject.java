@@ -48,7 +48,7 @@ public class SqlInsertFromJSONObject{
      * @param count количество
      * @return возвращается запрос
      */
-    public String convertToQuery(int count) {
+    public String convertToQuery(int count, String [] pkColumns) {
         StringBuilder builder = new StringBuilder();
         for (String field : fields) {
             builder.append(field).append(",");
@@ -57,6 +57,10 @@ public class SqlInsertFromJSONObject{
         StringBuilder paramsBuilder = new StringBuilder();
         for(int i = 0; i < count; i++) {
             paramsBuilder.append("(").append(params).append("),");
+        }
+        String insertString = "INSERT INTO ";
+        if (pkColumns!=null && pkColumns.length>0){
+            insertString = "INSERT OR REPLACE INTO ";
         }
 
         return "INSERT INTO " + tableName + "("+builder.substring(0, builder.length() - 1) + ")" + " VALUES " + paramsBuilder.substring(0, paramsBuilder.length() - 1) + ";";

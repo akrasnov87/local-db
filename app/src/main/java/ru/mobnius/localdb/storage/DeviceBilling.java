@@ -11,7 +11,6 @@ import ru.mobnius.localdb.data.Storage;
 @Storage(description = "Приборы", table = "ED_Device_Billing")
 public class DeviceBilling {
     @Id
-    @Index
     public String LINK;
 
     @Property(nameInDb = "F_Registr_Pts")

@@ -8,13 +8,25 @@
 
     <TextView
         android:id="@+id/item_download_description"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textColor="@color/colorHintDark"
         android:textSize="@dimen/medium_text_size"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/item_clear_data"
         tools:text="ФИАС" />
+    <Button
+        android:id="@+id/item_clear_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/clear_table"
+        android:minHeight="0dp"
+        android:padding="2dp"
+        android:textSize="@dimen/medium_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/item_download_count"/>
 
     <TextView
         android:id="@+id/item_download_table"

@@ -2,6 +2,7 @@ package ru.mobnius.localdb.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 
 import java.io.IOException;
@@ -61,5 +62,25 @@ public class NetworkUtil {
         } catch (Exception ignored) {
         } // for now eat exceptions
         return "";
+    }
+
+    public static NetworkInfo getNetworkInfo(Context context){
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        return cm.getActiveNetworkInfo();
+    }
+
+    public static boolean isConnectedWifi(Context context){
+        NetworkInfo info = NetworkUtil.getNetworkInfo(context);
+        return (info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_WIFI);
+    }
+
+    /**
+     * Check if there is any connectivity to a mobile network
+     * @param context
+     * @return
+     */
+    public static boolean isConnectedMobile(Context context){
+        NetworkInfo info = NetworkUtil.getNetworkInfo(context);
+        return (info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_MOBILE);
     }
 }

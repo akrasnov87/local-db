@@ -31,7 +31,7 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
 
     private final App mApp;
     private String errorMessage = "";
-    private String rowCountMessage = "";
+    private String errorType = "";
 
     public SyncStatusRequestListener(App app) {
         mApp = app;
@@ -43,17 +43,13 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
                     if (errorMessage != null && errorMessage.length() > 100) {
                         errorMessage = errorMessage.substring(0, 100);
                     }
-                    errorMessage = "В LocalDB произошла ошибка: "+ errorMessage +"... Попробуйте повторить синхронизацию";
-                }
-                if (Objects.equals(intent.getAction(), Tags.COUNT_TAG)){
-                   rowCountMessage = intent.getStringExtra(Tags.COUNT_TEXT);
+                    errorMessage = "В LocalDB произошла ошибка: "+ errorMessage;
+                    errorType = intent.getStringExtra(Tags.ERROR_TYPE);
                 }
             }
         };
         LocalBroadcastManager.getInstance(mApp).registerReceiver(
                 mMessageReceiver, new IntentFilter(Tags.ERROR_TAG));
-        LocalBroadcastManager.getInstance(mApp).registerReceiver(
-                mMessageReceiver, new IntentFilter(Tags.COUNT_TAG));
     }
 
     @Override
@@ -76,29 +72,13 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
                 JSONObject meta = new JSONObject();
                 JSONObject error = new JSONObject();
 
-                meta.put("success", true);
+                meta.put("success", false);
                 error.put("ldberror", errorMessage);
+                error.put("ldbstatus", errorType);
                 object.put("meta", meta);
                 object.put("result", error);
                 response = Response.getInstance(urlReader, object.toString());
                 errorMessage = "";
-                return response;
-            } catch (JSONException e) {
-                Logger.error(e);
-            }
-        }
-        if(!rowCountMessage.isEmpty()){
-            try {
-                JSONObject object = new JSONObject();
-                JSONObject meta = new JSONObject();
-                JSONObject error = new JSONObject();
-
-                meta.put("success", true);
-                error.put("count", rowCountMessage);
-                object.put("meta", meta);
-                object.put("result", error);
-                response = Response.getInstance(urlReader, object.toString());
-                rowCountMessage = "";
                 return response;
             } catch (JSONException e) {
                 Logger.error(e);

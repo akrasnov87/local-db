@@ -1,6 +1,7 @@
 package ru.mobnius.localdb.adapter.holder;
 
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -10,6 +11,7 @@ import java.text.DecimalFormat;
 
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
+import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.StorageDataCountAsyncTask;
 import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.ui.DialogDownloadFragment;
@@ -29,6 +31,8 @@ public class StorageNameHolder extends RecyclerView.ViewHolder
         tvDescription = itemView.findViewById(R.id.item_download_description);
         tvTable = itemView.findViewById(R.id.item_download_table);
         tvCount = itemView.findViewById(R.id.item_download_count);
+        Button btnClearData = itemView.findViewById(R.id.item_clear_data);
+        btnClearData.setOnClickListener(this);
 
         itemView.setOnClickListener(this);
     }
@@ -37,18 +41,18 @@ public class StorageNameHolder extends RecyclerView.ViewHolder
         mStorageName = storageName;
         tvDescription.setText(storageName.description);
         tvTable.setText(storageName.table);
-
-        new StorageDataCountAsyncTask(new StorageDataCountAsyncTask.OnStorageCountListener() {
-            @Override
-            public void onStorageCount(Long count) {
-                DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
-                tvCount.setText(df.format(count));
-            }
-        }).execute(storageName.table);
+        String rowCount = PreferencesManager.getInstance().getTableRowCount(storageName.table);
+        if (rowCount != null) {
+            tvCount.setText(rowCount);
+        }
     }
 
     @Override
     public void onClick(View v) {
-        mListener.onDownloadStorage(mStorageName);
+        if (v.getId() == R.id.item_clear_data) {
+            mListener.onClearData(mStorageName);
+        } else {
+            mListener.onDownloadStorage(mStorageName);
+        }
     }
 }

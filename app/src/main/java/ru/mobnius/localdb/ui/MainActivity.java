@@ -23,6 +23,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import org.greenrobot.greendao.database.Database;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
@@ -108,21 +110,21 @@ public class MainActivity extends BaseActivity
                 byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
                 if (bytes != null) {
                     message = new String(bytes);
-                    if (message.length()>2000){
-                        message = message.substring(0, 1000)+".........\n"+ message.substring(message.length()-1000, message.length()-1);
+                    if (message.length() > 2000) {
+                        message = message.substring(0, 1000) + ".........\n" + message.substring(message.length() - 1000, message.length() - 1);
                     }
                     message = "При последнем запуске приложения возникла следующая критическая ошибка:\n" + message;
-
                     tvError.setText(message);
                     svError.setVisibility(View.VISIBLE);
+                    Intent intent = new Intent(Tags.ERROR_TAG);
+                    intent.putExtra(Tags.ERROR_TYPE, Tags.CRITICAL_ERROR);
+                    intent.putExtra(Tags.ERROR_TEXT, message);
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
                 }
             }
         }
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter(Tags.ERROR_TAG));
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, new IntentFilter(Tags.CANCEL_TASK_TAG));
+
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         //  alert(getString(R.string.android_8));
         // }
@@ -161,9 +163,6 @@ public class MainActivity extends BaseActivity
         } else {
             setMenuItemVisible(true);
         }
-        if(mUpdateFragment.isVisible()){
-            setMenuItemVisible(false);
-        }
 
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
@@ -177,6 +176,18 @@ public class MainActivity extends BaseActivity
 
         mServerAppVersionAsyncTask = new ServerAppVersionAsyncTask();
         mServerAppVersionAsyncTask.execute();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Tags.ERROR_TAG);
+        filter.addAction(Tags.CANCEL_TASK_TAG);
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiver, filter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(
+                mMessageReceiver);
     }
 
     protected void onDestroy() {
@@ -290,6 +301,25 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
+    public void onClearData(final StorageName name) {
+        final Database db = HttpService.getDaoSession().getDatabase();
+        String message = "Вы уверены что хотите удалить все записи из таблицы " + name.getName() + "?";
+        if (db.isDbLockedByCurrentThread()) {
+            message = "База данных заблокирована другим потоком. Попробуйте позднее.";
+        }
+        confirm(message, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (!db.isDbLockedByCurrentThread()) {
+
+                } else {
+                    dialog.dismiss();
+                }
+            }
+        });
+    }
+
+    @Override
     public int getExceptionCode() {
         return ExceptionCode.MAIN;
     }
@@ -334,7 +364,11 @@ public class MainActivity extends BaseActivity
             switch (Objects.requireNonNull(intent.getAction())) {
                 case Tags.ERROR_TAG:
                     svError.setVisibility(View.VISIBLE);
-                    tvError.setText(intent.getStringExtra(Tags.ERROR_TEXT));
+                    String errorMessage = intent.getStringExtra(Tags.ERROR_TEXT);
+                    if (errorMessage != null && errorMessage.length() > 2000) {
+                        errorMessage = errorMessage.substring(0, 1000)+errorMessage.substring(errorMessage.length()-1000, errorMessage.length()-1);
+                    }
+                    tvError.setText(errorMessage);
                     break;
                 case Tags.CANCEL_TASK_TAG:
                     if (mUpdateFragment != null && mUpdateFragment.isVisible()) {

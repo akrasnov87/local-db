@@ -7,6 +7,7 @@ import ru.mobnius.localdb.HttpService;
 
 public class StorageDataCountAsyncTask extends AsyncTask<String, Void, Long> {
     private final OnStorageCountListener mListener;
+    private String tableName;
 
     public StorageDataCountAsyncTask(OnStorageCountListener listener) {
         mListener = listener;
@@ -14,8 +15,9 @@ public class StorageDataCountAsyncTask extends AsyncTask<String, Void, Long> {
 
     @Override
     protected Long doInBackground(String... strings) {
+        tableName = strings[0];
         Cursor cursor = HttpService.getDaoSession().getDatabase().rawQuery("SELECT COUNT(*) FROM " + strings[0], null);
-        if(cursor.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             return cursor.getLong(0);
         }
         return null;
@@ -24,7 +26,9 @@ public class StorageDataCountAsyncTask extends AsyncTask<String, Void, Long> {
     @Override
     protected void onPostExecute(Long aLong) {
         super.onPostExecute(aLong);
-
+        if (aLong != null) {
+            PreferencesManager.getInstance().setTableRowCount(String.valueOf(aLong), tableName);
+        }
         mListener.onStorageCount(aLong);
     }
 

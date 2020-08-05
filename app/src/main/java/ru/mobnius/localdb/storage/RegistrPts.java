@@ -13,7 +13,6 @@ import ru.mobnius.localdb.data.Storage;
 public class RegistrPts {
 
     @Id
-    @Index
     public String LINK;
 
     @Property(nameInDb = "C_Name")

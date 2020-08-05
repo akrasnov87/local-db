@@ -65,7 +65,8 @@ public class SqlQueryAsyncTask extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-        mListener.onSqlQueryCompleted(s, isError);
+            mListener.onSqlQueryCompleted(s, isError);
+
     }
 
     public interface OnSqlQuery {

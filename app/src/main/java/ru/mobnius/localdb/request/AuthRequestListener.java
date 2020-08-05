@@ -1,11 +1,16 @@
 package ru.mobnius.localdb.request;
 
+import android.content.ComponentName;
+import android.content.Context;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ru.mobnius.localdb.data.AuthorizationAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**
@@ -14,6 +19,11 @@ import ru.mobnius.localdb.utils.UrlReader;
  */
 public class AuthRequestListener
         implements OnRequestListener {
+    private Context mContext;
+
+    public  AuthRequestListener (Context context){
+        mContext = context;
+    }
 
     @Override
     public boolean isValid(String query) {
@@ -33,14 +43,14 @@ public class AuthRequestListener
         String node = urlReader.getParam("node");
 
         if(login != null && password != null && rpc != null && node != null) {
+            new AuthorizationAsyncTask(mContext, login, password).execute();
             PreferencesManager.getInstance().setLogin(login);
             PreferencesManager.getInstance().setPassword(password);
             PreferencesManager.getInstance().setNodeUrl(node);
             PreferencesManager.getInstance().setRpcUrl(rpc);
-
             response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
         } else {
-            response = Response.getErrorInstance(urlReader, "Инфоврмация об авторизации не передана полностью", Response.RESULT_FAIL);
+            response = Response.getErrorInstance(urlReader, "Информация об авторизации не передана полностью", Response.RESULT_FAIL);
         }
         return response;
     }

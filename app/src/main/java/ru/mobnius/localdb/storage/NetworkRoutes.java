@@ -11,7 +11,6 @@ import ru.mobnius.localdb.data.Storage;
 @Storage(description = "Схема Сети", table = "ED_Network_Routes")
 public class NetworkRoutes {
 
-    @Index
     public String LINK;
 
     @Property(nameInDb = "F_Parent")

@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -49,7 +50,9 @@ public class App extends Application implements
         PreferencesManager.createInstance(this, PreferencesManager.NAME);
 
         mConnectionReceiver = new ConnectionChecker();
-        registerReceiver(mConnectionReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        IntentFilter filterq = new IntentFilter();
+        filterq.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mConnectionReceiver, filterq);
 
         mAutoRunReceiver = new AutoRunReceiver();
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);

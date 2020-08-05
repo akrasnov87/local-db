@@ -14,7 +14,6 @@ import ru.mobnius.localdb.data.Storage;
 public class Fias {
 
     @Id
-    @Index
     public String LINK;
 
     @Property(nameInDb = "F_Street")

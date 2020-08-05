@@ -14,7 +14,6 @@ import androidx.core.app.NotificationCompat;
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.mobnius.localdb.data.ConnectionChecker;
 import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.OnResponseListener;
@@ -28,7 +27,6 @@ import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.request.AuthRequestListener;
-import ru.mobnius.localdb.request.CountQueryListener;
 import ru.mobnius.localdb.request.DefaultRequestListener;
 import ru.mobnius.localdb.request.ErrorRequestListener;
 import ru.mobnius.localdb.request.InfoRequestListener;
@@ -68,6 +66,7 @@ public class HttpService extends Service
         return intent;
     }
 
+
     /**
      * Имя сервиса
      */
@@ -96,11 +95,10 @@ public class HttpService extends Service
     @Override
     public void onCreate() {
         super.onCreate();
-        NotificationChannel channel = null;
+        NotificationChannel channel;
         String channelId = "httpServiceClient";
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             channel = new NotificationChannel(channelId, "ltnChannel", NotificationManager.IMPORTANCE_DEFAULT);
-
             ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
             Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle("").setContentText("").build();
             startForeground(1, notification);
@@ -112,12 +110,11 @@ public class HttpService extends Service
         mRequestListeners.add(new DefaultRequestListener());
         mRequestListeners.add(new SyncRequestListener((App) getApplication()));
         mRequestListeners.add(new SyncStatusRequestListener((App) getApplication()));
-        mRequestListeners.add(new AuthRequestListener());
+        mRequestListeners.add(new AuthRequestListener(this));
         mRequestListeners.add(new SyncStopRequestListener((App) getApplication()));
         mRequestListeners.add(new TableRequestListener());
         mRequestListeners.add(new ErrorRequestListener());
         mRequestListeners.add(new InfoRequestListener(this));
-        mRequestListeners.add(new CountQueryListener());
 
         sHttpServerThread = new HttpServerThread(this);
         sHttpServerThread.start();
@@ -127,7 +124,10 @@ public class HttpService extends Service
         Progress progress = PreferencesManager.getInstance().getProgress();
         if (progress != null) {
             onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
-            onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
+            int rowsInserted = Integer.parseInt(PreferencesManager.getInstance().getTableRowCount(progress.tableName));
+            if (rowsInserted != 0 && rowsInserted % 10000 == 0) {
+                onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
+            }
         }
     }
 

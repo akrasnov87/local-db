@@ -16,4 +16,5 @@
     <string name="enter_query">Введите запрос</string>
     <string name="make_query">Сделать запрос</string>
     <string name="close">Закрыть</string>
+    <string name="clear_table">Стереть данные</string>
 </resources>

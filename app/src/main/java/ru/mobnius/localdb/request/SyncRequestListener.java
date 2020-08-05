@@ -2,7 +2,6 @@ package ru.mobnius.localdb.request;
 
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 
@@ -32,6 +31,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
     private final App mApp;
     private UrlReader mUrlReader;
     private String mTableName = "";
+    private boolean isCanceled = false;
 
     public SyncRequestListener(App app) {
         mApp = app;
@@ -63,8 +63,9 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 }
                 Intent cancelPreviousTask = new Intent(Tags.CANCEL_TASK_TAG);
                 LocalBroadcastManager.getInstance(mApp).sendBroadcast(cancelPreviousTask);
-                new LoadAsyncTask(tableName, this, mApp, false).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                new LoadAsyncTask(tableName, this, mApp).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                 response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+                isCanceled = false;
             } else {
                 response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
             }
@@ -94,17 +95,18 @@ public class SyncRequestListener extends AuthFilterRequestListener
         if (!isConnected) {
             Intent intent1 = new Intent(Tags.CANCEL_TASK_TAG);
             LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent1);
+            isCanceled = true;
         } else {
-            if (!mTableName.isEmpty()) {
+            if (!mTableName.isEmpty() && isCanceled) {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp, true).
+                        new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp).
                                 executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                        isCanceled = false;
                     }
                 }, 7000);
             }
         }
     }
-
 }

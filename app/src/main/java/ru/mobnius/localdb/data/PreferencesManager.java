@@ -25,6 +25,10 @@ public class PreferencesManager {
     public static final String RPC_URL = "MBL_RPC_URL";
     public static final String SIZE = "MBL_SIZE";
     public static final String GENERATED_ERROR = "MBL_GENERATED_ERROR";
+    public static final String FIAS_COUNT = "MBL_FIAS_COUNT";
+    public static final String DEVICE_BILLING_COUNT = "MBL_DEVICE_BILLING_COUNT";
+    public static final String NETWORK_ROUTES_COUNT = "MBL_NETWORK_ROUTES_COUNT";
+    public static final String REGISTR_PTS_COUNT = "MBL_REGISTR_PTS_COUNT";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -109,4 +113,14 @@ public class PreferencesManager {
         String value = getSharedPreferences().getString(SIZE, "10000");
         return Integer.parseInt(Objects.requireNonNull(value));
     }
+
+    public void setTableRowCount(String fiasCount, String tableName){
+        getSharedPreferences().edit().putString(tableName, fiasCount).apply();
+    }
+
+    public String getTableRowCount(String tableName){
+        return getSharedPreferences().getString(tableName, "0");
+    }
+
+
 }

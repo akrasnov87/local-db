@@ -1,5 +1,9 @@
 package ru.mobnius.localdb.utils;
 
+import android.content.Intent;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.google.gson.Gson;
 
 import org.json.JSONException;
@@ -18,6 +22,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import ru.mobnius.localdb.Logger;
+import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.User;
@@ -28,7 +33,7 @@ public class Loader {
     /**
      * время на проверку подключения к серверу в милисекундах
      */
-    public final static int SERVER_CONNECTION_TIMEOUT = 3000;
+    public final static int SERVER_CONNECTION_TIMEOUT = 5000;
 
     private static Loader sLoader;
 
@@ -64,7 +69,7 @@ public class Loader {
                 urlConnection.setUseCaches(false);
                 urlConnection.getOutputStream().write(postData);
                 int status = urlConnection.getResponseCode();
-                if (status/100 == 4 || status/100 == 5){
+                if (status!=200){
                     return false;
                 }else {
                     authSuccess = true;
@@ -119,7 +124,7 @@ public class Loader {
 
             urlConnection.getOutputStream().write(postData);
             int status = urlConnection.getResponseCode();
-            if (status/100 == 4 || status/100 == 5){
+            if (status != 200){
                 return null;
             }
             InputStream stream = urlConnection.getInputStream();

@@ -17,7 +17,7 @@ public class ConnectionChecker extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (mCheckConnection != null) {
+        if (mCheckConnection != null ) {
             mCheckConnection.onConnectionChange(NetworkUtil.isNetworkAvailable(context));
         }
     }
