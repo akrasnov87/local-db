@@ -1,8 +1,5 @@
 package ru.mobnius.localdb.utils;
 
-import android.content.Intent;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.gson.Gson;
 
@@ -15,14 +12,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Scanner;
 
 import ru.mobnius.localdb.Logger;
-import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.User;

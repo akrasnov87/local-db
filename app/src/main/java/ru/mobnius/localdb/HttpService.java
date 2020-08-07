@@ -124,7 +124,7 @@ public class HttpService extends Service
         Progress progress = PreferencesManager.getInstance().getProgress();
         if (progress != null) {
             onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
-            int rowsInserted = Integer.parseInt(PreferencesManager.getInstance().getTableRowCount(progress.tableName));
+            int rowsInserted = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(progress.tableName));
             if (rowsInserted != 0 && rowsInserted % 10000 == 0) {
                 onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
             }

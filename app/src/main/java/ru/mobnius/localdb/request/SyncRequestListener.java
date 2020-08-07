@@ -83,8 +83,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     @Override
     public void onLoadFinish(String tableName) {
-        Intent intent1 = new Intent(Tags.CANCEL_TASK_TAG);
-        LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent1);
         mApp.onDownLoadFinish(tableName, mUrlReader);
         PreferencesManager.getInstance().setProgress(null);
         mTableName = "";

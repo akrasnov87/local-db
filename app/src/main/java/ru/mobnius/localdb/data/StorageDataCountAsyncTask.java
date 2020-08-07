@@ -27,7 +27,7 @@ public class StorageDataCountAsyncTask extends AsyncTask<String, Void, Long> {
     protected void onPostExecute(Long aLong) {
         super.onPostExecute(aLong);
         if (aLong != null) {
-            PreferencesManager.getInstance().setTableRowCount(String.valueOf(aLong), tableName);
+            PreferencesManager.getInstance().setLocalRowCount(String.valueOf(aLong), tableName);
         }
         mListener.onStorageCount(aLong);
     }

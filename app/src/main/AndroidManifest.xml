@@ -48,6 +48,13 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name=".ShutDownReceiver">
+        <intent-filter>
+            <action android:name="android.intent.action.ACTION_SHUTDOWN"/>
+            <action android:name="android.intent.action.QUICKBOOT_POWEROFF"/>
+        </intent-filter>
+    </receiver>
+
         <service
             android:name=".HttpService"
             android:enabled="true"

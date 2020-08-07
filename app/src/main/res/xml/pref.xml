@@ -44,6 +44,11 @@
         android:key="MBL_SQL"
         android:summary="Перейти на экран построения запросов"
         android:title="SQL" />
+    <Preference
+        android:icon="@drawable/ic_baseline_clear_24"
+        android:key="MBL_CLEAR"
+        android:summary="Удалить записи из всех таблиц"
+        android:title="Очистка базы данных" />
 
     <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"

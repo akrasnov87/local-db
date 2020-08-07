@@ -56,11 +56,16 @@ public class InfoRequestListener extends AuthFilterRequestListener implements On
             JSONArray array = new JSONArray();
             data.put("db_size", dbSizeInMB);
             data.put("version", version);
-            JSONObject tableRowCount = new JSONObject();
+            JSONObject localRowCount = new JSONObject();
+            JSONObject remoteRowCount = new JSONObject();
             for (AbstractDao dao : HttpService.getDaoSession().getAllDaos()) {
-                tableRowCount.put(dao.getTablename(), PreferencesManager.getInstance().getTableRowCount(dao.getTablename()));
+                localRowCount.put(dao.getTablename(), PreferencesManager.getInstance().getLocalRowCount(dao.getTablename()));
             }
-            data.put("tables_row_count", tableRowCount);
+            data.put("local_row_count", localRowCount);
+            for (AbstractDao dao : HttpService.getDaoSession().getAllDaos()) {
+                remoteRowCount.put(dao.getTablename(), PreferencesManager.getInstance().getLocalRowCount(dao.getTablename()));
+            }
+            data.put("remote_row_count", localRowCount);
             array.put(data);
             JSONObject result = new JSONObject();
             result.put("records", array);

@@ -43,8 +43,8 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().equals(Tags.CANCEL_TASK_TAG)) {
-                    LoadAsyncTask.this.cancel(true);
                     LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mMessageReceiver);
+                    LoadAsyncTask.this.cancel(false);
                 }
             }
         };
@@ -70,7 +70,7 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
         if (!removeBeforeInsert) {
             progress.current = progress.current + size;
         }
-        int savedProgress = Integer.parseInt(PreferencesManager.getInstance().getTableRowCount(mTableName));
+        int savedProgress = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(mTableName));
         if (savedProgress - progress.current == 10000) {
             //значит был обрыв интернет соединения (последние 10000 записей были получены и успешно записаны в БД)
             progress.current = savedProgress;
@@ -98,6 +98,7 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
         }
         RPCResult result = results[0];
         int total = result.result.total;
+        PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(total), mTableName);
         PreferencesManager.getInstance().setProgress(new Progress(progress.current, total, mTableName));
         publishProgress(new Progress(progress.current, total, mTableName));
         File cacheDir = mContext.getCacheDir();
@@ -116,6 +117,9 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
             }
         }
         for (int i = (progress.current + size); i < total; i += size) {
+            if (isCancelled()){
+                return message;
+            }
             if (PreferencesManager.getInstance().getProgress() == null) {
                 // значит принудительно все было остановлено
                 Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
@@ -152,9 +156,6 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
                 try {
                     StorageUtil.processing(daoSession, result, mTableName, false);
                 } catch (SQLiteFullException | SQLiteConstraintException e) {
-                    int x = Integer.parseInt(PreferencesManager.getInstance().getTableRowCount(mTableName));
-                    int y = progress.current;
-                    int z = i;
                     Logger.error(e);
                     message.add(Tags.SQL_ERROR);
                     message.add(e.getMessage());

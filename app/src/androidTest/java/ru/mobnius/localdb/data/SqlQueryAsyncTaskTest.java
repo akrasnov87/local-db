@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.greenrobot.greendao.database.Database;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,6 +37,10 @@ public class SqlQueryAsyncTaskTest {
         db.execSQL("CREATE TABLE " + TABLE_NAME + " (" + COLUMN_1 + " text not null, " + COLUMN_2 + " text not null, " + COLUMN_3 + " text not null);");
         db.execSQL("INSERT INTO " + TABLE_NAME + " (" + COLUMN_1 + ", " + COLUMN_2 + ", " + COLUMN_3 + ") VALUES (" + VALUE_1 + ", " + VALUE_2 + ", " + VALUE_3 + ");");
     }
+    @After
+    public void tearDown(){
+        mContext.deleteDatabase(dbName);
+    }
 
     @Test
     public void doInBackground() {
@@ -44,7 +49,8 @@ public class SqlQueryAsyncTaskTest {
         String c = "{\n    \"column1\": \"value1\",\n    \"column2\": \"value2\",\n    \"column3\": \"value3\"\n}";
         assertTrue(s.contentEquals(c));
         String e = task.doInBackground("SELECT column4 FROM " + TABLE_NAME);
-        assertTrue(e.contentEquals("android.database.sqlite.SQLiteException: no such column: column4 (code 1): , while compiling: SELECT column4 FROM NewTestTable"));
-        mContext.deleteDatabase(dbName);
+        assertTrue(e.contentEquals("android.database.sqlite.SQLiteException: no such column: column4 (code 1 SQLITE_ERROR): , while compiling: SELECT column4 FROM NewTestTable"));
+
     }
+
 }

@@ -9,7 +9,7 @@ import org.greenrobot.greendao.annotation.Property;
 import ru.mobnius.localdb.data.Storage;
 
 @Entity(nameInDb = "ED_Registr_Pts")
-@Storage(description = "Пользователи и платежи", table = "ED_Registr_Pts")
+@Storage(description = "Потребиители", table = "ED_Registr_Pts")
 public class RegistrPts {
 
     @Id

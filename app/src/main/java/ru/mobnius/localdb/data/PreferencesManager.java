@@ -25,6 +25,7 @@ public class PreferencesManager {
     public static final String RPC_URL = "MBL_RPC_URL";
     public static final String SIZE = "MBL_SIZE";
     public static final String GENERATED_ERROR = "MBL_GENERATED_ERROR";
+    public static final String CLEAR = "MBL_CLEAR";
     public static final String FIAS_COUNT = "MBL_FIAS_COUNT";
     public static final String DEVICE_BILLING_COUNT = "MBL_DEVICE_BILLING_COUNT";
     public static final String NETWORK_ROUTES_COUNT = "MBL_NETWORK_ROUTES_COUNT";
@@ -41,11 +42,11 @@ public class PreferencesManager {
         preferencesManager = new PreferencesManager(context, preferenceName);
     }
 
-    private PreferencesManager(Context context, String preferenceName){
+    private PreferencesManager(Context context, String preferenceName) {
         sharedPreferences = context.getSharedPreferences(preferenceName, Context.MODE_PRIVATE);
     }
 
-    public SharedPreferences getSharedPreferences(){
+    public SharedPreferences getSharedPreferences() {
         return sharedPreferences;
     }
 
@@ -99,7 +100,7 @@ public class PreferencesManager {
 
     public Progress getProgress() {
         String value = getSharedPreferences().getString(PROGRESS, null);
-        if(value == null) {
+        if (value == null) {
             return null;
         }
         return new Gson().fromJson(value, Progress.class);
@@ -114,12 +115,20 @@ public class PreferencesManager {
         return Integer.parseInt(Objects.requireNonNull(value));
     }
 
-    public void setTableRowCount(String fiasCount, String tableName){
-        getSharedPreferences().edit().putString(tableName, fiasCount).apply();
+    public void setLocalRowCount(String localRowCount, String tableName) {
+        getSharedPreferences().edit().putString(tableName, localRowCount).apply();
     }
 
-    public String getTableRowCount(String tableName){
+    public String getLocalRowCount(String tableName) {
         return getSharedPreferences().getString(tableName, "0");
+    }
+
+    public void setRemoteRowCount(String remoteRowCount, String tableName) {
+        getSharedPreferences().edit().putString(tableName + "remote", remoteRowCount).apply();
+    }
+
+    public String getRemoteRowCount(String tableName) {
+        return getSharedPreferences().getString(tableName + "remote", "0");
     }
 
 

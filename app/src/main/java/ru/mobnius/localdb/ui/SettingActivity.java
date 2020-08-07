@@ -9,9 +9,11 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreference;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -24,6 +26,7 @@ import java.util.Objects;
 
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
+import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.ExceptionInterceptActivity;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.exception.ExceptionCode;
@@ -79,6 +82,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
         private Preference pLogin;
         private SwitchPreference spDebug;
         private Preference pSQLite;
+        private Preference pClearDB;
         private Preference pLoginReset;
         private Preference pNodeUrl;
         private Preference pRpcUrl;
@@ -125,6 +129,10 @@ public class SettingActivity extends ExceptionInterceptActivity {
             pCreateError = findPreference(PreferencesManager.GENERATED_ERROR);
             Objects.requireNonNull(pCreateError).setVisible(PreferencesManager.getInstance().isDebug());
             pCreateError.setOnPreferenceClickListener(this);
+
+            pClearDB = findPreference(PreferencesManager.CLEAR);
+            Objects.requireNonNull(pClearDB).setVisible(PreferencesManager.getInstance().isDebug());
+            pClearDB.setOnPreferenceClickListener(this);
         }
 
         @Override
@@ -162,6 +170,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
                         pLoginReset.setVisible(true);
                         lpSize.setEnabled(true);
                         pCreateError.setVisible(true);
+                        pClearDB.setVisible(true);
                         spDebug.setSummary(String.format(debugSummary,  "включен" ));
                         Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                         clickToVersion = 0;
@@ -179,7 +188,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
                     break;
 
                 case PreferencesManager.LOGIN_RESET:
-                    confirm(new DialogInterface.OnClickListener() {
+                    confirm("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             if (which == DialogInterface.BUTTON_POSITIVE) {
@@ -191,6 +200,27 @@ public class SettingActivity extends ExceptionInterceptActivity {
                         }
                     });
                     break;
+                case PreferencesManager.CLEAR:
+                   confirm("Все локальные данные будут удалены, авторизация сброшена. Вы уверены?", new DialogInterface.OnClickListener() {
+                       @Override
+                       public void onClick(DialogInterface dialog, int which) {
+                           ActivityManager am = (ActivityManager) requireActivity().getSystemService(Context.ACTIVITY_SERVICE);
+                           String myProcessPrefix = requireActivity().getApplicationInfo().processName;
+                           String myProcessName = null;
+                           try {
+                               myProcessName = requireActivity().getPackageManager().getActivityInfo(requireActivity().getComponentName(), 0).processName;
+                           } catch (PackageManager.NameNotFoundException e) {
+                               e.printStackTrace();
+                           }
+                           for (ActivityManager.RunningAppProcessInfo proc : am.getRunningAppProcesses()) {
+                               if (proc.processName.startsWith(myProcessPrefix) && !proc.processName.equals(myProcessName)) {
+                                   android.os.Process.killProcess(proc.pid);
+                               }
+                           }
+                           boolean success = am.clearApplicationUserData();
+                           Toast.makeText(getActivity(), success?"База данных успешно удалена":"Не удалось удалить БД" , Toast.LENGTH_SHORT).show();
+                       }
+                   });
             }
             return false;
         }
@@ -217,7 +247,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
             return true;
         }
 
-        protected void confirm(DialogInterface.OnClickListener listener) {
+        protected void confirm(String message, DialogInterface.OnClickListener listener) {
             AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
             dialog.setTitle("Сообщение");
             dialog.setMessage("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?");

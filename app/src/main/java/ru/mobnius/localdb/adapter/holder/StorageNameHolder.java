@@ -7,12 +7,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.text.DecimalFormat;
-
-import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.data.PreferencesManager;
-import ru.mobnius.localdb.data.StorageDataCountAsyncTask;
 import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.ui.DialogDownloadFragment;
 
@@ -41,10 +37,10 @@ public class StorageNameHolder extends RecyclerView.ViewHolder
         mStorageName = storageName;
         tvDescription.setText(storageName.description);
         tvTable.setText(storageName.table);
-        String rowCount = PreferencesManager.getInstance().getTableRowCount(storageName.table);
-        if (rowCount != null) {
-            tvCount.setText(rowCount);
-        }
+        String localRowCount = PreferencesManager.getInstance().getLocalRowCount(storageName.table);
+        String remoteRowCount = PreferencesManager.getInstance().getRemoteRowCount(storageName.table);
+        String info = localRowCount + " из " + remoteRowCount;
+        tvCount.setText(info);
     }
 
     @Override

@@ -29,17 +29,33 @@ public class Fias {
     @Property(nameInDb = "C_Building_Number")
     public String C_Building_Number;
 
+    @Property(nameInDb = "F_Structure")
+    @Index
+    public String F_Structure;
+
+    @Property(nameInDb = "F_Municipality")
+    @Index
+    public String F_Municipality;
+
+    @Property(nameInDb = "F_Town")
+    @Index
+    public String F_Town;
+
     public Fias() {
     }
 
-    @Generated(hash = 1534843169)
+    @Generated(hash = 820060384)
     public Fias(String LINK, String F_Street, String C_Full_Address,
-            String C_House_Number, String C_Building_Number) {
+            String C_House_Number, String C_Building_Number, String F_Structure,
+            String F_Municipality, String F_Town) {
         this.LINK = LINK;
         this.F_Street = F_Street;
         this.C_Full_Address = C_Full_Address;
         this.C_House_Number = C_House_Number;
         this.C_Building_Number = C_Building_Number;
+        this.F_Structure = F_Structure;
+        this.F_Municipality = F_Municipality;
+        this.F_Town = F_Town;
     }
 
     public String getLINK() {
@@ -80,5 +96,29 @@ public class Fias {
 
     public void setC_Building_Number(String C_Building_Number) {
         this.C_Building_Number = C_Building_Number;
+    }
+
+    public String getF_Structure() {
+        return this.F_Structure;
+    }
+
+    public void setF_Structure(String F_Structure) {
+        this.F_Structure = F_Structure;
+    }
+
+    public String getF_Municipality() {
+        return this.F_Municipality;
+    }
+
+    public void setF_Municipality(String F_Municipality) {
+        this.F_Municipality = F_Municipality;
+    }
+
+    public String getF_Town() {
+        return this.F_Town;
+    }
+
+    public void setF_Town(String F_Town) {
+        this.F_Town = F_Town;
     }
 }

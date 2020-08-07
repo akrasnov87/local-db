@@ -161,6 +161,7 @@ public class MainActivity extends BaseActivity
             mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress());
             setMenuItemVisible(false);
         } else {
+            mUpdateFragment.stopProcess();
             setMenuItemVisible(true);
         }
 
@@ -173,9 +174,14 @@ public class MainActivity extends BaseActivity
             btnStop.setVisibility(View.GONE);
             btnStart.setVisibility(View.GONE);
         }
-
         mServerAppVersionAsyncTask = new ServerAppVersionAsyncTask();
         mServerAppVersionAsyncTask.execute();
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Tags.ERROR_TAG);
         filter.addAction(Tags.CANCEL_TASK_TAG);
@@ -184,8 +190,8 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(
                 mMessageReceiver);
     }
@@ -311,7 +317,7 @@ public class MainActivity extends BaseActivity
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (!db.isDbLockedByCurrentThread()) {
-
+                    db.execSQL("delete from " + name.table);
                 } else {
                     dialog.dismiss();
                 }
@@ -371,7 +377,7 @@ public class MainActivity extends BaseActivity
                     tvError.setText(errorMessage);
                     break;
                 case Tags.CANCEL_TASK_TAG:
-                    if (mUpdateFragment != null && mUpdateFragment.isVisible()) {
+                    if (mUpdateFragment != null) {
                         mUpdateFragment.stopProcess();
                     }
                     break;

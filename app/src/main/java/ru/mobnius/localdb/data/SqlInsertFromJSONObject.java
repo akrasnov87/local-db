@@ -8,12 +8,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import ru.mobnius.localdb.utils.StorageUtil;
-
 /**
  * Класс для обработки JSONObject и создания из него SQL запроса на добавление записи
  */
-public class SqlInsertFromJSONObject{
+public class SqlInsertFromJSONObject {
     private final String params;
     private final String tableName;
     private final String[] fields;
@@ -45,38 +43,45 @@ public class SqlInsertFromJSONObject{
 
     /**
      * запрос в БД для вставки
+     *
      * @param count количество
      * @return возвращается запрос
      */
-    public String convertToQuery(int count, String [] pkColumns) {
+    public String convertToQuery(int count, String[] pkColumns) {
         StringBuilder builder = new StringBuilder();
         for (String field : fields) {
             builder.append(field).append(",");
         }
 
         StringBuilder paramsBuilder = new StringBuilder();
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             paramsBuilder.append("(").append(params).append("),");
         }
         String insertString = "INSERT INTO ";
-        if (pkColumns!=null && pkColumns.length>0){
+        if (pkColumns != null && pkColumns.length > 0) {
             insertString = "INSERT OR REPLACE INTO ";
         }
 
-        return "INSERT INTO " + tableName + "("+builder.substring(0, builder.length() - 1) + ")" + " VALUES " + paramsBuilder.substring(0, paramsBuilder.length() - 1) + ";";
+        return insertString + tableName + "(" + builder.substring(0, builder.length() - 1) + ")" + " VALUES " + paramsBuilder.substring(0, paramsBuilder.length() - 1) + ";";
     }
 
     /**
      * Получение объекта для передачи в запрос
+     *
      * @param object объект для обработки
      * @return Массив значений полей
      * @throws JSONException исключение
      */
     public List<Object> getValues(JSONObject object) throws JSONException {
         List<Object> values = new ArrayList<>(fields.length);
-
         for (String field : fields) {
-            values.add(object.has(field) ? object.get(field) : null);
+            if (field.contains("F_Registr_Pts")) {
+                JSONObject obj = object.getJSONObject("F_Registr_Pts");
+                String x = obj.getString("LINK");
+                values.add(x);
+            } else {
+                values.add(object.has(field) ? object.get(field) : null);
+            }
         }
         return values;
     }
@@ -84,7 +89,7 @@ public class SqlInsertFromJSONObject{
     /**
      * колонка доступна или нет
      *
-     * @param columnName  имя колонки
+     * @param columnName имя колонки
      * @return true - колонка доступна в модели
      */
     private boolean isColumnExists(@SuppressWarnings("rawtypes") AbstractDao abstractDao, String columnName) {

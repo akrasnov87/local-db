@@ -16,7 +16,7 @@
         android:textSize="@dimen/small_text_size"
         android:textColor="@color/colorHint"/>
 
-    <TextView
+    <EditText
         android:id="@+id/log_list_item_message"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

@@ -3,9 +3,7 @@ package ru.mobnius.localdb.utils;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteFullException;
-import android.os.Looper;
 
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.database.Database;
@@ -13,16 +11,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
 import dalvik.system.DexFile;
-import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
-import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.SqlInsertFromJSONObject;
 import ru.mobnius.localdb.data.Storage;
@@ -138,7 +133,7 @@ public class StorageUtil {
 
         if (removeBeforeInsert) {
             db.execSQL("delete from " + tableName);
-            PreferencesManager.getInstance().setTableRowCount("0", tableName);
+            PreferencesManager.getInstance().setLocalRowCount("0", tableName);
         }
 
         if (result.result.records.length > 0) {
@@ -161,8 +156,8 @@ public class StorageUtil {
                         try {
                             db.execSQL(sqlInsert.convertToQuery(idx, pkColumns), values.toArray(new Object[0]));
                             db.setTransactionSuccessful();
-                            int previousRowCount = Integer.parseInt(PreferencesManager.getInstance().getTableRowCount(tableName));
-                            PreferencesManager.getInstance().setTableRowCount(String.valueOf(previousRowCount + idx),tableName);
+                            int previousRowCount = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
+                            PreferencesManager.getInstance().setLocalRowCount(String.valueOf(previousRowCount + idx),tableName);
                         } finally {
                             try {
                                 db.endTransaction();
@@ -181,8 +176,8 @@ public class StorageUtil {
                     try {
                         db.execSQL(sqlInsert.convertToQuery(idx, pkColumns), values.toArray(new Object[0]));
                         db.setTransactionSuccessful();
-                        int previousRowCount = Integer.parseInt(PreferencesManager.getInstance().getTableRowCount(tableName));
-                        PreferencesManager.getInstance().setTableRowCount(String.valueOf(previousRowCount + idx),tableName);
+                        int previousRowCount = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
+                        PreferencesManager.getInstance().setLocalRowCount(String.valueOf(previousRowCount + idx),tableName);
                     } finally {
                         try {
                             db.endTransaction();
