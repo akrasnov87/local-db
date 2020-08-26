@@ -20,8 +20,8 @@ import java.util.Scanner;
 
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.PreferencesManager;
-import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.model.User;
+import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.storage.ClientErrors;
 import ru.mobnius.localdb.storage.DaoSession;
 
@@ -34,7 +34,7 @@ public class Loader {
     private static Loader sLoader;
 
     public static Loader getInstance() {
-        if(sLoader == null) {
+        if (sLoader == null) {
             sLoader = new Loader();
         }
         return sLoader;
@@ -65,9 +65,9 @@ public class Loader {
                 urlConnection.setUseCaches(false);
                 urlConnection.getOutputStream().write(postData);
                 int status = urlConnection.getResponseCode();
-                if (status!=200){
+                if (status != 200) {
                     return false;
-                }else {
+                } else {
                     authSuccess = true;
                 }
                 InputStream in = new BufferedInputStream(urlConnection.getInputStream());
@@ -92,9 +92,10 @@ public class Loader {
 
     /**
      * запрос к БД
+     *
      * @param action имя таблицы
      * @param method метод
-     * @param data данные для фильтрации
+     * @param data   данные для фильтрации
      * @return результат
      */
     public RPCResult[] rpc(String action, String method, String data) {
@@ -108,19 +109,19 @@ public class Loader {
 
             urlConnection.setRequestMethod("POST");
             urlConnection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-            urlConnection.setRequestProperty("Accept","application/json");
+            urlConnection.setRequestProperty("Accept", "application/json");
 
             urlConnection.setRequestProperty("Authorization", "Token " + getUser().token);
 
             urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
             urlConnection.setDoOutput(true);
-            urlConnection.setInstanceFollowRedirects( false );
+            urlConnection.setInstanceFollowRedirects(false);
             urlConnection.setUseCaches(false);
             urlConnection.setConnectTimeout(SERVER_CONNECTION_TIMEOUT);
             OutputStream outputStream = urlConnection.getOutputStream();
             outputStream.write(postData);
             int status = urlConnection.getResponseCode();
-            if (status != 200){
+            if (status != 200) {
                 return null;
             }
             InputStream stream = urlConnection.getInputStream();
@@ -129,7 +130,7 @@ public class Loader {
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) {
-                sb.append(line+"\n");
+                sb.append(line + "\n");
             }
             br.close();
             return RPCResult.createInstance(sb.toString());
@@ -137,7 +138,7 @@ public class Loader {
             Logger.error(e);
             return null;
         } finally {
-            if(urlConnection != null) {
+            if (urlConnection != null) {
                 urlConnection.disconnect();
             }
         }
@@ -173,14 +174,14 @@ public class Loader {
      * Отправка ошибок на сервер
      */
     public void sendErrors(DaoSession daoSession) {
-        if(daoSession.getClientErrorsDao().count() > 0) {
+        if (daoSession != null && daoSession.getClientErrorsDao().count() > 0) {
             List<ClientErrors> items = daoSession.getClientErrorsDao().loadAll();
             String urlParams = new Gson().toJson(items);
             byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
             URL url;
             HttpURLConnection urlConnection = null;
             try {
-                if(PreferencesManager.getInstance().getNodeUrl()==null){
+                if (PreferencesManager.getInstance().getNodeUrl() == null) {
                     return;
                 }
                 url = new URL(PreferencesManager.getInstance().getNodeUrl() + "/local-db-error");
@@ -188,10 +189,10 @@ public class Loader {
 
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                urlConnection.setRequestProperty("Accept","application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
                 urlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
                 urlConnection.setDoOutput(true);
-                urlConnection.setInstanceFollowRedirects( false );
+                urlConnection.setInstanceFollowRedirects(false);
                 urlConnection.setUseCaches(false);
                 urlConnection.setConnectTimeout(SERVER_CONNECTION_TIMEOUT);
 
@@ -204,7 +205,7 @@ public class Loader {
                 JSONObject jsonObject = new JSONObject(serverResult);
                 boolean success = jsonObject.getJSONObject("meta").getBoolean("success");
 
-                if(success) {
+                if (success) {
                     daoSession.getClientErrorsDao().deleteAll();
                 } else {
                     Logger.error(new Exception(jsonObject.getJSONObject("meta").getString("msg")));
@@ -212,7 +213,7 @@ public class Loader {
             } catch (IOException | JSONException e) {
                 Logger.error(e);
             } finally {
-                if(urlConnection != null) {
+                if (urlConnection != null) {
                     urlConnection.disconnect();
                 }
             }
@@ -221,6 +222,7 @@ public class Loader {
 
     /**
      * Получение информации о пользователе
+     *
      * @return информация от сервера
      */
     public User getUser() {

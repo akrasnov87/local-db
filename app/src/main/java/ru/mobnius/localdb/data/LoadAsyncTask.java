@@ -16,7 +16,6 @@ import org.greenrobot.greendao.database.Database;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.List;
 
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
@@ -172,7 +171,11 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     }
 
     private RPCResult[] rpc(String tableName, int start, int limit) throws FileNotFoundException {
-        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": " + start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": \"C_Full_Address\", \"direction\": \"ASC\" }] }]");
+        String sortColumn =  "\"LINK\"";
+        if (tableName.toLowerCase().equals("ui_sv_fias")){
+            sortColumn = "\"C_Full_Address\"";
+        }
+        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": " + start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": " + sortColumn + ", \"direction\": \"ASC\" }] }]");
         return results;
     }
 
