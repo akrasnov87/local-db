@@ -16,47 +16,38 @@ public class Fias {
     @Id
     public String LINK;
 
-    @Property(nameInDb = "F_Street")
-    public String F_Street;
-
     @Property(nameInDb = "C_Full_Address")
-    @Index
     public String C_Full_Address;
 
     @Property(nameInDb = "C_House_Number")
     public String C_House_Number;
 
-    @Property(nameInDb = "C_Building_Number")
-    public String C_Building_Number;
-
     @Property(nameInDb = "F_Structure")
-    @Index
     public String F_Structure;
 
     @Property(nameInDb = "F_Municipality")
-    @Index
     public String F_Municipality;
 
     @Property(nameInDb = "F_Town")
-    @Index
     public String F_Town;
 
     public Fias() {
     }
 
-    @Generated(hash = 820060384)
-    public Fias(String LINK, String F_Street, String C_Full_Address,
-            String C_House_Number, String C_Building_Number, String F_Structure,
-            String F_Municipality, String F_Town) {
+
+
+    @Generated(hash = 415324961)
+    public Fias(String LINK, String C_Full_Address, String C_House_Number,
+            String F_Structure, String F_Municipality, String F_Town) {
         this.LINK = LINK;
-        this.F_Street = F_Street;
         this.C_Full_Address = C_Full_Address;
         this.C_House_Number = C_House_Number;
-        this.C_Building_Number = C_Building_Number;
         this.F_Structure = F_Structure;
         this.F_Municipality = F_Municipality;
         this.F_Town = F_Town;
     }
+
+ 
 
     public String getLINK() {
         return this.LINK;
@@ -64,14 +55,6 @@ public class Fias {
 
     public void setLINK(String LINK) {
         this.LINK = LINK;
-    }
-
-    public String getF_Street() {
-        return this.F_Street;
-    }
-
-    public void setF_Street(String F_Street) {
-        this.F_Street = F_Street;
     }
 
     public String getC_Full_Address() {
@@ -88,14 +71,6 @@ public class Fias {
 
     public void setC_House_Number(String C_House_Number) {
         this.C_House_Number = C_House_Number;
-    }
-
-    public String getC_Building_Number() {
-        return this.C_Building_Number;
-    }
-
-    public void setC_Building_Number(String C_Building_Number) {
-        this.C_Building_Number = C_Building_Number;
     }
 
     public String getF_Structure() {

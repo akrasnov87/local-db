@@ -64,8 +64,6 @@ public class HttpResponseThread extends Thread {
                 status = Response.RESULT_FAIL;
             }
             os.flush();
-            mSocket.close();
-
             if(mLogListener != null && request != null && new UrlReader(request).getSegments().length > 0) {
                 mLogListener.onAddLog(new LogItem("request: " + request + " - " + status, false));
             }
@@ -74,6 +72,12 @@ public class HttpResponseThread extends Thread {
             if(mLogListener != null) {
                 Logger.error(e);
                 mLogListener.onAddLog(new LogItem(e.getMessage(), true));
+            }
+        }finally {
+            try {
+                mSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

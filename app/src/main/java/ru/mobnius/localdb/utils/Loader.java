@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -116,8 +117,8 @@ public class Loader {
             urlConnection.setInstanceFollowRedirects( false );
             urlConnection.setUseCaches(false);
             urlConnection.setConnectTimeout(SERVER_CONNECTION_TIMEOUT);
-
-            urlConnection.getOutputStream().write(postData);
+            OutputStream outputStream = urlConnection.getOutputStream();
+            outputStream.write(postData);
             int status = urlConnection.getResponseCode();
             if (status != 200){
                 return null;
@@ -134,13 +135,12 @@ public class Loader {
             return RPCResult.createInstance(sb.toString());
         } catch (IOException e) {
             Logger.error(e);
+            return null;
         } finally {
             if(urlConnection != null) {
                 urlConnection.disconnect();
             }
         }
-
-        return null;
     }
 
     /**

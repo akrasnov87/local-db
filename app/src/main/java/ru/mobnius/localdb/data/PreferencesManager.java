@@ -131,5 +131,4 @@ public class PreferencesManager {
         return getSharedPreferences().getString(tableName + "remote", "0");
     }
 
-
 }

@@ -5,7 +5,7 @@ public interface ExceptionCode {
      * Ошибка на уровне приложения.
      * Не была перехвачено ни кем
      */
-    int ALL = 666;
+    int ALL = 555;
 
     /**
      * Общее

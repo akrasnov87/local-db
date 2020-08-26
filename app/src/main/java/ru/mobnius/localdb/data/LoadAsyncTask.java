@@ -11,9 +11,12 @@ import android.os.AsyncTask;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import org.greenrobot.greendao.database.Database;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.List;
 
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
@@ -27,12 +30,13 @@ import ru.mobnius.localdb.utils.StorageUtil;
 /**
  * Загрузка данных с сервера
  */
-public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>> {
+public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate {
 
     private final OnLoadListener mListener;
     @SuppressLint("StaticFieldLeak")
     private Context mContext;
     private final String mTableName;
+    private int mTotal;
     private BroadcastReceiver mMessageReceiver;
 
     public LoadAsyncTask(String tableName, OnLoadListener listener, Context context) {
@@ -79,7 +83,7 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
             // значит произошел краш программы (выключение телефона, необработанная ошибка). В этом случае лучше стереть записи, так как нет гарантии что они корректные.
             removeBeforeInsert = true;
         }
-        publishProgress(progress);
+        PreferencesManager.getInstance().setProgress(progress);
 
         DaoSession daoSession = HttpService.getDaoSession();
         RPCResult[] results;
@@ -97,18 +101,17 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
             return message;
         }
         RPCResult result = results[0];
-        int total = result.result.total;
-        PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(total), mTableName);
-        PreferencesManager.getInstance().setProgress(new Progress(progress.current, total, mTableName));
-        publishProgress(new Progress(progress.current, total, mTableName));
+        mTotal = result.result.total;
+        PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName);
+        PreferencesManager.getInstance().setProgress(new Progress(progress.current, mTotal, mTableName));
         File cacheDir = mContext.getCacheDir();
-        if (cacheDir.getUsableSpace() * 100 / cacheDir.getTotalSpace() <= 6) {
+        if (cacheDir.getFreeSpace() / 1000000 < 200) {
             message.add(Tags.STORAGE_ERROR);
             message.add("Ошибка: в хранилище телефона осталось свободно менее 5%. Очистите место и повторите загрузку");
             return message;
         } else {
             try {
-                StorageUtil.processing(daoSession, result, mTableName, removeBeforeInsert);
+                StorageUtil.processing(daoSession, result, mTableName, removeBeforeInsert, this);
             } catch (SQLiteFullException | SQLiteConstraintException e) {
                 message.add(Tags.SQL_ERROR);
                 message.add(e.getMessage());
@@ -116,8 +119,8 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
                 return message;
             }
         }
-        for (int i = (progress.current + size); i < total; i += size) {
-            if (isCancelled()){
+        for (int i = (progress.current + size); i < mTotal; i += size) {
+            if (isCancelled()) {
                 return message;
             }
             if (PreferencesManager.getInstance().getProgress() == null) {
@@ -145,16 +148,16 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
                     }
                 }
             }
+
             result = results[0];
-
-
-            if (cacheDir.getUsableSpace() * 100 / cacheDir.getTotalSpace() <= 6) {
+            File cacheDir1 = mContext.getCacheDir();
+            if (cacheDir1.getFreeSpace() / 1000000 < 200) {
                 message.add(Tags.STORAGE_ERROR);
                 message.add("Ошибка: в хранилище телефона осталось свободно менее 5%. Удалось загрузить: " + i + " записей (очистите место и повторите загрузку)");
                 return message;
             } else {
                 try {
-                    StorageUtil.processing(daoSession, result, mTableName, false);
+                    StorageUtil.processing(daoSession, result, mTableName, false, this);
                 } catch (SQLiteFullException | SQLiteConstraintException e) {
                     Logger.error(e);
                     message.add(Tags.SQL_ERROR);
@@ -162,23 +165,23 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
                     return message;
                 }
             }
-            publishProgress(new Progress(i, total, mTableName));
+            PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName));
         }
+        createIndexes(mTableName, HttpService.getDaoSession().getDatabase());
         return message;
     }
 
     private RPCResult[] rpc(String tableName, int start, int limit) throws FileNotFoundException {
-        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": " + start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": \"LINK\", \"direction\": \"ASC\" }] }]");
+        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": " + start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": \"C_Full_Address\", \"direction\": \"ASC\" }] }]");
         return results;
     }
 
 
     @Override
-    protected void onProgressUpdate(Progress... values) {
+    protected void onProgressUpdate(Integer... values) {
         super.onProgressUpdate(values);
-        Progress progress = values[0];
-        PreferencesManager.getInstance().setProgress(progress);
-        mListener.onLoadProgress(mTableName, progress);
+        int progress = values[0];
+        mListener.onLoadProgress(mTableName, progress, mTotal);
     }
 
     @Override
@@ -194,6 +197,26 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
         mListener.onLoadFinish(mTableName);
     }
 
+    @Override
+    public void onUpdateProgress(int progress) {
+        publishProgress(progress);
+    }
+
+    private void createIndexes(String tableName, Database db) {
+        switch (tableName.toLowerCase()) {
+            case "ui_sv_fias":
+                db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
+                        " (\"C_Full_Address\" ASC);");
+                db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_F_Structure ON \"UI_SV_FIAS\"" +
+                        " (\"F_Structure\" ASC);");
+                db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_F_Municipality ON \"UI_SV_FIAS\"" +
+                        " (\"F_Municipality\" ASC);");
+                db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_F_Town ON \"UI_SV_FIAS\"" +
+                        " (\"F_Town\" ASC);");
+                break;
+        }
+    }
+
 
     public interface OnLoadListener {
         /**
@@ -202,7 +225,7 @@ public class LoadAsyncTask extends AsyncTask<String, Progress, ArrayList<String>
          * @param tableName имя таблицы
          * @param progress  процент
          */
-        void onLoadProgress(String tableName, Progress progress);
+        void onLoadProgress(String tableName, int progress, int total);
 
         /**
          * Результат загрузки данных

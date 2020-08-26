@@ -63,9 +63,9 @@ public class InfoRequestListener extends AuthFilterRequestListener implements On
             }
             data.put("local_row_count", localRowCount);
             for (AbstractDao dao : HttpService.getDaoSession().getAllDaos()) {
-                remoteRowCount.put(dao.getTablename(), PreferencesManager.getInstance().getLocalRowCount(dao.getTablename()));
+                remoteRowCount.put(dao.getTablename(), PreferencesManager.getInstance().getRemoteRowCount(dao.getTablename()));
             }
-            data.put("remote_row_count", localRowCount);
+            data.put("remote_row_count", remoteRowCount);
             array.put(data);
             JSONObject result = new JSONObject();
             result.put("records", array);

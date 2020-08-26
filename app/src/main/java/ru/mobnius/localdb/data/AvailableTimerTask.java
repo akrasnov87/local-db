@@ -20,22 +20,19 @@ public class AvailableTimerTask extends TimerTask {
     public void run() {
         boolean available = false;
         HttpURLConnection urlConnection = null;
-        for (int tryOnceMore = 0; tryOnceMore < 3; tryOnceMore++) {
             try {
                 URL url = new URL("http://localhost:" + HttpServerThread.HTTP_SERVER_PORT);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
-                urlConnection.setConnectTimeout(3000);
+                urlConnection.setConnectTimeout(7000);
 
                 new BufferedInputStream(urlConnection.getInputStream());
                 available = true;
-                break;
             } catch (IOException e) {
                 Logger.error(e);
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
-                }
             }
         }
 

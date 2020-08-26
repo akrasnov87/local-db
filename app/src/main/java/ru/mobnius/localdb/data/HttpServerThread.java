@@ -31,11 +31,9 @@ public class HttpServerThread extends Thread {
         Socket socket;
         try {
             httpServerSocket = new ServerSocket(HTTP_SERVER_PORT);
-
             //noinspection InfiniteLoopStatement
             while(true) {
                 socket = httpServerSocket.accept();
-
                 HttpResponseThread httpResponseThread = new HttpResponseThread(mContext, socket);
                 httpResponseThread.start();
             }

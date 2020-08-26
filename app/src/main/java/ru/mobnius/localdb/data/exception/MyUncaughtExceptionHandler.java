@@ -25,9 +25,8 @@ public class MyUncaughtExceptionHandler implements Thread.UncaughtExceptionHandl
     private final Context mContext;
 
     /**
-     *
      * @param group группа исключения IExceptionGroup
-     * @param code код исключения IExceptionCode
+     * @param code  код исключения IExceptionCode
      */
     public MyUncaughtExceptionHandler(Thread.UncaughtExceptionHandler oldHandler, String group, int code, Context context) {
         this.oldHandler = oldHandler;
@@ -39,19 +38,19 @@ public class MyUncaughtExceptionHandler implements Thread.UncaughtExceptionHandl
     @Override
     public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
         try {
-            if(!intercept) {
+            if (!intercept) {
                 Log.d(TAG, "Перехвачено исключение от группы " + group + ", код " + ExceptionUtils.codeToString(code));
-                String exceptionString = StringUtil.exceptionToString(e);
+                final String exceptionString = StringUtil.exceptionToString(e);
                 ExceptionModel exceptionModel = ExceptionModel.getInstance(new Date(), exceptionString, group, code);
                 boolean isDebug = PreferencesManager.getInstance() != null && PreferencesManager.getInstance().isDebug();
                 Log.d(TAG, "Запись исключения " + exceptionModel.getExceptionCode(isDebug) + " в файл.");
                 FileExceptionManager.getInstance(mContext).writeBytes(exceptionModel.getFileName(), exceptionModel.toString().getBytes());
                 Log.d(TAG, "Исключение " + exceptionModel.getExceptionCode(isDebug) + " записано в файл.");
             }
-        }catch (Exception exc) {
+        } catch (Exception exc) {
             intercept = false;
             Log.d(TAG, Objects.requireNonNull(exc.getMessage()));
-        }finally {
+        } finally {
             intercept = true;
             if (oldHandler != null) {
                 oldHandler.uncaughtException(t, e); //Delegates to Android's error handling

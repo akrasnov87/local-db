@@ -17,4 +17,6 @@
     <string name="make_query">Сделать запрос</string>
     <string name="close">Закрыть</string>
     <string name="clear_table">Стереть данные</string>
+    <string name="crash_toast_text">Ошибка LOCAL_DB. Пожалуйста, отправьте отчет разработчику</string>
+    <string name="ok">ok</string>
 </resources>

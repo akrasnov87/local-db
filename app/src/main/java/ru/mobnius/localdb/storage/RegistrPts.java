@@ -3,13 +3,12 @@ package ru.mobnius.localdb.storage;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
-import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;
 
 @Entity(nameInDb = "ED_Registr_Pts")
-@Storage(description = "Потребиители", table = "ED_Registr_Pts")
+@Storage(description = "Потребители", table = "ED_Registr_Pts")
 public class RegistrPts {
 
     @Id

@@ -158,7 +158,7 @@ public class MainActivity extends BaseActivity
     protected void onResume() {
         super.onResume();
         if (PreferencesManager.getInstance().getProgress() != null) {
-            mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress());
+            mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress().current, PreferencesManager.getInstance().getProgress().total);
             setMenuItemVisible(false);
         } else {
             mUpdateFragment.stopProcess();
@@ -272,8 +272,8 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    public void onDownLoadProgress(UrlReader reader, Progress progress) {
-        mUpdateFragment.updateProcess(progress);
+    public void onDownLoadProgress(UrlReader reader, int progress, int total) {
+        mUpdateFragment.updateProcess(progress, total);
     }
 
     @Override

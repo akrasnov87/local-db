@@ -1,10 +1,10 @@
 package ru.mobnius.localdb;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -23,7 +23,6 @@ import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.UrlReader;
-
 public class App extends Application implements
         OnLogListener,
         AvailableTimerTask.OnAvailableListener,
@@ -36,6 +35,7 @@ public class App extends Application implements
     private List<OnLogListener> mLogListeners;
     private List<AvailableTimerTask.OnAvailableListener> mAvailableListeners;
     private List<OnHttpListener> mHttpListeners;
+
 
     @Override
     public void onCreate() {
@@ -124,9 +124,9 @@ public class App extends Application implements
     }
 
     @Override
-    public void onDownLoadProgress(UrlReader reader, Progress progress) {
+    public void onDownLoadProgress(UrlReader reader, int progress, int total) {
         for(OnHttpListener listener : mHttpListeners) {
-            listener.onDownLoadProgress(reader, progress);
+            listener.onDownLoadProgress(reader, progress, total);
         }
     }
 

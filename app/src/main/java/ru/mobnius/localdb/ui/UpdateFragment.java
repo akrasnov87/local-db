@@ -46,12 +46,12 @@ public class UpdateFragment extends BaseFragment {
         mBar.setVisibility(View.VISIBLE);
     }
 
-    public void updateProcess(Progress progress) {
+    public void updateProcess(int progress, int total) {
         if(mBar.getVisibility() != View.VISIBLE) {
             startProcess();
         }
-        tvStatus.setText(String.format("%s из %s", progress.current, progress.total));
-        mBar.setProgress((int)progress.getPercent());
+        tvStatus.setText(String.format("%s из %s", progress, total));
+        mBar.setProgress((int)getPercent(progress, total));
     }
 
     /**
@@ -68,5 +68,13 @@ public class UpdateFragment extends BaseFragment {
     @Override
     public int getExceptionCode() {
         return ExceptionCode.DOWNLOAD_PROGRESS;
+    }
+
+    private double getPercent(int progress, int total) {
+        double result = (double) (progress * 100) / total;
+        if(result > 100) {
+            result = 100;
+        }
+        return result;
     }
 }

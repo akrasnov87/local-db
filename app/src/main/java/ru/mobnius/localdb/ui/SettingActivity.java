@@ -1,13 +1,5 @@
 package ru.mobnius.localdb.ui;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.FragmentManager;
-import androidx.preference.ListPreference;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.SwitchPreference;
-
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
@@ -20,19 +12,26 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.FragmentManager;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreference;
+
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Objects;
 
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
-import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.ExceptionInterceptActivity;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.data.exception.ExceptionGroup;
-import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
 import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
+import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
@@ -171,7 +170,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
                         lpSize.setEnabled(true);
                         pCreateError.setVisible(true);
                         pClearDB.setVisible(true);
-                        spDebug.setSummary(String.format(debugSummary,  "включен" ));
+                        spDebug.setSummary(String.format(debugSummary, "включен"));
                         Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                         clickToVersion = 0;
                     }
@@ -201,26 +200,26 @@ public class SettingActivity extends ExceptionInterceptActivity {
                     });
                     break;
                 case PreferencesManager.CLEAR:
-                   confirm("Все локальные данные будут удалены, авторизация сброшена. Вы уверены?", new DialogInterface.OnClickListener() {
-                       @Override
-                       public void onClick(DialogInterface dialog, int which) {
-                           ActivityManager am = (ActivityManager) requireActivity().getSystemService(Context.ACTIVITY_SERVICE);
-                           String myProcessPrefix = requireActivity().getApplicationInfo().processName;
-                           String myProcessName = null;
-                           try {
-                               myProcessName = requireActivity().getPackageManager().getActivityInfo(requireActivity().getComponentName(), 0).processName;
-                           } catch (PackageManager.NameNotFoundException e) {
-                               e.printStackTrace();
-                           }
-                           for (ActivityManager.RunningAppProcessInfo proc : am.getRunningAppProcesses()) {
-                               if (proc.processName.startsWith(myProcessPrefix) && !proc.processName.equals(myProcessName)) {
-                                   android.os.Process.killProcess(proc.pid);
-                               }
-                           }
-                           boolean success = am.clearApplicationUserData();
-                           Toast.makeText(getActivity(), success?"База данных успешно удалена":"Не удалось удалить БД" , Toast.LENGTH_SHORT).show();
-                       }
-                   });
+                    confirm("Все локальные данные будут удалены, авторизация сброшена. Вы уверены?", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ActivityManager am = (ActivityManager) requireActivity().getSystemService(Context.ACTIVITY_SERVICE);
+                            String myProcessPrefix = requireActivity().getApplicationInfo().processName;
+                            String myProcessName = null;
+                            try {
+                                myProcessName = requireActivity().getPackageManager().getActivityInfo(requireActivity().getComponentName(), 0).processName;
+                            } catch (PackageManager.NameNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                            for (ActivityManager.RunningAppProcessInfo proc : am.getRunningAppProcesses()) {
+                                if (proc.processName.startsWith(myProcessPrefix) && !proc.processName.equals(myProcessName)) {
+                                    android.os.Process.killProcess(proc.pid);
+                                }
+                            }
+                            boolean success = am.clearApplicationUserData();
+                            Toast.makeText(getActivity(), success ? "База данных успешно удалена" : "Не удалось удалить БД", Toast.LENGTH_SHORT).show();
+                        }
+                    });
             }
             return false;
         }
@@ -276,8 +275,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
         @Override
         public void onDestroy() {
             super.onDestroy();
-            mServerAppVersionAsyncTask.cancel(true);
-            mServerAppVersionAsyncTask = null;
+            mServerAppVersionAsyncTask.cancel(false);
         }
 
         @SuppressLint("StaticFieldLeak")
@@ -285,11 +283,14 @@ public class SettingActivity extends ExceptionInterceptActivity {
 
             @Override
             protected String doInBackground(Void... voids) {
-                try {
-                    return Loader.getInstance().version();
-                } catch (IOException e) {
-                    return "0.0.0.0";
+                if (!isCancelled()) {
+                    try {
+                        return Loader.getInstance().version();
+                    } catch (IOException e) {
+                        return "0.0.0.0";
+                    }
                 }
+                return "";
             }
 
             @Override
@@ -316,7 +317,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
                         }
                     }
                     pServerVersion.setVisible(false);
-                    if (pVersion != null) {
+                    if (pVersion != null && isAdded()) {
                         pVersion.setSummary("Установлена последняя версия " + VersionUtil.getVersionName(requireActivity()));
                     }
                 }

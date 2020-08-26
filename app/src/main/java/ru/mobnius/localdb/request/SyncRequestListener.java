@@ -7,10 +7,13 @@ import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import org.greenrobot.greendao.database.Database;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
+import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.ConnectionChecker;
@@ -76,9 +79,9 @@ public class SyncRequestListener extends AuthFilterRequestListener
     }
 
     @Override
-    public void onLoadProgress(String tableName, Progress progress) {
-        mApp.onDownLoadProgress(mUrlReader, progress);
-        Log.d(Names.TAG, tableName + ": " + progress.getPercent());
+    public void onLoadProgress(String tableName, int progress, int total) {
+        mApp.onDownLoadProgress(mUrlReader, progress, total);
+        Log.d(Names.TAG, tableName + ": " + getPercent(progress, total));
     }
 
     @Override
@@ -106,5 +109,13 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 }, 7000);
             }
         }
+    }
+
+    private double getPercent(int progress, int total) {
+        double result = (double) (progress * 100) / total;
+        if(result > 100) {
+            result = 100;
+        }
+        return result;
     }
 }

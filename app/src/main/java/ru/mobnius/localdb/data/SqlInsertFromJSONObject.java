@@ -1,12 +1,17 @@
 package ru.mobnius.localdb.data;
 
+
 import org.greenrobot.greendao.AbstractDao;
+import org.greenrobot.greendao.database.Database;
+import org.greenrobot.greendao.database.DatabaseStatement;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import ru.mobnius.localdb.HttpService;
 
 /**
  * Класс для обработки JSONObject и создания из него SQL запроса на добавление записи
@@ -44,25 +49,25 @@ public class SqlInsertFromJSONObject {
     /**
      * запрос в БД для вставки
      *
-     * @param count количество
+     * @param inserts количество
      * @return возвращается запрос
      */
-    public String convertToQuery(int count, String[] pkColumns) {
+    public void insertToDataBase(int inserts, int columnCount, List<Object> values ) {
         StringBuilder builder = new StringBuilder();
         for (String field : fields) {
             builder.append(field).append(",");
         }
+        Database database = HttpService.getDaoSession().getDatabase();
+        String s = "INSERT INTO " + tableName + "(" + builder.substring(0, builder.length() - 1) + ")" + " VALUES " + "(" + params + ")" + ";";
+        DatabaseStatement statement = database.compileStatement(s);
+        insert(statement, columnCount, inserts, values);
 
-        StringBuilder paramsBuilder = new StringBuilder();
-        for (int i = 0; i < count; i++) {
-            paramsBuilder.append("(").append(params).append("),");
-        }
-        String insertString = "INSERT INTO ";
-        if (pkColumns != null && pkColumns.length > 0) {
-            insertString = "INSERT OR REPLACE INTO ";
-        }
+      //  StringBuilder paramsBuilder = new StringBuilder();
+      //  for (int i = 0; i < inserts; i++) {
+       //     paramsBuilder.append("(").append(params).append("),");
+       // }
 
-        return insertString + tableName + "(" + builder.substring(0, builder.length() - 1) + ")" + " VALUES " + paramsBuilder.substring(0, paramsBuilder.length() - 1) + ";";
+       // return "INSERT INTO " + tableName + "(" + builder.substring(0, builder.length() - 1) + ")" + " VALUES " + paramsBuilder.substring(0, paramsBuilder.length() - 1) + ";";
     }
 
     /**
@@ -101,4 +106,38 @@ public class SqlInsertFromJSONObject {
 
         return false;
     }
+
+    private void insert (DatabaseStatement statement, int columnCount, int insertCount, List<Object> values){
+        int i = 0;
+        switch (columnCount){
+            case 6:
+                while (insertCount>0){
+                    statement.clearBindings();
+                    statement.bindString(1, String.valueOf(values.get(i++)));
+                    statement.bindString(2, String.valueOf(values.get(i++)));
+                    statement.bindString(3, String.valueOf(values.get(i++)));
+                    statement.bindString(4, String.valueOf(values.get(i++)));
+                    statement.bindString(5, String.valueOf(values.get(i++)));
+                    statement.bindString(6, String.valueOf(values.get(i++)));
+                    statement.executeInsert();
+                    insertCount--;
+                }
+            break;
+            case 4:
+                while (insertCount>0){
+                    statement.clearBindings();
+                    statement.bindString(1, String.valueOf(values.get(i++)));
+                    statement.bindString(2, String.valueOf(values.get(i++)));
+                    statement.bindString(3, String.valueOf(values.get(i++)));
+                    statement.bindString(4, String.valueOf(values.get(i++)));
+                    statement.executeInsert();
+                    insertCount--;
+                }
+                break;
+
+        }
+
+    }
+
+
 }

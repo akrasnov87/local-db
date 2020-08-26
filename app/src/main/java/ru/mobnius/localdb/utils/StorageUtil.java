@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
+import android.util.Log;
 
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.database.Database;
@@ -14,6 +15,7 @@ import org.json.JSONObject;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 
 import dalvik.system.DexFile;
@@ -26,6 +28,7 @@ import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.storage.DaoSession;
 
 public class StorageUtil {
+    private final static String TAG = "naval";
 
     /**
      * Получение списка хранилищ для загрузки данных
@@ -92,7 +95,7 @@ public class StorageUtil {
                                 try {
                                     JSONObject object = new JSONObject(cursor.getString(i));
                                     rowObject.put(cursor.getColumnName(i), object);
-                                }catch (JSONException e){
+                                } catch (JSONException e) {
                                     Logger.error(e);
                                 }
                             } else {
@@ -115,9 +118,16 @@ public class StorageUtil {
 
 
     @SuppressWarnings("rawtypes")
-    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert) throws SQLiteFullException, SQLiteConstraintException {
+    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert, OnProgressUpdate listener) throws SQLiteFullException, SQLiteConstraintException {
         Database db = daoSession.getDatabase();
+        if (removeBeforeInsert) {
+            db.execSQL("delete from " + tableName);
+            PreferencesManager.getInstance().setLocalRowCount("0", tableName);
+        }
+        long s = System.currentTimeMillis();
+        Log.d("hak", s + " start");
         AbstractDao abstractDao = null;
+        int insertions = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
 
         for (AbstractDao ad : daoSession.getAllDaos()) {
             if (ad.getTablename().equals(tableName)) {
@@ -129,67 +139,105 @@ public class StorageUtil {
         if (abstractDao == null) {
             return;
         }
-        String [] pkColumns = abstractDao.getPkColumns();
-
-        if (removeBeforeInsert) {
-            db.execSQL("delete from " + tableName);
-            PreferencesManager.getInstance().setLocalRowCount("0", tableName);
-        }
-
         if (result.result.records.length > 0) {
-            JSONObject firstObject = result.result.records[0];
+
+            JSONObject firstObject = toNormal(result.result.records[0], abstractDao);
             SqlInsertFromJSONObject sqlInsert = new SqlInsertFromJSONObject(firstObject, tableName, abstractDao);
 
+            //Вычисляем максимально возможную вставку за 1 раз. 999 за 1 раз - ограничение SQLite
+            int columnsCount = abstractDao.getAllColumns().length;
+            int max = 999 / columnsCount;
+
             int idx = 0;
-            int max = 100;
             List<Object> values = new ArrayList<>(max);
+            db.beginTransaction();
             try {
                 for (JSONObject o : result.result.records) {
-                    if (idx == 0) {
-                        db.beginTransaction();
-                    }
-                    values.addAll(sqlInsert.getValues(o));
-
+                    values.addAll(sqlInsert.getValues(toNormal(o, abstractDao)));
                     idx++;
-
                     if (idx >= max) {
                         try {
-                            db.execSQL(sqlInsert.convertToQuery(idx, pkColumns), values.toArray(new Object[0]));
-                            db.setTransactionSuccessful();
-                            int previousRowCount = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
-                            PreferencesManager.getInstance().setLocalRowCount(String.valueOf(previousRowCount + idx),tableName);
-                        } finally {
-                            try {
-                                db.endTransaction();
-                            } catch (IllegalStateException e) {
-                                Logger.error(e);
-                            }
+                           // db.execSQL(
+                                    sqlInsert.insertToDataBase(idx, columnsCount, values);
+                                    //, values.toArray(new Object[0]));
+                            insertions += idx;
+                            listener.onUpdateProgress(insertions);
+                        } catch (Exception e) {
+                            Logger.error(e);
                         }
                         idx = 0;
                         values.clear();
                     }
                 }
+                if (idx == 0) {
+                    db.setTransactionSuccessful();
+                }
             } catch (Exception e) {
                 Logger.error(e);
             } finally {
-                if (idx > 0) {
+                long d = (System.currentTimeMillis() - s) / 1000;
+                Log.d("hak", "time - " + d);
+                if (idx == 0) {
+                    db.endTransaction();
+                    PreferencesManager.getInstance().setLocalRowCount(String.valueOf(insertions), tableName);
+                } else {
                     try {
-                        db.execSQL(sqlInsert.convertToQuery(idx, pkColumns), values.toArray(new Object[0]));
+                        //db.execSQL(
+                                sqlInsert.insertToDataBase(idx, columnsCount, values);
+                                //, values.toArray(new Object[0]));
                         db.setTransactionSuccessful();
-                        int previousRowCount = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
-                        PreferencesManager.getInstance().setLocalRowCount(String.valueOf(previousRowCount + idx),tableName);
+                        insertions += idx;
+                        listener.onUpdateProgress(insertions);
                     } finally {
                         try {
                             db.endTransaction();
+                            PreferencesManager.getInstance().setLocalRowCount(String.valueOf(insertions), tableName);
                         } catch (IllegalStateException e) {
                             Logger.error(e);
                         }
                     }
                 }
+
             }
         }
     }
 
+    /**
+     * метод для приведения JSON объекта к виду key(название колнки в таблице)->value(либо значение из notNormal либо пустая строка "")
+     *
+     * @param notNormal   JSON объект полученный от сервера
+     * @param abstractDao для получения названий всех колонок которые есть в данной таблице
+     * @return нормализованный JSONObject
+     */
+    @SuppressWarnings("rawtypes")
+    private static JSONObject toNormal(JSONObject notNormal, AbstractDao abstractDao) {
+        JSONObject object = new JSONObject();
+        for (String x : abstractDao.getAllColumns()) {
+            try {
+                object.put(x, "");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        Iterator<String> itr = notNormal.keys();
+
+        while (itr.hasNext()) {
+            String key = itr.next();
+            try {
+                object.put(key, notNormal.get(key));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return object;
+    }
+
+    /**
+     * Метод для проверки строки на валидность JSON
+     *
+     * @param test тестируемая строка
+     * @return true если строка валидная
+     */
     public static boolean isJSONValid(String test) {
         try {
             new JSONObject(test);
@@ -199,4 +247,7 @@ public class StorageUtil {
         return true;
     }
 
+    public interface OnProgressUpdate {
+        void onUpdateProgress(int progress);
+    }
 }
