@@ -103,6 +103,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             }
             RPCResult result = results[0];
             mTotal = result.result.total;
+            publishProgress(0);
             File cacheDir = mApp.getCacheDir();
             int spaceNeeded = isNotEnoughSpace(result, mTotal, size);
             if (cacheDir.getFreeSpace() / 1000000 < spaceNeeded) {
@@ -208,14 +209,16 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
     private void createIndexes(String tableName, Database db) {
         if ("ui_sv_fias".equals(tableName.toLowerCase())) {
-            db.execSQL("CREATE INDEX IF NOT EXISTS IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
+            db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
                     " (\"C_Full_Address\" ASC);");
-            db.execSQL("CREATE INDEX IF NOT EXISTS IDX_UI_SV_FIAS_F_Structure ON \"UI_SV_FIAS\"" +
+            /**
+            db.execSQL("CREATE INDEX " + "EXISTS IDX_UI_SV_FIAS_F_Structure ON \"UI_SV_FIAS\"" +
                     " (\"F_Structure\" ASC);");
-            db.execSQL("CREATE INDEX IF NOT EXISTS IDX_UI_SV_FIAS_F_Municipality ON \"UI_SV_FIAS\"" +
+            db.execSQL("CREATE INDEX  " + "IDX_UI_SV_FIAS_F_Municipality ON \"UI_SV_FIAS\"" +
                     " (\"F_Municipality\" ASC);");
-            db.execSQL("CREATE INDEX IF NOT EXISTS IDX_UI_SV_FIAS_F_Town ON \"UI_SV_FIAS\"" +
+            db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_F_Town ON \"UI_SV_FIAS\"" +
                     " (\"F_Town\" ASC);");
+             */
         }
     }
 
