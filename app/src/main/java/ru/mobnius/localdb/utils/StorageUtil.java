@@ -124,8 +124,6 @@ public class StorageUtil {
             db.execSQL("delete from " + tableName);
             PreferencesManager.getInstance().setLocalRowCount("0", tableName);
         }
-        long s = System.currentTimeMillis();
-        Log.d("hak", s + " start");
         AbstractDao abstractDao = null;
         int insertions = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
 
@@ -156,10 +154,7 @@ public class StorageUtil {
                     values.addAll(sqlInsert.getValues(toNormal(o, abstractDao)));
                     idx++;
                     if (idx >= max) {
-                        try {
-                           // db.execSQL(
-                                    sqlInsert.insertToDataBase(idx, columnsCount, values);
-                                    //, values.toArray(new Object[0]));
+                        try { db.execSQL(sqlInsert.convertToSqlQuery(idx), values.toArray(new Object[0]));
                             insertions += idx;
                             listener.onUpdateProgress(insertions);
                         } catch (Exception e) {
@@ -175,16 +170,13 @@ public class StorageUtil {
             } catch (Exception e) {
                 Logger.error(e);
             } finally {
-                long d = (System.currentTimeMillis() - s) / 1000;
-                Log.d("hak", "time - " + d);
                 if (idx == 0) {
                     db.endTransaction();
                     PreferencesManager.getInstance().setLocalRowCount(String.valueOf(insertions), tableName);
                 } else {
                     try {
-                        //db.execSQL(
-                                sqlInsert.insertToDataBase(idx, columnsCount, values);
-                                //, values.toArray(new Object[0]));
+                        db.execSQL(
+                                sqlInsert.convertToSqlQuery(idx), values.toArray(new Object[0]));
                         db.setTransactionSuccessful();
                         insertions += idx;
                         listener.onUpdateProgress(insertions);

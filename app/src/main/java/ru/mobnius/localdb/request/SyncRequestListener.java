@@ -19,8 +19,8 @@ import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.ConnectionChecker;
 import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.data.RowCountAsyncTask;
 import ru.mobnius.localdb.model.DefaultResult;
-import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
@@ -61,14 +61,16 @@ public class SyncRequestListener extends AuthFilterRequestListener
         mTableName = tableName;
         if (tableName != null) {
             if (NetworkUtil.isNetworkAvailable(mApp)) {
-                if (urlReader.getParam("restore") == null) {
+                if (urlReader.getParam("restore") != null) {
+                    new RowCountAsyncTask(mApp, this).execute(mTableName);
+                }else {
                     PreferencesManager.getInstance().setProgress(null);
+                    Intent cancelPreviousTask = new Intent(Tags.CANCEL_TASK_TAG);
+                    LocalBroadcastManager.getInstance(mApp).sendBroadcast(cancelPreviousTask);
+                    new LoadAsyncTask(tableName, this, mApp).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                    response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+                    isCanceled = false;
                 }
-                Intent cancelPreviousTask = new Intent(Tags.CANCEL_TASK_TAG);
-                LocalBroadcastManager.getInstance(mApp).sendBroadcast(cancelPreviousTask);
-                new LoadAsyncTask(tableName, this, mApp).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-                response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
-                isCanceled = false;
             } else {
                 response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
             }
@@ -94,19 +96,18 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onConnectionChange(boolean isConnected) {
         if (!isConnected) {
-            Intent intent1 = new Intent(Tags.CANCEL_TASK_TAG);
-            LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent1);
+            Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
+            LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
             isCanceled = true;
         } else {
             if (!mTableName.isEmpty() && isCanceled) {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp).
-                                executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                        new RowCountAsyncTask( mApp, SyncRequestListener.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mTableName);
                         isCanceled = false;
                     }
-                }, 7000);
+                }, 5000);
             }
         }
     }

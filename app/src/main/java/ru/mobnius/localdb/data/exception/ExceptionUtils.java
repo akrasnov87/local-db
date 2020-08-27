@@ -68,8 +68,9 @@ public class ExceptionUtils {
 
                 for (String fileName : files) {
                     ExceptionModel model = toModel(new String(fileExceptionManager.readPath(fileName)));
-                    assert model != null;
-                    list.add(model.toDbItem(context));
+                    if (model!=null) {
+                        list.add(model.toDbItem(context));
+                    }
                 }
                 if (list.size() > 0) {
                     daoSession.getClientErrorsDao().insertInTx(list);
