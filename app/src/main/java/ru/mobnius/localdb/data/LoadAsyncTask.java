@@ -5,8 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
 import android.os.AsyncTask;
@@ -14,12 +12,11 @@ import android.os.AsyncTask;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.greenrobot.greendao.database.Database;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
@@ -63,11 +60,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     protected ArrayList<String> doInBackground(String... strings) {
         ArrayList<String> message = new ArrayList<>();
         if (!isCancelled()) {
-            if (isNotEnoughSpace(mApp)) {
-                message.add(Tags.STORAGE_ERROR);
-                message.add("Ошибка: в хранилище телефона недостаточно свободного места (необходимо около 2,5 ГБ). Очистите место и повторите загрузку");
-                return message;
-            }
+
 
             Loader loader = Loader.getInstance();
             boolean isAuthorized = loader.auth(strings[0], strings[1]);
@@ -110,6 +103,14 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             }
             RPCResult result = results[0];
             mTotal = result.result.total;
+            File cacheDir = mApp.getCacheDir();
+            int spaceNeeded = isNotEnoughSpace(result, mTotal, size);
+            if (cacheDir.getFreeSpace() / 1000000 < spaceNeeded) {
+                message.add(Tags.STORAGE_ERROR);
+                message.add("Ошибка: в хранилище телефона недостаточно свободного места для загрузки таблицы(" +
+                        mTableName + ", необходимо около " + spaceNeeded + " МБ). Очистите место и повторите загрузку");
+                return message;
+            }
             PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName);
             PreferencesManager.getInstance().setProgress(new Progress(progress.current, mTotal, mTableName));
 
@@ -153,24 +154,17 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 }
 
                 result = results[0];
-                File cacheDir1 = mApp.getCacheDir();
-                if (cacheDir1.getFreeSpace() / 1000000 < 200) {
-                    message.add(Tags.STORAGE_ERROR);
-                    message.add("Ошибка: в хранилище телефона осталось свободно менее 5%. Удалось загрузить: " + i + " записей (очистите место и повторите загрузку)");
+                try {
+                    StorageUtil.processing(daoSession, result, mTableName, false, this);
+                } catch (SQLiteFullException | SQLiteConstraintException e) {
+                    Logger.error(e);
+                    message.add(Tags.SQL_ERROR);
+                    message.add(e.getMessage());
                     return message;
-                } else {
-                    try {
-                        StorageUtil.processing(daoSession, result, mTableName, false, this);
-                    } catch (SQLiteFullException | SQLiteConstraintException e) {
-                        Logger.error(e);
-                        message.add(Tags.SQL_ERROR);
-                        message.add(e.getMessage());
-                        return message;
-                    }
+
                 }
                 PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName));
             }
-
             createIndexes(mTableName, HttpService.getDaoSession().getDatabase());
         }
         return message;
@@ -213,45 +207,42 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     }
 
     private void createIndexes(String tableName, Database db) {
-        switch (tableName.toLowerCase()) {
-            case "ui_sv_fias":
-                db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
-                        " (\"C_Full_Address\" ASC);");
-                db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_F_Structure ON \"UI_SV_FIAS\"" +
-                        " (\"F_Structure\" ASC);");
-                db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_F_Municipality ON \"UI_SV_FIAS\"" +
-                        " (\"F_Municipality\" ASC);");
-                db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_F_Town ON \"UI_SV_FIAS\"" +
-                        " (\"F_Town\" ASC);");
-                break;
+        if ("ui_sv_fias".equals(tableName.toLowerCase())) {
+            db.execSQL("CREATE INDEX IF NOT EXISTS IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
+                    " (\"C_Full_Address\" ASC);");
+            db.execSQL("CREATE INDEX IF NOT EXISTS IDX_UI_SV_FIAS_F_Structure ON \"UI_SV_FIAS\"" +
+                    " (\"F_Structure\" ASC);");
+            db.execSQL("CREATE INDEX IF NOT EXISTS IDX_UI_SV_FIAS_F_Municipality ON \"UI_SV_FIAS\"" +
+                    " (\"F_Municipality\" ASC);");
+            db.execSQL("CREATE INDEX IF NOT EXISTS IDX_UI_SV_FIAS_F_Town ON \"UI_SV_FIAS\"" +
+                    " (\"F_Town\" ASC);");
         }
     }
 
-    private boolean isNotEnoughSpace(Context context) {
-        File cacheDir = context.getCacheDir();
-        if (cacheDir.getFreeSpace() / 1000000 < 2500) {
-            return true;
-        }
-        return false;
+    private int isNotEnoughSpace(RPCResult rpcResult, int totalSize, int size) {
+        float oneResultSize = (float) (Arrays.toString(rpcResult.result.records).length() / 1024) / 1024;
+        float totalResultsCount = (float) totalSize / size;
+        float spaceNeeded = totalResultsCount * oneResultSize;
+        return (int) spaceNeeded + 100;
     }
 
 
-public interface OnLoadListener {
-    /**
-     * Прогресс выполнения
-     *
-     * @param tableName имя таблицы
-     * @param progress  процент
-     */
-    void onLoadProgress(String tableName, int progress, int total);
+    public interface OnLoadListener {
+        /**
+         * Прогресс выполнения
+         *
+         * @param tableName имя таблицы
+         * @param progress  процент
+         */
+        void onLoadProgress(String tableName, int progress, int total);
 
-    /**
-     * Результат загрузки данных
-     *
-     * @param tableName имя таблицы
-     */
-    void onLoadFinish(String tableName);
-}
+        /**
+         * Результат загрузки данных
+         *
+         * @param tableName имя таблицы
+         */
+        void onLoadFinish(String tableName);
+    }
 
 
 }
