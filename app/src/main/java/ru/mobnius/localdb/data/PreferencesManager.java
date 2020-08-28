@@ -108,7 +108,7 @@ public class PreferencesManager {
     }
 
     public int getSize() {
-        String value = getSharedPreferences().getString(SIZE, "100000");
+        String value = getSharedPreferences().getString(SIZE, "10000");
         return Integer.parseInt(Objects.requireNonNull(value));
     }
 
