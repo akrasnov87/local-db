@@ -18,6 +18,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.Tags;
@@ -30,7 +31,7 @@ import ru.mobnius.localdb.utils.StorageUtil;
 /**
  * Загрузка данных с сервера
  */
-public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate {
+public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate{
 
     private final OnLoadListener mListener;
     @SuppressLint("StaticFieldLeak")
@@ -39,10 +40,10 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     private int mTotal;
     private BroadcastReceiver mMessageReceiver;
 
-    public LoadAsyncTask(String tableName, OnLoadListener listener, Context context) {
+    public LoadAsyncTask(String tableName, OnLoadListener listener, App app) {
         mListener = listener;
         mTableName = tableName;
-        mApp = context;
+        mApp = app;
         mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -134,6 +135,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
                     break;
                 }
+
                 try {
                     results = rpc(mTableName, i, size);
                 } catch (FileNotFoundException e) {
@@ -194,6 +196,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         }
         PreferencesManager.getInstance().setProgress(null);
         mListener.onLoadFinish(mTableName);
+        LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
     }
 
     @Override

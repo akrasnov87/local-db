@@ -91,13 +91,13 @@ public class RowCountAsyncTask extends AsyncTask<String, Void, Integer> {
     @Override
     protected void onPostExecute(Integer integer) {
         super.onPostExecute(integer);
-        LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
-        if (integer != 0 && integer % 10000 == 0) {
+        if (integer != 0 && integer % 10000 == 0 && !isCancelled()) {
             Progress progress = PreferencesManager.getInstance().getProgress();
             progress.current = integer;
             PreferencesManager.getInstance().setProgress(progress);
             PreferencesManager.getInstance().setLocalRowCount(String.valueOf(integer), progress.tableName);
             new LoadAsyncTask(progress.tableName, mListener, mApp).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
         }
+        LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
     }
 }
