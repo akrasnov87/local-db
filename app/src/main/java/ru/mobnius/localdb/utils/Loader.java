@@ -129,10 +129,22 @@ public class Loader {
             BufferedReader br = new BufferedReader(reader);
             StringBuilder sb = new StringBuilder();
             String line;
+            //int i = 0;
             while ((line = br.readLine()) != null) {
                 sb.append(line + "\n");
+              /*  i++;
+                if (i>10000){
+                    if (line.contains("}")) {
+                        int index =  sb.indexOf(",", sb.length()-10);
+                        sb.deleteCharAt(index);
+                        sb.append("]\n}\n}\n]\n");
+                        RPCResult[] result = RPCResult.createInstance(sb.toString());
+                        RPCResult results = result[0];
+                    }
+                }*/
             }
             br.close();
+
             return RPCResult.createInstance(sb.toString());
         } catch (IOException e) {
             Logger.error(e);

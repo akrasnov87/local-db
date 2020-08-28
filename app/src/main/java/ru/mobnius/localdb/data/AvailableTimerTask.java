@@ -25,9 +25,11 @@ public class AvailableTimerTask extends TimerTask {
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.setConnectTimeout(7000);
-
-                new BufferedInputStream(urlConnection.getInputStream());
-                available = true;
+                int status = urlConnection.getResponseCode();
+                if (status == 200) {
+                    new BufferedInputStream(urlConnection.getInputStream());
+                    available = true;
+                }
             } catch (IOException e) {
                 Logger.error(e);
             } finally {

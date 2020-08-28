@@ -49,6 +49,11 @@
         android:key="MBL_CLEAR"
         android:summary="Удалить записи из всех таблиц"
         android:title="Очистка базы данных" />
+    <SwitchPreference
+        android:icon="@drawable/ic_outline_visibility_24"
+        android:key="MBL_ERROR_VISIBILITY"
+        android:summary="Показывать сообщения об ошибках в интерфейсе приложения"
+        android:title="Видимость ошибок" />
 
     <PreferenceCategory
         android:icon="@drawable/ic_baseline_bug_report_24"

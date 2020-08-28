@@ -26,10 +26,7 @@ public class PreferencesManager {
     public static final String SIZE = "MBL_SIZE";
     public static final String GENERATED_ERROR = "MBL_GENERATED_ERROR";
     public static final String CLEAR = "MBL_CLEAR";
-    public static final String FIAS_COUNT = "MBL_FIAS_COUNT";
-    public static final String DEVICE_BILLING_COUNT = "MBL_DEVICE_BILLING_COUNT";
-    public static final String NETWORK_ROUTES_COUNT = "MBL_NETWORK_ROUTES_COUNT";
-    public static final String REGISTR_PTS_COUNT = "MBL_REGISTR_PTS_COUNT";
+    public static final String ERROR_VISIBILITY = "MBL_ERROR_VISIBILITY";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -111,7 +108,7 @@ public class PreferencesManager {
     }
 
     public int getSize() {
-        String value = getSharedPreferences().getString(SIZE, "10000");
+        String value = getSharedPreferences().getString(SIZE, "100000");
         return Integer.parseInt(Objects.requireNonNull(value));
     }
 
@@ -130,5 +127,11 @@ public class PreferencesManager {
     public String getRemoteRowCount(String tableName) {
         return getSharedPreferences().getString(tableName + "remote", "0");
     }
+    public boolean isErrorVisible() {
+        return getSharedPreferences().getBoolean(ERROR_VISIBILITY, false);
+    }
 
+    public void setErrorVisibility(boolean value) {
+        getSharedPreferences().edit().putBoolean(ERROR_VISIBILITY, value).apply();
+    }
 }

@@ -11,7 +11,8 @@ import java.util.Objects;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.utils.StringUtil;
 
-public class MyUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+public class
+MyUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
     /**
      * был перехвачен
      */

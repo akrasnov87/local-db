@@ -85,6 +85,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
         private Preference pLoginReset;
         private Preference pNodeUrl;
         private Preference pRpcUrl;
+        private SwitchPreference spErrorVisibility;
         private ListPreference lpSize;
         private Preference pCreateError;
         private ServerAppVersionAsyncTask mServerAppVersionAsyncTask;
@@ -132,6 +133,20 @@ public class SettingActivity extends ExceptionInterceptActivity {
             pClearDB = findPreference(PreferencesManager.CLEAR);
             Objects.requireNonNull(pClearDB).setVisible(PreferencesManager.getInstance().isDebug());
             pClearDB.setOnPreferenceClickListener(this);
+
+            spErrorVisibility = findPreference(PreferencesManager.ERROR_VISIBILITY);
+            Objects.requireNonNull(spErrorVisibility).setVisible(PreferencesManager.getInstance().isDebug());
+            spErrorVisibility.setVisible(PreferencesManager.getInstance().isDebug());
+            spErrorVisibility.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if (preference.getKey().equals(PreferencesManager.ERROR_VISIBILITY)) {
+                        boolean errorVisibilityValue = Boolean.parseBoolean(String.valueOf(newValue));
+                        PreferencesManager.getInstance().setErrorVisibility(errorVisibilityValue);
+                    }
+                    return true;
+                }
+            });
         }
 
         @Override
@@ -142,6 +157,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
 
             spDebug.setSummary(String.format(debugSummary, PreferencesManager.getInstance().isDebug() ? "включен" : "отключен"));
             spDebug.setChecked(PreferencesManager.getInstance().isDebug());
+            spErrorVisibility.setChecked(PreferencesManager.getInstance().isErrorVisible());
 
             String loginSummary = "Логин для авторизации на сервере: %s";
             pLogin.setSummary(String.format(loginSummary, PreferencesManager.getInstance().getLogin()));
@@ -170,6 +186,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
                         lpSize.setEnabled(true);
                         pCreateError.setVisible(true);
                         pClearDB.setVisible(true);
+                        spErrorVisibility.setVisible(true);
                         spDebug.setSummary(String.format(debugSummary, "включен"));
                         Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                         clickToVersion = 0;
@@ -233,6 +250,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
                 pSQLite.setVisible(debugValue);
                 lpSize.setEnabled(debugValue);
                 pCreateError.setVisible(debugValue);
+                spErrorVisibility.setVisible(debugValue);
                 PreferencesManager.getInstance().setDebug(debugValue);
                 pLoginReset.setVisible(debugValue);
             }

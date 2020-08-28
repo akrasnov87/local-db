@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -45,7 +46,6 @@ import ru.mobnius.localdb.data.component.MySnackBar;
 import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.data.exception.FileExceptionManager;
 import ru.mobnius.localdb.model.LogItem;
-import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.utils.Loader;
@@ -78,7 +78,11 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Tags.ERROR_TAG);
+        filter.addAction(Tags.CANCEL_TASK_TAG);
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                mMessageReceiver, filter);
         setContentView(R.layout.activity_main);
         Log.d(Names.TAG, "Запуск главного экрана");
 
@@ -114,12 +118,20 @@ public class MainActivity extends BaseActivity
                         message = message.substring(0, 1000) + ".........\n" + message.substring(message.length() - 1000, message.length() - 1);
                     }
                     message = "При последнем запуске приложения возникла следующая критическая ошибка:\n" + message;
-                    tvError.setText(message);
-                    svError.setVisibility(View.VISIBLE);
                     Intent intent = new Intent(Tags.ERROR_TAG);
                     intent.putExtra(Tags.ERROR_TYPE, Tags.CRITICAL_ERROR);
                     intent.putExtra(Tags.ERROR_TEXT, message);
                     LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+                    Intent i = new Intent(Intent.ACTION_SEND);
+                    i.setType("message/rfc822");
+                    i.putExtra(Intent.EXTRA_EMAIL, new String[]{"a-slatinin@it-serv.ru"});
+                    i.putExtra(Intent.EXTRA_SUBJECT, "Отчет об ошибке");
+                    i.putExtra(Intent.EXTRA_TEXT, message);
+                    try {
+                        startActivity(Intent.createChooser(i, "В приложении LocalDB возникла ошибка. Пожалуйста, выберите приложение чтобы отправить готовый отчет разработчикам."));
+                    } catch (android.content.ActivityNotFoundException ex) {
+                        Toast.makeText(MainActivity.this, "Не найдено установленных e-mail клиентов.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }
@@ -132,7 +144,6 @@ public class MainActivity extends BaseActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         miSyncDB = menu.findItem(R.id.action_fias);
         return true;
@@ -179,23 +190,6 @@ public class MainActivity extends BaseActivity
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Tags.ERROR_TAG);
-        filter.addAction(Tags.CANCEL_TASK_TAG);
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, filter);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(
-                mMessageReceiver);
-    }
-
     protected void onDestroy() {
         super.onDestroy();
         if (mServerAppVersionAsyncTask != null) {
@@ -205,6 +199,8 @@ public class MainActivity extends BaseActivity
         ((App) getApplication()).unRegistryLogListener(this);
         ((App) getApplication()).unRegistryAvailableListener(this);
         ((App) getApplication()).unRegistryHttpListener(this);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(
+                mMessageReceiver);
     }
 
     @Override
@@ -369,12 +365,14 @@ public class MainActivity extends BaseActivity
         public void onReceive(Context context, Intent intent) {
             switch (Objects.requireNonNull(intent.getAction())) {
                 case Tags.ERROR_TAG:
-                    svError.setVisibility(View.VISIBLE);
                     String errorMessage = intent.getStringExtra(Tags.ERROR_TEXT);
                     if (errorMessage != null && errorMessage.length() > 2000) {
-                        errorMessage = errorMessage.substring(0, 1000)+errorMessage.substring(errorMessage.length()-1000, errorMessage.length()-1);
+                        errorMessage = errorMessage.substring(0, 1000) + errorMessage.substring(errorMessage.length() - 1000, errorMessage.length() - 1);
                     }
-                    tvError.setText(errorMessage);
+                        if (PreferencesManager.getInstance().isErrorVisible()) {
+                            svError.setVisibility(View.VISIBLE);
+                            tvError.setText(errorMessage);
+                        }
                     break;
                 case Tags.CANCEL_TASK_TAG:
                     if (mUpdateFragment != null) {

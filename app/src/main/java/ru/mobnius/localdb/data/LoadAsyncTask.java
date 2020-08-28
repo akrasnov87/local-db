@@ -134,24 +134,18 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
                     break;
                 }
-                for (int retry = 0; true; retry++) {
-                    try {
-                        results = rpc(mTableName, i, size);
-                    } catch (FileNotFoundException e) {
-                        Logger.error(e);
-                        message.add(Tags.RPC_ERROR);
-                        message.add(e.getMessage());
-                        return message;
-                    }
-                    if (results != null) {
-                        break;
-                    } else {
-                        if (retry == 10) {
-                            message.add(Tags.RPC_ERROR);
-                            message.add("Не удалось установить соединение с сервером в процессе загрузки");
-                            return message;
-                        }
-                    }
+                try {
+                    results = rpc(mTableName, i, size);
+                } catch (FileNotFoundException e) {
+                    Logger.error(e);
+                    message.add(Tags.RPC_ERROR);
+                    message.add(e.getMessage());
+                    return message;
+                }
+                if (results == null) {
+                    message.add(Tags.RPC_ERROR);
+                    message.add("Не удалось установить соединение с сервером в процессе загрузки");
+                    return message;
                 }
 
                 result = results[0];
@@ -211,7 +205,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         if ("ui_sv_fias".equals(tableName.toLowerCase())) {
             db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
                     " (\"C_Full_Address\" ASC);");
-            /**
+            /*
             db.execSQL("CREATE INDEX " + "EXISTS IDX_UI_SV_FIAS_F_Structure ON \"UI_SV_FIAS\"" +
                     " (\"F_Structure\" ASC);");
             db.execSQL("CREATE INDEX  " + "IDX_UI_SV_FIAS_F_Municipality ON \"UI_SV_FIAS\"" +
