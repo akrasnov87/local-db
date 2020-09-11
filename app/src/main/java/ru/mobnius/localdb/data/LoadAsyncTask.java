@@ -31,16 +31,17 @@ import ru.mobnius.localdb.utils.StorageUtil;
 /**
  * Загрузка данных с сервера
  */
-public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate{
+public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate {
 
     private final OnLoadListener mListener;
     @SuppressLint("StaticFieldLeak")
     private Context mApp;
-    private final String mTableName;
+    private final String[] mTableName;
+    private String mCurrentTableName;
     private int mTotal;
     private BroadcastReceiver mMessageReceiver;
 
-    public LoadAsyncTask(String tableName, OnLoadListener listener, App app) {
+    public LoadAsyncTask(String[] tableName, OnLoadListener listener, App app) {
         mListener = listener;
         mTableName = tableName;
         mApp = app;
@@ -61,83 +62,36 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     protected ArrayList<String> doInBackground(String... strings) {
         ArrayList<String> message = new ArrayList<>();
         if (!isCancelled()) {
-
-
-            Loader loader = Loader.getInstance();
-            boolean isAuthorized = loader.auth(strings[0], strings[1]);
-            if (!isAuthorized) {
-                message.add(Tags.AUTH_ERROR);
-                message.add("Не удалось получить ответ от сервера. Возможно пароль введен неверно, попробуйте авторизоваться повторно");
-                return message;
-            }
-
-            boolean removeBeforeInsert = false;
-            Progress progress;
-            if (PreferencesManager.getInstance().getProgress() == null) {
-                //удаляем прежде чем заливать
-                removeBeforeInsert = true;
-                progress = new Progress(0, 1, mTableName);
-            } else {
-                //восстанавливаем загрузку
-                progress = PreferencesManager.getInstance().getProgress();
-            }
-
-            //количество записей с сервера за 1 rpc запрос
-            int size = PreferencesManager.getInstance().getSize();
-
-            PreferencesManager.getInstance().setProgress(progress);
-
-            DaoSession daoSession = HttpService.getDaoSession();
-            RPCResult[] results;
-            try {
-                results = rpc(mTableName, progress.current, size);
-            } catch (FileNotFoundException e) {
-                Logger.error(e);
-                message.add(Tags.RPC_ERROR);
-                message.add(e.getMessage());
-                return message;
-            }
-            if (results == null) {
-                message.add(Tags.RPC_ERROR);
-                message.add("Не удалось установить соединение с сервером при старте загрузки");
-                return message;
-            }
-            RPCResult result = results[0];
-            mTotal = result.result.total;
-            publishProgress(0);
-            File cacheDir = mApp.getCacheDir();
-            int spaceNeeded = isNotEnoughSpace(result, mTotal, size);
-            if (cacheDir.getFreeSpace() / 1000000 < spaceNeeded) {
-                message.add(Tags.STORAGE_ERROR);
-                message.add("Ошибка: в хранилище телефона недостаточно свободного места для загрузки таблицы(" +
-                        mTableName + ", необходимо около " + spaceNeeded + " МБ). Очистите место и повторите загрузку");
-                return message;
-            }
-            PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName);
-            PreferencesManager.getInstance().setProgress(new Progress(progress.current, mTotal, mTableName));
-
-            try {
-                StorageUtil.processing(daoSession, result, mTableName, removeBeforeInsert, this);
-            } catch (SQLiteFullException | SQLiteConstraintException e) {
-                message.add(Tags.SQL_ERROR);
-                message.add(e.getMessage());
-                Logger.error(e);
-                return message;
-            }
-
-            for (int i = (progress.current + size); i < mTotal; i += size) {
-                if (isCancelled()) {
+            for (int j = 0; j < mTableName.length; j++) {
+                mCurrentTableName = mTableName[j];
+                Loader loader = Loader.getInstance();
+                boolean isAuthorized = loader.auth(strings[0], strings[1]);
+                if (!isAuthorized) {
+                    message.add(Tags.AUTH_ERROR);
+                    message.add("Не удалось получить ответ от сервера. Возможно пароль введен неверно, попробуйте авторизоваться повторно");
                     return message;
                 }
+
+                boolean removeBeforeInsert = false;
+                Progress progress;
                 if (PreferencesManager.getInstance().getProgress() == null) {
-                    // значит принудительно все было остановлено
-                    Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
-                    LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
-                    break;
+                    //удаляем прежде чем заливать
+                    removeBeforeInsert = true;
+                    progress = new Progress(0, 1, mTableName[j]);
+                } else {
+                    //восстанавливаем загрузку
+                    progress = PreferencesManager.getInstance().getProgress();
                 }
 
+                //количество записей с сервера за 1 rpc запрос
+                int size = PreferencesManager.getInstance().getSize();
+
+                PreferencesManager.getInstance().setProgress(progress);
+
+                DaoSession daoSession = HttpService.getDaoSession();
+                RPCResult[] results;
                 try {
-                    results = rpc(mTableName, i, size);
+                    results = rpc(mTableName[j], progress.current, size);
                 } catch (FileNotFoundException e) {
                     Logger.error(e);
                     message.add(Tags.RPC_ERROR);
@@ -146,23 +100,76 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 }
                 if (results == null) {
                     message.add(Tags.RPC_ERROR);
-                    message.add("Не удалось установить соединение с сервером в процессе загрузки");
+                    message.add("Не удалось установить соединение с сервером при старте загрузки");
                     return message;
                 }
+                RPCResult result = results[0];
+                mTotal = result.result.total;
+                publishProgress(0);
+                File cacheDir = mApp.getCacheDir();
+                int spaceNeeded = getRequiredSpaceSize(result, mTotal, size);
+                if (cacheDir.getFreeSpace() / 1000000 < spaceNeeded) {
+                    message.add(Tags.STORAGE_ERROR);
+                    message.add("Ошибка: в хранилище телефона недостаточно свободного места для загрузки таблицы(" +
+                            mTableName + ", необходимо около " + spaceNeeded + " МБ). Очистите место и повторите загрузку");
+                    return message;
+                }
+                PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName[j]);
+                PreferencesManager.getInstance().setProgress(new Progress(progress.current, mTotal, mTableName[j]));
 
-                result = results[0];
                 try {
-                    StorageUtil.processing(daoSession, result, mTableName, false, this);
+                    StorageUtil.processing(daoSession, result, mTableName[j], removeBeforeInsert, this);
                 } catch (SQLiteFullException | SQLiteConstraintException e) {
-                    Logger.error(e);
                     message.add(Tags.SQL_ERROR);
                     message.add(e.getMessage());
+                    Logger.error(e);
                     return message;
-
                 }
-                PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName));
+
+                for (int i = (progress.current + size); i < mTotal; i += size) {
+                    if (isCancelled()) {
+                        return message;
+                    }
+                    if (PreferencesManager.getInstance().getProgress() == null) {
+                        // значит принудительно все было остановлено
+                        Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
+                        LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
+                        break;
+                    }
+
+                    try {
+                        results = rpc(mTableName[j], i, size);
+                    } catch (FileNotFoundException e) {
+                        Logger.error(e);
+                        message.add(Tags.RPC_ERROR);
+                        message.add(e.getMessage());
+                        return message;
+                    }
+                    if (results == null) {
+                        message.add(Tags.RPC_ERROR);
+                        message.add("Не удалось установить соединение с сервером в процессе загрузки");
+                        return message;
+                    }
+
+                    result = results[0];
+                    try {
+                        StorageUtil.processing(daoSession, result, mTableName[j], false, this);
+                    } catch (SQLiteFullException | SQLiteConstraintException e) {
+                        Logger.error(e);
+                        message.add(Tags.SQL_ERROR);
+                        message.add(e.getMessage());
+                        return message;
+
+                    }
+                    PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j]));
+                }
+                createIndexes(mTableName[j], HttpService.getDaoSession().getDatabase());
+                ArrayList<String> list = new ArrayList<>(Arrays.asList(mTableName));
+                list.remove(mCurrentTableName);
+                String[] allTablesArray = list.toArray(new String[0]);
+                PreferencesManager.getInstance().setAllTablesArray(allTablesArray);
+                PreferencesManager.getInstance().setProgress(null);
             }
-            createIndexes(mTableName, HttpService.getDaoSession().getDatabase());
         }
         return message;
     }
@@ -172,16 +179,20 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         if (tableName.toLowerCase().equals("ui_sv_fias")) {
             sortColumn = "\"C_Full_Address\"";
         }
-        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": " + start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": " + sortColumn + ", \"direction\": \"ASC\" }] }]");
+        String bDisabled = "";
+        if (tableName.toLowerCase().equals("ed_device_billing")||tableName.toLowerCase().equals("ed_registr_pts")){
+            bDisabled =  " \"filter\":[{\"property\":\"B_Disable\", \"value\":\"0\", \"operator\":\"=\" }]";
+        }
+        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": "+
+                start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": " + sortColumn + ", \"direction\": \"ASC\" }]," + bDisabled +"}]");
         return results;
     }
-
 
     @Override
     protected void onProgressUpdate(Integer... values) {
         super.onProgressUpdate(values);
         int progress = values[0];
-        mListener.onLoadProgress(mTableName, progress, mTotal);
+        mListener.onLoadProgress(mCurrentTableName, progress, mTotal);
     }
 
     @Override
@@ -195,7 +206,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
         }
         PreferencesManager.getInstance().setProgress(null);
-        mListener.onLoadFinish(mTableName);
+        mListener.onLoadFinish(mCurrentTableName);
         LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
     }
 
@@ -204,7 +215,8 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         publishProgress(progress);
     }
 
-    private void createIndexes(String tableName, Database db) {
+    private void
+    createIndexes(String tableName, Database db) {
         if ("ui_sv_fias".equals(tableName.toLowerCase())) {
             db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
                     " (\"C_Full_Address\" ASC);");
@@ -219,7 +231,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         }
     }
 
-    private int isNotEnoughSpace(RPCResult rpcResult, int totalSize, int size) {
+    private int getRequiredSpaceSize(RPCResult rpcResult, int totalSize, int size) {
         float oneResultSize = (float) (Arrays.toString(rpcResult.result.records).length() / 1024) / 1024;
         float totalResultsCount = (float) totalSize / size;
         float spaceNeeded = totalResultsCount * oneResultSize;

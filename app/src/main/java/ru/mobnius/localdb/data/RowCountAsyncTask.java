@@ -96,7 +96,7 @@ public class RowCountAsyncTask extends AsyncTask<String, Void, Integer> {
             progress.current = integer;
             PreferencesManager.getInstance().setProgress(progress);
             PreferencesManager.getInstance().setLocalRowCount(String.valueOf(integer), progress.tableName);
-            new LoadAsyncTask(progress.tableName, mListener, mApp).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+            new LoadAsyncTask(PreferencesManager.getInstance().getAllTablesArray(), mListener, mApp).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
         }
         LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
     }

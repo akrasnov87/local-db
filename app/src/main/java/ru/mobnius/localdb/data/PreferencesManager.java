@@ -27,6 +27,9 @@ public class PreferencesManager {
     public static final String GENERATED_ERROR = "MBL_GENERATED_ERROR";
     public static final String CLEAR = "MBL_CLEAR";
     public static final String ERROR_VISIBILITY = "MBL_ERROR_VISIBILITY";
+    public static final String BUSY_PORT = "MBL_BUSY_PORT";
+    public static final String ALL_TABLES = "MBL_ALL_TABLES";
+    private static final String ALL_TABLES_NAMES = "MBL_ALL_TABLES_NAMES";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -127,11 +130,46 @@ public class PreferencesManager {
     public String getRemoteRowCount(String tableName) {
         return getSharedPreferences().getString(tableName + "remote", "0");
     }
+
     public boolean isErrorVisible() {
         return getSharedPreferences().getBoolean(ERROR_VISIBILITY, false);
     }
 
     public void setErrorVisibility(boolean value) {
         getSharedPreferences().edit().putBoolean(ERROR_VISIBILITY, value).apply();
+    }
+
+    public void setPortIsBusy(boolean value) {
+        getSharedPreferences().edit().putBoolean(BUSY_PORT, value).apply();
+    }
+
+    public boolean isPortBusy() {
+        return getSharedPreferences().getBoolean(BUSY_PORT, false);
+    }
+
+    public void setIsAllTables(boolean value) {
+        getSharedPreferences().edit().putBoolean(ALL_TABLES, value).apply();
+    }
+
+    public void setAllTablesArray(String[] value) {
+        String allTables;
+        if (value == null || value.length == 0) {
+            allTables = "";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (String s : value) {
+                sb.append(s).append(",");
+            }
+            allTables = sb.toString();
+        }
+        getSharedPreferences().edit().putString(ALL_TABLES_NAMES, allTables).apply();
+    }
+
+    public String[] getAllTablesArray() {
+        String allTables = getSharedPreferences().getString(ALL_TABLES_NAMES, "");
+        if (allTables != null && allTables.isEmpty()) {
+            return allTables.split(",");
+        }
+        return null;
     }
 }

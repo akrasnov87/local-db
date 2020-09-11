@@ -7,10 +7,14 @@ import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import org.greenrobot.greendao.AbstractDao;
+
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
+import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.ConnectionChecker;
@@ -30,7 +34,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     private final App mApp;
     private UrlReader mUrlReader;
-    private String mTableName = "";
     private boolean isCanceled = false;
 
     public SyncRequestListener(App app) {
@@ -54,25 +57,35 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
         mUrlReader = urlReader;
         // TODO: 17.06.2020 нужно достать из запроса логин и пароль
-        String tableName = urlReader.getParam("table");
-        mTableName = tableName;
-        if (tableName != null) {
-            if (NetworkUtil.isNetworkAvailable(mApp)) {
-                if (urlReader.getParam("restore") != null) {
-                    new RowCountAsyncTask(mApp, this).execute(mTableName);
-                }else {
-                    PreferencesManager.getInstance().setProgress(null);
-                    Intent cancelPreviousTask = new Intent(Tags.CANCEL_TASK_TAG);
-                    LocalBroadcastManager.getInstance(mApp).sendBroadcast(cancelPreviousTask);
-                    new LoadAsyncTask(tableName, this, mApp).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-                    response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
-                    isCanceled = false;
+        ArrayList<String> tableName = new ArrayList<>();
+        String table = urlReader.getParam("table");
+        if (table.equals("allTables")) {
+            for (int i = 0; i < HttpService.getDaoSession().getAllDaos().size(); i++) {
+                AbstractDao dao = (AbstractDao) HttpService.getDaoSession().getAllDaos().toArray()[i];
+                if (!dao.getTablename().equals("sd_client_errors")) {
+                    tableName.add(dao.getTablename());
+                    PreferencesManager.getInstance().setIsAllTables(true);
+                    PreferencesManager.getInstance().setAllTablesArray(tableName.toArray(new String[0]));
                 }
+            }
+        }else {
+            tableName.add(table);
+            PreferencesManager.getInstance().setIsAllTables(false);
+            PreferencesManager.getInstance().setAllTablesArray(null);
+        }
+        if (NetworkUtil.isNetworkAvailable(mApp)) {
+            if (urlReader.getParam("restore") != null) {
+                new RowCountAsyncTask(mApp, this).execute(PreferencesManager.getInstance().getProgress().tableName);
             } else {
-                response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
+                PreferencesManager.getInstance().setProgress(null);
+                Intent cancelPreviousTask = new Intent(Tags.CANCEL_TASK_TAG);
+                LocalBroadcastManager.getInstance(mApp).sendBroadcast(cancelPreviousTask);
+                new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+                isCanceled = false;
             }
         } else {
-            response = Response.getErrorInstance(urlReader, "Не все параметры запроса указаны", Response.RESULT_FAIL);
+            response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
         }
         return response;
     }
@@ -87,7 +100,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
         PreferencesManager.getInstance().setProgress(null);
-        mTableName = "";
+
     }
 
     @Override
@@ -97,11 +110,11 @@ public class SyncRequestListener extends AuthFilterRequestListener
             LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
             isCanceled = true;
         } else {
-            if (!mTableName.isEmpty() && isCanceled) {
+            if (PreferencesManager.getInstance().getProgress() != null && isCanceled) {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        new RowCountAsyncTask( mApp, SyncRequestListener.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mTableName);
+                        new RowCountAsyncTask(mApp, SyncRequestListener.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getProgress().tableName);
                         isCanceled = false;
                     }
                 }, 5000);
@@ -111,7 +124,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     private double getPercent(int progress, int total) {
         double result = (double) (progress * 100) / total;
-        if(result > 100) {
+        if (result > 100) {
             result = 100;
         }
         return result;

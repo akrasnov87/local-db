@@ -96,16 +96,16 @@ public class HttpService extends Service
     public void onCreate() {
         super.onCreate();
         NotificationChannel channel;
-        String channelId = "httpServiceClient";
+        String channelId = "httpServiceClientLocalDB";
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             channel = new NotificationChannel(channelId, "ltnChannel", NotificationManager.IMPORTANCE_DEFAULT);
             ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
             Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle("").setContentText("").build();
             startForeground(1, notification);
         }
-        onExceptionIntercept();
+       // onExceptionIntercept();
         mDaoSession = new DaoMaster(new DbOpenHelper(getApplication(), "local-db.db").getWritableDb()).newSession();
-        ExceptionUtils.saveLocalException(this, mDaoSession);
+        //ExceptionUtils.saveLocalException(this, mDaoSession);
 
         mRequestListeners.add(new DefaultRequestListener());
         mRequestListeners.add(new SyncRequestListener((App) getApplication()));

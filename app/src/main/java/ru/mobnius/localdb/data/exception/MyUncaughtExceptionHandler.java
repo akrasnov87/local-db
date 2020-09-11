@@ -38,6 +38,7 @@ MyUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     @Override
     public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+
         try {
             if (!intercept) {
                 Log.d(TAG, "Перехвачено исключение от группы " + group + ", код " + ExceptionUtils.codeToString(code));

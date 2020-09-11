@@ -1,6 +1,7 @@
 package ru.mobnius.localdb;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,7 +21,6 @@ public class AutoRunReceiver extends BroadcastReceiver
     private Context mContext;
 
 
-
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -36,26 +36,41 @@ public class AutoRunReceiver extends BroadcastReceiver
 
         Timer timer = new Timer();
         AvailableTimerTask availableTimerTask = new AvailableTimerTask(this);
-        int TIMEOUT = 1000;
+        int TIMEOUT = 10000;
         timer.schedule(availableTimerTask, 1000, TIMEOUT);
 
         // отправка ошибок
         Timer timerSend = new Timer();
-        SendErrorTimerTask sendErrorTimerTask = new SendErrorTimerTask();
-        timerSend.schedule(sendErrorTimerTask, 1000, 60 * 1000);
+        if (isMyServiceRunning(HttpService.class)) {
+            SendErrorTimerTask sendErrorTimerTask = new SendErrorTimerTask();
+            timerSend.schedule(sendErrorTimerTask, 1000, 60 * 1000);
+        }
 
-        ((App)mContext).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
+        ((App) mContext).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
+
+
     }
 
     @Override
     public void onAvailable(boolean available) {
         // тут нужно автоматически перезапускать сервис
-        ((App)mContext).onAvailable(available);
+        ((App) mContext).onAvailable(available);
 
-        if(!available) {
+        if (!available) {
             boolean serviceAvailable = ServiceUtil.checkServiceRunning(mContext, HttpService.SERVICE_NAME);
             ((App) mContext).onAddLog(new LogItem("хост не доступен, служба " + (serviceAvailable ? "запущена" : "остановлена"), true));
             mContext.startService(HttpService.getIntent(mContext, HttpService.AUTO));
         }
+
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

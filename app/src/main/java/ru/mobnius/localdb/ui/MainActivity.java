@@ -106,35 +106,29 @@ public class MainActivity extends BaseActivity
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
-        String message = "";
-        File root = FileExceptionManager.getInstance(this).getRootCatalog();
-        String[] files = root.list();
-        if (files != null) {
-            for (String fileName : files) {
-                byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
-                if (bytes != null) {
-                    message = new String(bytes);
-                    if (message.length() > 2000) {
-                        message = message.substring(0, 1000) + ".........\n" + message.substring(message.length() - 1000, message.length() - 1);
-                    }
-                    message = "При последнем запуске приложения возникла следующая критическая ошибка:\n" + message;
-                    Intent intent = new Intent(Tags.ERROR_TAG);
-                    intent.putExtra(Tags.ERROR_TYPE, Tags.CRITICAL_ERROR);
-                    intent.putExtra(Tags.ERROR_TEXT, message);
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-                    Intent i = new Intent(Intent.ACTION_SEND);
-                    i.setType("message/rfc822");
-                    i.putExtra(Intent.EXTRA_EMAIL, new String[]{"a-slatinin@it-serv.ru"});
-                    i.putExtra(Intent.EXTRA_SUBJECT, "Отчет об ошибке");
-                    i.putExtra(Intent.EXTRA_TEXT, message);
-                    try {
-                        startActivity(Intent.createChooser(i, "В приложении LocalDB возникла ошибка. Пожалуйста, выберите приложение чтобы отправить готовый отчет разработчикам."));
-                    } catch (android.content.ActivityNotFoundException ex) {
-                        Toast.makeText(MainActivity.this, "Не найдено установленных e-mail клиентов.", Toast.LENGTH_SHORT).show();
+        if (PreferencesManager.getInstance().isErrorVisible()) {
+            String message = "";
+            File root = FileExceptionManager.getInstance(this).getRootCatalog();
+            String[] files = root.list();
+            if (files != null) {
+                for (String fileName : files) {
+                    byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
+                    if (bytes != null) {
+                        message = new String(bytes);
+                        if (message.length() > 2000) {
+                            message = message.substring(0, 1000) + ".........\n" + message.substring(message.length() - 1000, message.length() - 1);
+                        }
+                        message = "При последнем запуске приложения возникла следующая критическая ошибка:\n" + message;
+                        Intent intent = new Intent(Tags.ERROR_TAG);
+                        intent.putExtra(Tags.ERROR_TYPE, Tags.CRITICAL_ERROR);
+                        intent.putExtra(Tags.ERROR_TEXT, message);
+                        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
                     }
                 }
             }
         }
+
+
 
 
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -165,6 +159,7 @@ public class MainActivity extends BaseActivity
         return super.onOptionsItemSelected(item);
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onResume() {
         super.onResume();
@@ -187,7 +182,11 @@ public class MainActivity extends BaseActivity
         }
         mServerAppVersionAsyncTask = new ServerAppVersionAsyncTask();
         mServerAppVersionAsyncTask.execute();
-
+        if (PreferencesManager.getInstance().isPortBusy()) {
+            svError.setVisibility(View.VISIBLE);
+            tvError.setText("Не удалось запустить службу, так как необходимый порт используется другим приложением. " +
+                    "Попробуйте закрыть все приложения и еще раз запустить LocalDB. Если это не поможет попробуйте перезагрузить телефон.");
+        }
     }
 
     protected void onDestroy() {
@@ -230,6 +229,9 @@ public class MainActivity extends BaseActivity
         switch (v.getId()) {
             case R.id.activity_main_close_error:
                 svError.setVisibility(View.GONE);
+                if (PreferencesManager.getInstance().isPortBusy()) {
+                    PreferencesManager.getInstance().setPortIsBusy(false);
+                }
                 break;
             case R.id.service_start:
                 startService(HttpService.getIntent(this, HttpService.MANUAL));
@@ -369,10 +371,10 @@ public class MainActivity extends BaseActivity
                     if (errorMessage != null && errorMessage.length() > 2000) {
                         errorMessage = errorMessage.substring(0, 1000) + errorMessage.substring(errorMessage.length() - 1000, errorMessage.length() - 1);
                     }
-                        if (PreferencesManager.getInstance().isErrorVisible()) {
-                            svError.setVisibility(View.VISIBLE);
-                            tvError.setText(errorMessage);
-                        }
+                    if (PreferencesManager.getInstance().isErrorVisible()) {
+                        svError.setVisibility(View.VISIBLE);
+                        tvError.setText(errorMessage);
+                    }
                     break;
                 case Tags.CANCEL_TASK_TAG:
                     if (mUpdateFragment != null) {
