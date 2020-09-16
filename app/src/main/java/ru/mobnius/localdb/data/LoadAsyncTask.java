@@ -30,11 +30,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.Tags;
+import ru.mobnius.localdb.data.tablePack.CsvUtil;
+import ru.mobnius.localdb.data.tablePack.Table;
+import ru.mobnius.localdb.model.KeyValue;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.observer.EventListener;
@@ -91,6 +95,9 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                         JSONObject jsonObject = new JSONObject(tablesInfo);
                         JSONArray array = jsonObject.getJSONArray(mCurrentTableName);
                         JSONObject object = (JSONObject) array.get(0);
+                        if (!object.has("VERSION")){
+                            object = (JSONObject) array.get(1);
+                        }
                         version = object.getString("VERSION");
                         totalCount = Integer.parseInt(object.getString("TOTAL_COUNT"));
                         fileCount = Integer.parseInt(object.getString("FILE_COUNT"));
@@ -101,20 +108,29 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                         return message;
                     }
                 }
-                InsertHandler<String> insertHandler = new InsertHandler<>(INSERT_HANDLER_NAME);
-                Handler handler = new Handler();
+                InsertHandler<String> insertHandler = new InsertHandler<>();
                 int currentRowsCount = 0;
-                long x =  System.currentTimeMillis();
-                Log.e("hak", "time start: " + x);
-                for (int i = 0; i < fileCount; i++) {
+
+                for (int i = 0; i < 1; i++) {
+
+                    long x =  System.currentTimeMillis();
+                    Log.e("hak", "time start: " + x);
                     UnzipUtil unzipUtil = new UnzipUtil(getFile(mApp, mCurrentTableName, version, currentRowsCount, singlePart).getAbsolutePath(),
                             FileUtil.getRoot(mApp, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
                     String unzipped = unzipUtil.unzip();
-                    insertHandler.insert(unzipped);
+                    StorageUtil.processings(HttpService.getDaoSession(), unzipped, mCurrentTableName, false);
+                    long y = (System.currentTimeMillis() - x);
+                    Log.e("hak", "time finish: " + y);
+                    long z =  System.currentTimeMillis();
+                    Table table = CsvUtil.convert(unzipped);
+                    long t = (System.currentTimeMillis() - z);
+                    Log.e("hak", "time alex: " + t);
+                    //insertHandler.insert(unzipped);
                     currentRowsCount += singlePart;
+
+                    return message;
+
                 }
-                long y = System.currentTimeMillis() - x;
-                Log.e("hak", "time finish: " + y);
                 //UnzipUtil unzipUtil = new UnzipUtil(get.getAbsolutePath(), FileUtil.getRoot(mApp, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
                // String s = unzipUtil.unzip();
                 int last = singlePart;

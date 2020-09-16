@@ -10,9 +10,10 @@ import java.util.concurrent.ConcurrentMap;
 
 public class InsertHandler<T> extends HandlerThread {
     private boolean mHasQuit = false;
-    private static final int MESSAGE_DOWNLOAD = 0;
+    private static final int INSERT_ROWS = 0;
     private Handler mRequestHandler;
-    private ConcurrentMap<T,String> mRequestMap = new ConcurrentHashMap<>();
+    private ConcurrentMap<T, String> mRequestMap = new ConcurrentHashMap<>();
+    private static final String TAG = "InsertHandler";
 
     @Override
     public boolean quit() {
@@ -20,8 +21,8 @@ public class InsertHandler<T> extends HandlerThread {
         return super.quit();
     }
 
-    public InsertHandler(String name) {
-        super(name);
+    public InsertHandler() {
+        super(TAG);
     }
 
     public void insert(T target) {
@@ -34,7 +35,7 @@ public class InsertHandler<T> extends HandlerThread {
         mRequestHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
-                if (msg.what == MESSAGE_DOWNLOAD) {
+                if (msg.what == INSERT_ROWS) {
                     T target = (T) msg.obj;
                     handleRequest(target);
                 }
@@ -43,8 +44,8 @@ public class InsertHandler<T> extends HandlerThread {
     }
 
     private void handleRequest(final T target) {
-        final String url = mRequestMap.get(target);
-        if (url == null) {
+        final String insertData = mRequestMap.get(target);
+        if (insertData == null) {
             return;
         }
     }

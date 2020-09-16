@@ -21,6 +21,7 @@ import dalvik.system.DexFile;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.SqlInsertFromJSONObject;
+import ru.mobnius.localdb.data.SqlInsertFromString;
 import ru.mobnius.localdb.data.Storage;
 import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.model.rpc.RPCResult;
@@ -153,7 +154,8 @@ public class StorageUtil {
                     values.addAll(sqlInsert.getValues(toNormal(o, abstractDao)));
                     idx++;
                     if (idx >= max) {
-                        try { db.execSQL(sqlInsert.convertToSqlQuery(idx), values.toArray(new Object[0]));
+                        try {
+                            db.execSQL(sqlInsert.convertToSqlQuery(idx), values.toArray(new Object[0]));
                             insertions += idx;
                             listener.onUpdateProgress(insertions);
                         } catch (Exception e) {
@@ -193,6 +195,87 @@ public class StorageUtil {
         }
     }
 
+    public static void processings(DaoSession daoSession, String unzipped, String tableName, boolean removeBeforeInsert) throws SQLiteFullException, SQLiteConstraintException {
+        Database db = daoSession.getDatabase();
+        if (removeBeforeInsert) {
+            db.execSQL("delete from " + tableName);
+            PreferencesManager.getInstance().setLocalRowCount("0", tableName);
+        }
+        AbstractDao abstractDao = null;
+        int insertions = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
+
+        for (AbstractDao ad : daoSession.getAllDaos()) {
+            if (ad.getTablename().equals(tableName)) {
+                abstractDao = ad;
+                break;
+            }
+        }
+        if (abstractDao == null) {
+            return;
+        }
+
+        SqlInsertFromString sqlInsertFromString = new SqlInsertFromString(unzipped, tableName);
+        List<Object> allValues;
+        allValues = sqlInsertFromString.getValues();
+        if (allValues == null) {
+            return;
+        }
+        if (allValues.size() > 0) {
+            //Вычисляем максимально возможную вставку за 1 раз. 999 за 1 раз - ограничение SQLite
+            int columnsCount = abstractDao.getAllColumns().length;
+            int max = 999 / columnsCount;
+            max = closestInteger(max, abstractDao.getAllColumns().length);
+
+            int idx = 0;
+            int x = 0;
+            List<Object> values = new ArrayList<>(max);
+            db.beginTransaction();
+            try {
+                for (Object o : allValues) {
+                    values.add(o);
+                    x++;
+                    if (x == 6) {
+                        idx++;
+                        x=0;
+                    }
+                    if (idx == max) {
+                        try {
+                            db.execSQL(sqlInsertFromString.convertToSqlQuery(idx), values.toArray(new Object[0]));
+                            insertions += idx;
+                        } catch (Exception e) {
+                            Logger.error(e);
+                        }
+                        idx = 0;
+                        values.clear();
+                    }
+                }
+                if (idx == 0) {
+                    db.setTransactionSuccessful();
+                }
+            } catch (Exception e) {
+                Logger.error(e);
+            } finally {
+                if (idx == 0) {
+                    db.endTransaction();
+                    PreferencesManager.getInstance().setLocalRowCount(String.valueOf(insertions), tableName);
+                } else {
+                    try {
+                        db.execSQL(sqlInsertFromString.convertToSqlQuery(idx), values.toArray(new Object[0]));
+                        db.setTransactionSuccessful();
+                        insertions += idx;
+                    } finally {
+                        try {
+                            db.endTransaction();
+                            PreferencesManager.getInstance().setLocalRowCount(String.valueOf(insertions), tableName);
+                        } catch (IllegalStateException e) {
+                            Logger.error(e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * метод для приведения JSON объекта к виду key(название колнки в таблице)->value(либо значение из notNormal либо пустая строка "")
      *
@@ -221,6 +304,11 @@ public class StorageUtil {
             }
         }
         return object;
+    }
+
+    static int closestInteger(int a, int b) {
+        int c1 = a - (a % b);
+        return c1;
     }
 
     /**
