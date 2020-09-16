@@ -1,11 +1,9 @@
 package ru.mobnius.localdb.ui;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,9 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -48,6 +44,7 @@ import ru.mobnius.localdb.data.exception.FileExceptionManager;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.StorageName;
+import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
@@ -78,11 +75,6 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Tags.ERROR_TAG);
-        filter.addAction(Tags.CANCEL_TASK_TAG);
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                mMessageReceiver, filter);
         setContentView(R.layout.activity_main);
         Log.d(Names.TAG, "Запуск главного экрана");
 
@@ -106,8 +98,8 @@ public class MainActivity extends BaseActivity
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
+        String message = "";
         if (PreferencesManager.getInstance().isErrorVisible()) {
-            String message = "";
             File root = FileExceptionManager.getInstance(this).getRootCatalog();
             String[] files = root.list();
             if (files != null) {
@@ -119,17 +111,12 @@ public class MainActivity extends BaseActivity
                             message = message.substring(0, 1000) + ".........\n" + message.substring(message.length() - 1000, message.length() - 1);
                         }
                         message = "При последнем запуске приложения возникла следующая критическая ошибка:\n" + message;
-                        Intent intent = new Intent(Tags.ERROR_TAG);
-                        intent.putExtra(Tags.ERROR_TYPE, Tags.CRITICAL_ERROR);
-                        intent.putExtra(Tags.ERROR_TEXT, message);
-                        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+                        tvError.setText(message);
+                        svError.setVisibility(View.VISIBLE);
                     }
                 }
             }
         }
-
-
-
 
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         //  alert(getString(R.string.android_8));
@@ -198,8 +185,6 @@ public class MainActivity extends BaseActivity
         ((App) getApplication()).unRegistryLogListener(this);
         ((App) getApplication()).unRegistryAvailableListener(this);
         ((App) getApplication()).unRegistryHttpListener(this);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(
-                mMessageReceiver);
     }
 
     @Override
@@ -247,8 +232,8 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (DialogInterface.BUTTON_POSITIVE == which) {
-                            Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
-                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                            App app = (App) getApplication();
+                            app.getObserver().notify(Observer.STOP, "stopping async task");
                             PreferencesManager.getInstance().setProgress(null);
                             mUpdateFragment.stopProcess();
                             setMenuItemVisible(true);
@@ -361,29 +346,6 @@ public class MainActivity extends BaseActivity
             }
         }
     }
-
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            switch (Objects.requireNonNull(intent.getAction())) {
-                case Tags.ERROR_TAG:
-                    String errorMessage = intent.getStringExtra(Tags.ERROR_TEXT);
-                    if (errorMessage != null && errorMessage.length() > 2000) {
-                        errorMessage = errorMessage.substring(0, 1000) + errorMessage.substring(errorMessage.length() - 1000, errorMessage.length() - 1);
-                    }
-                    if (PreferencesManager.getInstance().isErrorVisible()) {
-                        svError.setVisibility(View.VISIBLE);
-                        tvError.setText(errorMessage);
-                    }
-                    break;
-                case Tags.CANCEL_TASK_TAG:
-                    if (mUpdateFragment != null) {
-                        mUpdateFragment.stopProcess();
-                    }
-                    break;
-            }
-        }
-    };
 
     private void setMenuItemVisible(boolean visible) {
         if (miSyncDB != null) {

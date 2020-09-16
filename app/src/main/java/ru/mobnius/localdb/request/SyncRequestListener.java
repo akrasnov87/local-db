@@ -23,6 +23,7 @@ import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.RowCountAsyncTask;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
@@ -36,9 +37,10 @@ public class SyncRequestListener extends AuthFilterRequestListener
     private UrlReader mUrlReader;
     private boolean isCanceled = false;
 
-    public SyncRequestListener(App app) {
+    public SyncRequestListener(App app, SyncStatusRequestListener statusRequestListener) {
         mApp = app;
         mApp.getConnectionReceiver().setListener(this);
+        mApp.getObserver().subscribe(Observer.ERROR, statusRequestListener);
     }
 
     @Override
@@ -68,19 +70,23 @@ public class SyncRequestListener extends AuthFilterRequestListener
                     PreferencesManager.getInstance().setAllTablesArray(tableName.toArray(new String[0]));
                 }
             }
-        }else {
+        } else {
             tableName.add(table);
             PreferencesManager.getInstance().setIsAllTables(false);
             PreferencesManager.getInstance().setAllTablesArray(null);
         }
         if (NetworkUtil.isNetworkAvailable(mApp)) {
             if (urlReader.getParam("restore") != null) {
-                new RowCountAsyncTask(mApp, this).execute(PreferencesManager.getInstance().getProgress().tableName);
+                RowCountAsyncTask task = new RowCountAsyncTask(mApp, SyncRequestListener.this);
+               mApp.getObserver().subscribe(Observer.STOP, task);
+                task.execute(PreferencesManager.getInstance().getProgress().tableName);
             } else {
                 PreferencesManager.getInstance().setProgress(null);
                 Intent cancelPreviousTask = new Intent(Tags.CANCEL_TASK_TAG);
                 LocalBroadcastManager.getInstance(mApp).sendBroadcast(cancelPreviousTask);
-                new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp).execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp);
+                mApp.getObserver().subscribe(Observer.STOP, task);
+                task.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                 response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
                 isCanceled = false;
             }
@@ -100,7 +106,11 @@ public class SyncRequestListener extends AuthFilterRequestListener
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
         PreferencesManager.getInstance().setProgress(null);
+    }
 
+    @Override
+    public void onLoadError(String [] message) {
+        mApp.getObserver().notify(Observer.ERROR, message);
     }
 
     @Override
@@ -108,13 +118,16 @@ public class SyncRequestListener extends AuthFilterRequestListener
         if (!isConnected) {
             Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
             LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
+            mApp.getObserver().notify(Observer.STOP, "stopping async task");
             isCanceled = true;
         } else {
             if (PreferencesManager.getInstance().getProgress() != null && isCanceled) {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        new RowCountAsyncTask(mApp, SyncRequestListener.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getProgress().tableName);
+                        RowCountAsyncTask task = new RowCountAsyncTask(mApp, SyncRequestListener.this);
+                        mApp.getObserver().subscribe(Observer.STOP, task);
+                        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getProgress().tableName);
                         isCanceled = false;
                     }
                 }, 5000);
@@ -128,5 +141,8 @@ public class SyncRequestListener extends AuthFilterRequestListener
             result = 100;
         }
         return result;
+    }
+
+    public void stopDownload() {
     }
 }

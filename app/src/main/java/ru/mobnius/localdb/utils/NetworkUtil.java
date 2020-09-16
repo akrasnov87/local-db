@@ -2,16 +2,10 @@ package ru.mobnius.localdb.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
-import java.net.Socket;
-import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 

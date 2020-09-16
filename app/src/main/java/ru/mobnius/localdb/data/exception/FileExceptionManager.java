@@ -133,7 +133,7 @@ public class FileExceptionManager
                 deleteRecursive(child);
 
         if(!fileOrDirectory.delete()) {
-            Logger.error(new Exception("Ошибка удаление каталога"));
+            Logger.error(new Exception("Ошибка удаления каталога"));
         }
     }
 

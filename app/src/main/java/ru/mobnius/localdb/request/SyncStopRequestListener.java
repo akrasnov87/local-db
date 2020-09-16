@@ -8,10 +8,12 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
+import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**
@@ -19,10 +21,10 @@ import ru.mobnius.localdb.utils.UrlReader;
  */
 public class SyncStopRequestListener extends AuthFilterRequestListener
         implements OnRequestListener {
-    private Context mContext;
+    private App mApp;
 
-    public SyncStopRequestListener(Context context){
-        mContext = context;
+    public SyncStopRequestListener(App app){
+        mApp = app;
     }
 
     @Override
@@ -34,13 +36,11 @@ public class SyncStopRequestListener extends AuthFilterRequestListener
 
     @Override
     public Response getResponse(UrlReader urlReader) {
-        Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
-        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         Response response = super.getResponse(urlReader);
         if(response != null) {
             return response;
         }
-
+        mApp.getObserver().notify(Observer.STOP, "stopAsyncTask");
         if(PreferencesManager.getInstance().getProgress() != null) {
             PreferencesManager.getInstance().setProgress(null);
 

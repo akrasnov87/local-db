@@ -1,20 +1,33 @@
 package ru.mobnius.localdb.data;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
 import android.os.AsyncTask;
+import android.os.Environment;
+import android.os.Handler;
+import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.greenrobot.greendao.database.Database;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -24,14 +37,18 @@ import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.rpc.RPCResult;
+import ru.mobnius.localdb.observer.EventListener;
+import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.storage.DaoSession;
+import ru.mobnius.localdb.utils.FileUtil;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.StorageUtil;
+import ru.mobnius.localdb.utils.UnzipUtil;
 
 /**
  * Загрузка данных с сервера
  */
-public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate {
+public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate, EventListener {
 
     private final OnLoadListener mListener;
     @SuppressLint("StaticFieldLeak")
@@ -39,23 +56,12 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     private final String[] mTableName;
     private String mCurrentTableName;
     private int mTotal;
-    private BroadcastReceiver mMessageReceiver;
+    private final String INSERT_HANDLER_NAME = "insert_handler_name";
 
     public LoadAsyncTask(String[] tableName, OnLoadListener listener, App app) {
         mListener = listener;
         mTableName = tableName;
         mApp = app;
-        mMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(Tags.CANCEL_TASK_TAG)) {
-                    LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
-                    LoadAsyncTask.this.cancel(false);
-                }
-            }
-        };
-        LocalBroadcastManager.getInstance(mApp).registerReceiver(
-                mMessageReceiver, new IntentFilter(Tags.CANCEL_TASK_TAG));
     }
 
     @Override
@@ -71,7 +77,49 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     message.add("Не удалось получить ответ от сервера. Возможно пароль введен неверно, попробуйте авторизоваться повторно");
                     return message;
                 }
-
+                String tablesInfo = getTablesInfo();
+                String version;
+                int totalCount;
+                int fileCount;
+                int singlePart;
+                if (tablesInfo == null) {
+                    message.add(Tags.ZIP_ERROR);
+                    message.add("Не удалось необходимую для скачивания информацию");
+                    return message;
+                } else {
+                    try {
+                        JSONObject jsonObject = new JSONObject(tablesInfo);
+                        JSONArray array = jsonObject.getJSONArray(mCurrentTableName);
+                        JSONObject object = (JSONObject) array.get(0);
+                        version = object.getString("VERSION");
+                        totalCount = Integer.parseInt(object.getString("TOTAL_COUNT"));
+                        fileCount = Integer.parseInt(object.getString("FILE_COUNT"));
+                        singlePart = Integer.parseInt(object.getString("PART"));
+                    } catch (JSONException e) {
+                        message.add(Tags.ZIP_ERROR);
+                        message.add("Не удалось прочитать необходимую для скачивания информацию");
+                        return message;
+                    }
+                }
+                InsertHandler<String> insertHandler = new InsertHandler<>(INSERT_HANDLER_NAME);
+                Handler handler = new Handler();
+                int currentRowsCount = 0;
+                long x =  System.currentTimeMillis();
+                Log.e("hak", "time start: " + x);
+                for (int i = 0; i < fileCount; i++) {
+                    UnzipUtil unzipUtil = new UnzipUtil(getFile(mApp, mCurrentTableName, version, currentRowsCount, singlePart).getAbsolutePath(),
+                            FileUtil.getRoot(mApp, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
+                    String unzipped = unzipUtil.unzip();
+                    insertHandler.insert(unzipped);
+                    currentRowsCount += singlePart;
+                }
+                long y = System.currentTimeMillis() - x;
+                Log.e("hak", "time finish: " + y);
+                //UnzipUtil unzipUtil = new UnzipUtil(get.getAbsolutePath(), FileUtil.getRoot(mApp, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
+               // String s = unzipUtil.unzip();
+                int last = singlePart;
+                //InsertHandler<String> insertHandler = new InsertHandler<>(0 + "-" + last);
+                //insertHandler.insert(s);
                 boolean removeBeforeInsert = false;
                 Progress progress;
                 if (PreferencesManager.getInstance().getProgress() == null) {
@@ -111,7 +159,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 if (cacheDir.getFreeSpace() / 1000000 < spaceNeeded) {
                     message.add(Tags.STORAGE_ERROR);
                     message.add("Ошибка: в хранилище телефона недостаточно свободного места для загрузки таблицы(" +
-                            mTableName + ", необходимо около " + spaceNeeded + " МБ). Очистите место и повторите загрузку");
+                            mTableName[j] + ", необходимо около " + spaceNeeded + " МБ). Очистите место и повторите загрузку");
                     return message;
                 }
                 PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName[j]);
@@ -161,7 +209,9 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                         return message;
 
                     }
-                    PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j]));
+                    if (!isCancelled()) {
+                        PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j]));
+                    }
                 }
                 createIndexes(mTableName[j], HttpService.getDaoSession().getDatabase());
                 ArrayList<String> list = new ArrayList<>(Arrays.asList(mTableName));
@@ -180,11 +230,11 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             sortColumn = "\"C_Full_Address\"";
         }
         String bDisabled = "";
-        if (tableName.toLowerCase().equals("ed_device_billing")||tableName.toLowerCase().equals("ed_registr_pts")){
-            bDisabled =  " \"filter\":[{\"property\":\"B_Disable\", \"value\":\"0\", \"operator\":\"=\" }]";
+        if (tableName.toLowerCase().equals("ed_device_billing") || tableName.toLowerCase().equals("ed_registr_pts")) {
+            bDisabled = " \"filter\":[{\"property\":\"B_Disable\", \"value\":\"0\", \"operator\":\"=\" }]";
         }
-        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": "+
-                start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": " + sortColumn + ", \"direction\": \"ASC\" }]," + bDisabled +"}]");
+        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": " +
+                start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": " + sortColumn + ", \"direction\": \"ASC\" }]," + bDisabled + "}]");
         return results;
     }
 
@@ -198,16 +248,13 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     @Override
     protected void onPostExecute(ArrayList<String> message) {
         super.onPostExecute(message);
-        LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
-        if (message != null && !message.isEmpty()) {
-            Intent intent = new Intent(Tags.ERROR_TAG);
-            intent.putExtra(Tags.ERROR_TYPE, message.get(0));
-            intent.putExtra(Tags.ERROR_TEXT, message.get(1));
-            LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
-        }
         PreferencesManager.getInstance().setProgress(null);
-        mListener.onLoadFinish(mCurrentTableName);
-        LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
+        if (message != null && !message.isEmpty()) {
+            String[] errorData = {message.get(0), message.get(1)};
+            mListener.onLoadError(errorData);
+        } else {
+            mListener.onLoadFinish(mCurrentTableName);
+        }
     }
 
     @Override
@@ -231,11 +278,77 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         }
     }
 
+    private File getFile(Context context, String tableName, String version, int start, int limit) {
+        File file = null;
+        HttpURLConnection conn;
+        try {
+            int nextStep = start + limit;
+            URL url = new URL(PreferencesManager.getInstance().getZipUrl() + "/csv-zip/" + tableName + "/" + version + "/" + start + "-" + nextStep + ".zip");
+            conn = (HttpURLConnection) url.openConnection();
+            int contentLength = conn.getContentLength();
+
+            DataInputStream stream = new DataInputStream(url.openStream());
+
+            byte[] buffer = new byte[contentLength];
+            stream.readFully(buffer);
+            stream.close();
+            file = new File(FileUtil.getRoot(context, Environment.DIRECTORY_DOCUMENTS), tableName + ":" + start + "-" + nextStep);
+            DataOutputStream fos = new DataOutputStream(new FileOutputStream(file));
+            fos.write(buffer);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file;
+    }
+
+    private String getTablesInfo() {
+        String version = null;
+        HttpURLConnection conn;
+        try {
+            URL url = new URL(PreferencesManager.getInstance().getZipUrl() + "/csv-zip/");
+            conn = (HttpURLConnection) url.openConnection();
+            int contentLength = conn.getContentLength();
+            //OutputStream outputStream = conn.getOutputStream();
+            // outputStream.write(postData);
+            int status = conn.getResponseCode();
+            if (status != 200) {
+                return null;
+            }
+            InputStream stream = conn.getInputStream();
+            InputStreamReader reader = new InputStreamReader(stream);
+            BufferedReader br = new BufferedReader(reader);
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line + "\n");
+
+            }
+            br.close();
+            version = sb.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return version;
+    }
+
+
     private int getRequiredSpaceSize(RPCResult rpcResult, int totalSize, int size) {
         float oneResultSize = (float) (Arrays.toString(rpcResult.result.records).length() / 1024) / 1024;
         float totalResultsCount = (float) totalSize / size;
         float spaceNeeded = totalResultsCount * oneResultSize;
         return (int) spaceNeeded + 100;
+    }
+
+    @Override
+    public void update(String eventType, String... args) {
+        if (eventType.equals(Observer.STOP)) {
+            this.cancel(false);
+            if (PreferencesManager.getInstance().getProgress() != null) {
+                PreferencesManager.getInstance().setProgress(null);
+            }
+        }
     }
 
 
@@ -254,6 +367,8 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
          * @param tableName имя таблицы
          */
         void onLoadFinish(String tableName);
+
+        void onLoadError(String... errorData);
     }
 
 

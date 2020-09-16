@@ -13,4 +13,6 @@ public interface Tags {
     String RPC_ERROR = "rpc_error";
     String STORAGE_ERROR = "storage_error";
     String CRITICAL_ERROR = "critical_error";
+    String ZIP_ERROR = "zip_error";
+    String JSON_ERROR = "json_error";
 }

@@ -11,6 +11,7 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,11 +22,13 @@ import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.data.exception.ExceptionGroup;
 import ru.mobnius.localdb.data.exception.ExceptionUtils;
+import ru.mobnius.localdb.data.exception.FileExceptionManager;
 import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.request.AuthRequestListener;
 import ru.mobnius.localdb.request.DefaultRequestListener;
 import ru.mobnius.localdb.request.ErrorRequestListener;
@@ -103,13 +106,32 @@ public class HttpService extends Service
             Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle("").setContentText("").build();
             startForeground(1, notification);
         }
-       // onExceptionIntercept();
+        onExceptionIntercept();
         mDaoSession = new DaoMaster(new DbOpenHelper(getApplication(), "local-db.db").getWritableDb()).newSession();
-        //ExceptionUtils.saveLocalException(this, mDaoSession);
+        String message;
+        File root = FileExceptionManager.getInstance(this).getRootCatalog();
+        String[] files = root.list();
+        if (files != null) {
+            for (String fileName : files) {
+                byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
+                if (bytes != null) {
+                    message = new String(bytes);
+                    if (message.length() > 2000) {
+                        message = message.substring(0, 1000) + ".........\n" + message.substring(message.length() - 1000, message.length() - 1);
+                    }
+                    App app = (App) getApplication();
+                    String[] strings = {Tags.CRITICAL_ERROR, message};
+                    app.getObserver().notify(Observer.ERROR, strings);
+                }
+            }
+        }
+        ExceptionUtils.saveLocalException(this, mDaoSession);
 
         mRequestListeners.add(new DefaultRequestListener());
-        mRequestListeners.add(new SyncRequestListener((App) getApplication()));
-        mRequestListeners.add(new SyncStatusRequestListener((App) getApplication()));
+        SyncStatusRequestListener syncStatusRequestListener = new SyncStatusRequestListener((App) getApplication());
+        SyncRequestListener syncRequestListener = new SyncRequestListener((App) getApplication(), syncStatusRequestListener);
+        mRequestListeners.add(syncRequestListener);
+        mRequestListeners.add(syncStatusRequestListener);
         mRequestListeners.add(new AuthRequestListener(this));
         mRequestListeners.add(new SyncStopRequestListener((App) getApplication()));
         mRequestListeners.add(new TableRequestListener());
@@ -125,7 +147,6 @@ public class HttpService extends Service
         if (progress != null) {
             onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
             onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
-
         }
     }
 

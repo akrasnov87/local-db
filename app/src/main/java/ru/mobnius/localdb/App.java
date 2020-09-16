@@ -22,6 +22,7 @@ import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.UrlReader;
 public class App extends Application implements
         OnLogListener,
@@ -35,6 +36,7 @@ public class App extends Application implements
     private List<OnLogListener> mLogListeners;
     private List<AvailableTimerTask.OnAvailableListener> mAvailableListeners;
     private List<OnHttpListener> mHttpListeners;
+    private Observer mObserver;
 
 
     @Override
@@ -58,6 +60,7 @@ public class App extends Application implements
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         filter.addAction(Intent.ACTION_BOOT_COMPLETED);
         registerReceiver(mAutoRunReceiver, filter);
+        mObserver = new Observer(Observer.STOP, Observer.ERROR);
     }
 
     public void registryLogListener(OnLogListener listener) {
@@ -85,6 +88,10 @@ public class App extends Application implements
     }
     public ConnectionChecker getConnectionReceiver(){
         return mConnectionReceiver;
+    }
+
+    public Observer getObserver(){
+        return mObserver;
     }
 
     @Override

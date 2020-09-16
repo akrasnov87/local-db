@@ -1,14 +1,9 @@
 package ru.mobnius.localdb.data;
 
 import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.os.AsyncTask;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,28 +11,16 @@ import org.json.JSONObject;
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
-import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.model.Progress;
+import ru.mobnius.localdb.observer.EventListener;
 
-public class RowCountAsyncTask extends AsyncTask<String, Void, Integer> {
+public class RowCountAsyncTask extends AsyncTask<String, Void, Integer> implements EventListener {
     private final App mApp;
     private final LoadAsyncTask.OnLoadListener mListener;
-    private BroadcastReceiver mMessageReceiver;
 
     public RowCountAsyncTask(App app, LoadAsyncTask.OnLoadListener listener) {
         mApp = app;
         mListener = listener;
-        mMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(Tags.CANCEL_TASK_TAG)) {
-                    LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
-                    RowCountAsyncTask.this.cancel(false);
-                }
-            }
-        };
-        LocalBroadcastManager.getInstance(mApp).registerReceiver(
-                mMessageReceiver, new IntentFilter(Tags.CANCEL_TASK_TAG));
     }
 
     @Override
@@ -98,6 +81,15 @@ public class RowCountAsyncTask extends AsyncTask<String, Void, Integer> {
             PreferencesManager.getInstance().setLocalRowCount(String.valueOf(integer), progress.tableName);
             new LoadAsyncTask(PreferencesManager.getInstance().getAllTablesArray(), mListener, mApp).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
         }
-        LocalBroadcastManager.getInstance(mApp).unregisterReceiver(mMessageReceiver);
+    }
+
+    @Override
+    public void update(String eventType, String... args) {
+        if (eventType.equals("stop")) {
+            this.cancel(false);
+            if (PreferencesManager.getInstance().getProgress() != null) {
+                PreferencesManager.getInstance().setProgress(null);
+            }
+        }
     }
 }

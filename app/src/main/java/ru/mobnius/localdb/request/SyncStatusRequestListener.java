@@ -1,25 +1,17 @@
 package ru.mobnius.localdb.request;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Logger;
-import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
+import ru.mobnius.localdb.observer.EventListener;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
@@ -27,7 +19,7 @@ import ru.mobnius.localdb.utils.UrlReader;
  * Проверка выполнения синхронизации
  */
 public class SyncStatusRequestListener extends AuthFilterRequestListener
-        implements OnRequestListener {
+        implements OnRequestListener, EventListener {
 
     private final App mApp;
     private String errorMessage = "";
@@ -35,21 +27,6 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
 
     public SyncStatusRequestListener(App app) {
         mApp = app;
-        BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (Objects.equals(intent.getAction(), Tags.ERROR_TAG)) {
-                    errorMessage = intent.getStringExtra(Tags.ERROR_TEXT);
-                    if (errorMessage != null && errorMessage.length() > 100) {
-                        errorMessage = errorMessage.substring(0, 100);
-                    }
-                    errorMessage = "В LocalDB произошла ошибка: "+ errorMessage;
-                    errorType = intent.getStringExtra(Tags.ERROR_TYPE);
-                }
-            }
-        };
-        LocalBroadcastManager.getInstance(mApp).registerReceiver(
-                mMessageReceiver, new IntentFilter(Tags.ERROR_TAG));
     }
 
     @Override
@@ -65,7 +42,7 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
         if (response != null) {
             return response;
         }
-        if (!errorMessage.isEmpty()){
+        if (!errorMessage.isEmpty()) {
 
             try {
                 JSONObject object = new JSONObject();
@@ -95,5 +72,17 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
             response = Response.getErrorInstance(urlReader, "Информация о выполнении загрузки не найдена. Возможно она была завершена ранее.", Response.RESULT_FAIL);
         }
         return response;
+    }
+
+    @Override
+    public void update(String eventType, String... args) {
+        if (eventType.equals("error")) {
+            errorType = args[0];
+            errorMessage = args[1];
+            if (errorMessage != null && errorMessage.length() > 600) {
+                errorMessage = errorMessage.substring(0, 600);
+            }
+            errorMessage = "В LocalDB произошла ошибка: " + errorMessage;
+        }
     }
 }
