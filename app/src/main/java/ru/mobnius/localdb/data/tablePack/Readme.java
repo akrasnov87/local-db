@@ -4,18 +4,21 @@ import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.Property;
 
 import java.lang.reflect.Type;
+import java.util.Date;
 
-public class Table {
+public class Readme {
     private String[] mHeaders;
     private String[][] mValues;
     private int mIdx = 0;
     private String mHeadersLine;
+    private Type[] mTypes;
 
-    public Table(String headers, int count) {
+    public Readme(String headers, int count) {
         super();
         mHeadersLine = headers;
         mHeaders = headers.split("\\|");
         mValues = new String[count][mHeaders.length];
+        mTypes = new Type[mHeaders.length];
     }
 
     public String[] getHeaders() {
@@ -39,9 +42,5 @@ public class Table {
 
     public int count() {
         return mIdx;
-    }
-
-    public String getHeadersLineForSql() {
-        return mHeadersLine.replaceAll("\\|", ",");
     }
 }

@@ -12,6 +12,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import ru.mobnius.localdb.data.HttpServerThread;
@@ -23,6 +24,9 @@ import ru.mobnius.localdb.data.exception.ExceptionGroup;
 import ru.mobnius.localdb.data.exception.ExceptionUtils;
 import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
+import ru.mobnius.localdb.data.tablePack.OnRunnableLoadListeners;
+import ru.mobnius.localdb.data.tablePack.PackManager;
+import ru.mobnius.localdb.data.tablePack.RunnableLoad;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
@@ -127,6 +131,44 @@ public class HttpService extends Service
             onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
 
         }
+
+        PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "ED_Device_Billing", "1.2.649");
+        mDaoSession.getFiasDao().deleteAll();
+        mDaoSession.getFiasDao().detachAll();
+
+        long d_start = new Date().getTime();
+        packManager.start(new OnRunnableLoadListeners() {
+            @Override
+            public void onBufferSuccess(int count) {
+
+            }
+
+            @Override
+            public void onBufferInsert(int count) {
+
+            }
+
+            @Override
+            public void onBufferEmpty() {
+
+            }
+
+            @Override
+            public void onLoaded() {
+                long d_end = new Date().getTime();
+                Log.d(PackManager.TAG, String.valueOf(d_end - d_start));
+            }
+
+            @Override
+            public void onError(String message) {
+
+            }
+
+            @Override
+            public void onProgress(int start, int total) {
+
+            }
+        }, 0);
     }
 
     @Override
