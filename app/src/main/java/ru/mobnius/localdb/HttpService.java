@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -108,7 +109,8 @@ public class HttpService extends Service
             startForeground(1, notification);
         }
        // onExceptionIntercept();
-        mDaoSession = new DaoMaster(new DbOpenHelper(getApplication(), "local-db.db").getWritableDb()).newSession();
+        SQLiteDatabase sqLiteDatabase = new DbOpenHelper(getApplication(), "local-db.db").getWritableDatabase();
+        mDaoSession = new DaoMaster(sqLiteDatabase).newSession();
         //ExceptionUtils.saveLocalException(this, mDaoSession);
 
         mRequestListeners.add(new DefaultRequestListener());
@@ -129,10 +131,9 @@ public class HttpService extends Service
         if (progress != null) {
             onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
             onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
-
         }
 
-        PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "ED_Device_Billing", "1.2.649");
+        /*PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "UI_SV_FIAS", "1.2.641");
         mDaoSession.getFiasDao().deleteAll();
         mDaoSession.getFiasDao().detachAll();
 
@@ -168,7 +169,7 @@ public class HttpService extends Service
             public void onProgress(int start, int total) {
 
             }
-        }, 0);
+        }, 0);*/
     }
 
     @Override

@@ -1,10 +1,15 @@
 package ru.mobnius.localdb.data.tablePack;
 
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
+
+import com.google.gson.JsonObject;
 
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.AbstractDaoSession;
 import org.greenrobot.greendao.database.Database;
+import org.greenrobot.greendao.database.DatabaseStatement;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -13,8 +18,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Scanner;
+
+import ru.mobnius.localdb.storage.DaoSession;
 
 public class CsvUtil {
     public static Table convert(String input) {
@@ -31,7 +39,6 @@ public class CsvUtil {
                         values[idx] = s;
                         idx++;
                     }
-
                     table.addValues(values);
                 }
 
@@ -97,31 +104,68 @@ public class CsvUtil {
         return result;
     }
 
-    public static boolean insertToTable(Table table, String tableName, AbstractDaoSession session) {
-        boolean result;
-        Database db = session.getDatabase();
-        AbstractDao abstractDao = null;
-        for (AbstractDao ad : session.getAllDaos()) {
-            if (ad.getTablename().equals(tableName)) {
-                abstractDao = ad;
-                break;
-            }
+    public static JSONObject getInfo(String baseUrl) {
+        JSONObject result = null;
+        HttpURLConnection urlConnection = null;
+        try {
+        URL url = new URL(baseUrl + "/csv-zip");
+        urlConnection = (HttpURLConnection) url.openConnection();
+
+
+            urlConnection.setRequestMethod("GET");
+            urlConnection.setConnectTimeout(3000);
+
+            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+
+            Scanner s = new Scanner(in).useDelimiter("\\A");
+            result = new JSONObject(s.hasNext() ? s.next() : "");
+        }
+        catch (Exception e) {
+            Log.d(PackManager.TAG, e.getMessage());
+        }
+        finally {
+            urlConnection.disconnect();
         }
 
-        db.beginTransaction();
+        return result;
+    }
+
+    public static boolean insertToTable(Table table, String tableName, DaoSession mDaoSession) {
+        boolean result;
+
+        StringBuilder builder = new StringBuilder();
+        for (String name : table.getHeaders()) {
+            builder.append("?,");
+        }
+
+        String mParams = builder.substring(0, builder.length() - 1);
+        Database database = mDaoSession.getDatabase();
+        database.beginTransaction();
+
+        DatabaseStatement mStatement = database.compileStatement("INSERT INTO " + tableName + "(" + table.getHeadersLineForSql() + ")" + " VALUES(" + mParams + ")");
+
         try {
-            SqlStatementInsert sqlStatementInsert = new SqlStatementInsert(table, tableName, abstractDao);
             for (int i = 0; i < table.count(); i++) {
-                sqlStatementInsert.bind(i);
+                for(int j = 0; j < table.getHeaders().length; j++) {
+                    String value = table.getValue(i)[j];
+                    if(value == null) {
+                        mStatement.bindNull(j + 1);
+                    } else {
+                        mStatement.bindString(j + 1, value);
+                    }
+                }
+                mStatement.execute();
+                mStatement.clearBindings();
             }
 
-            db.setTransactionSuccessful();
+            database.setTransactionSuccessful();
             result = true;
         }catch (Exception e) {
+            Log.d(PackManager.TAG, e.getMessage());
             result = false;
         }
         finally {
-            db.endTransaction();
+            database.endTransaction();
         }
 
         return result;

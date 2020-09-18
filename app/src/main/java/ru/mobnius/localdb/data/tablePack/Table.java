@@ -1,10 +1,5 @@
 package ru.mobnius.localdb.data.tablePack;
 
-import org.greenrobot.greendao.AbstractDao;
-import org.greenrobot.greendao.Property;
-
-import java.lang.reflect.Type;
-
 public class Table {
     private String[] mHeaders;
     private String[][] mValues;
@@ -43,5 +38,10 @@ public class Table {
 
     public String getHeadersLineForSql() {
         return mHeadersLine.replaceAll("\\|", ",");
+    }
+
+    public void updateHeaders(String oldName, String newName) {
+        mHeadersLine = mHeadersLine.replace(oldName, newName);
+        mHeaders = mHeadersLine.split("\\|");
     }
 }

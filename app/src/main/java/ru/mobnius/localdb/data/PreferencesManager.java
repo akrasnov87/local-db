@@ -2,6 +2,7 @@ package ru.mobnius.localdb.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.google.gson.Gson;
 
@@ -22,6 +23,7 @@ public class PreferencesManager {
     public static final String PROGRESS = "MBL_PROGRESS";
     public static final String LOGIN_RESET = "MBL_LOGIN_RESET";
     public static final String NODE_URL = "MBL_NODE_URL";
+    public static final String REPO_URL = "MBL_REPO_URL";
     public static final String RPC_URL = "MBL_RPC_URL";
     public static final String SIZE = "MBL_SIZE";
     public static final String GENERATED_ERROR = "MBL_GENERATED_ERROR";
@@ -82,6 +84,15 @@ public class PreferencesManager {
         return getSharedPreferences().getString(NODE_URL, null);
     }
 
+    public String getRepoUrl() {
+        return getSharedPreferences().getString(REPO_URL, null);
+        //return "http://demo.it-serv.ru/repo";
+    }
+
+    public void setRepoUrl(String repoUrl) {
+        getSharedPreferences().edit().putString(REPO_URL, repoUrl).apply();
+    }
+
     public void setRpcUrl(String rpcUrl) {
         getSharedPreferences().edit().putString(RPC_URL, rpcUrl).apply();
     }
@@ -94,7 +105,7 @@ public class PreferencesManager {
         return getLogin() != null && getPassword() != null;
     }
 
-    public void setProgress(Progress progress) {
+    public void setProgress(Progress progress)  {
         getSharedPreferences().edit().putString(PROGRESS, progress == null ? null : new Gson().toJson(progress)).apply();
     }
 
@@ -167,7 +178,7 @@ public class PreferencesManager {
 
     public String[] getAllTablesArray() {
         String allTables = getSharedPreferences().getString(ALL_TABLES_NAMES, "");
-        if (allTables != null && allTables.isEmpty()) {
+        if (allTables != null && !allTables.isEmpty()) {
             return allTables.split(",");
         }
         return null;

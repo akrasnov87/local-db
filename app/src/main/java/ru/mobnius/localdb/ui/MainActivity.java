@@ -311,14 +311,13 @@ public class MainActivity extends BaseActivity
         if (db.isDbLockedByCurrentThread()) {
             message = "База данных заблокирована другим потоком. Попробуйте позднее.";
         }
-        confirm(message, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (!db.isDbLockedByCurrentThread()) {
-                    db.execSQL("delete from " + name.table);
-                } else {
-                    dialog.dismiss();
-                }
+        confirm(message, (dialog, which) -> {
+            if (!db.isDbLockedByCurrentThread()) {
+                db.execSQL("delete from " + name.table);
+                PreferencesManager.getInstance().setLocalRowCount("0", name.table);
+                PreferencesManager.getInstance().setRemoteRowCount("0", name.table);
+            } else {
+                dialog.dismiss();
             }
         });
     }

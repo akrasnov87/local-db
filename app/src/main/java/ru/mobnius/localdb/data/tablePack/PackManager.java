@@ -1,5 +1,6 @@
 package ru.mobnius.localdb.data.tablePack;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.util.Date;
@@ -13,7 +14,7 @@ public class PackManager {
 
     public static String TAG = "PACK";
 
-    private DaoSession mDaoSession;
+    private DaoSession mSQLiteDatabase;
     private String mBaseUrl;
     private String mTableName;
     private String mVersion;
@@ -22,8 +23,8 @@ public class PackManager {
 
     private Thread mLoadThread;
 
-    public PackManager(DaoSession daoSession, String baseUrl, String tableName, String version) {
-        mDaoSession = daoSession;
+    public PackManager(DaoSession sqLiteDatabase, String baseUrl, String tableName, String version) {
+        mSQLiteDatabase = sqLiteDatabase;
         mBaseUrl = baseUrl;
         mTableName = tableName;
         mVersion = version;
@@ -31,7 +32,7 @@ public class PackManager {
 
     public void start(OnRunnableLoadListeners listener, int start) {
 
-        mRunnableLoad = new RunnableLoad(listener, mDaoSession, mBaseUrl + "/csv-zip/" + mTableName + "/" + mVersion, mTableName, start);
+        mRunnableLoad = new RunnableLoad(listener, mSQLiteDatabase, mBaseUrl + "/csv-zip/" + mTableName + "/" + mVersion, mTableName, start);
 
         mLoadThread = new Thread(mRunnableLoad);
         mLoadThread.start();

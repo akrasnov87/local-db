@@ -21,6 +21,7 @@ import ru.mobnius.localdb.data.ConnectionChecker;
 import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.RowCountAsyncTask;
+import ru.mobnius.localdb.data.tablePack.PackManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.NetworkUtil;
@@ -100,7 +101,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
         PreferencesManager.getInstance().setProgress(null);
-
     }
 
     @Override
@@ -111,12 +111,9 @@ public class SyncRequestListener extends AuthFilterRequestListener
             isCanceled = true;
         } else {
             if (PreferencesManager.getInstance().getProgress() != null && isCanceled) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        new RowCountAsyncTask(mApp, SyncRequestListener.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getProgress().tableName);
-                        isCanceled = false;
-                    }
+                new Handler().postDelayed(() -> {
+                    new RowCountAsyncTask(mApp, SyncRequestListener.this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getProgress().tableName);
+                    isCanceled = false;
                 }, 5000);
             }
         }
