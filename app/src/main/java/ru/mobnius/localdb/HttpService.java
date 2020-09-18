@@ -153,9 +153,9 @@ public class HttpService extends Service
             onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
         }
 
-        PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "ED_Device_Billing", "1.2.649");
-        mDaoSession.getFiasDao().deleteAll();
-        mDaoSession.getFiasDao().detachAll();
+       /* PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "ED_Network_Routes", "1.3.847");
+        mDaoSession.getRegistrPtsDao().deleteAll();
+        mDaoSession.getRegistrPtsDao().detachAll();
 
         long d_start = new Date().getTime();
         packManager.start(new OnRunnableLoadListeners() {
@@ -191,7 +191,8 @@ public class HttpService extends Service
             }
         }, 0);
     }
-
+*/
+    }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String strMode;

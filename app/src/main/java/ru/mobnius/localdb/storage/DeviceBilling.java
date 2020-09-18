@@ -12,7 +12,7 @@ import ru.mobnius.localdb.data.Storage;
 @Entity(nameInDb = "ED_Device_Billing")
 @Storage(description = "Приборы", table = "ED_Device_Billing")
 public class DeviceBilling {
-    @Id
+
     public String LINK;
 
     @Property(nameInDb = "F_Registr_Pts")

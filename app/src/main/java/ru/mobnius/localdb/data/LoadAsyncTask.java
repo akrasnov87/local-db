@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.os.Handler;
 import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -30,15 +29,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.Tags;
-import ru.mobnius.localdb.data.tablePack.CsvUtil;
-import ru.mobnius.localdb.data.tablePack.Table;
-import ru.mobnius.localdb.model.KeyValue;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.observer.EventListener;
@@ -47,7 +42,6 @@ import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.FileUtil;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.StorageUtil;
-import ru.mobnius.localdb.utils.UnzipUtil;
 
 /**
  * Загрузка данных с сервера
@@ -61,11 +55,15 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     private String mCurrentTableName;
     private int mTotal;
     private final String INSERT_HANDLER_NAME = "insert_handler_name";
+    private InsertHandler.ZipDownloadListener mZipDownloadListener;
 
     public LoadAsyncTask(String[] tableName, OnLoadListener listener, App app) {
         mListener = listener;
         mTableName = tableName;
         mApp = app;
+        if (listener instanceof InsertHandler.ZipDownloadListener) {
+            mZipDownloadListener = (InsertHandler.ZipDownloadListener) listener;
+        }
     }
 
     @Override
@@ -95,7 +93,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                         JSONObject jsonObject = new JSONObject(tablesInfo);
                         JSONArray array = jsonObject.getJSONArray(mCurrentTableName);
                         JSONObject object = (JSONObject) array.get(0);
-                        if (!object.has("VERSION")){
+                        if (!object.has("VERSION")) {
                             object = (JSONObject) array.get(1);
                         }
                         version = object.getString("VERSION");
@@ -108,32 +106,22 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                         return message;
                     }
                 }
-                InsertHandler<String> insertHandler = new InsertHandler<>();
                 int currentRowsCount = 0;
+                Log.e("hak", "Начато скачивание" + System.currentTimeMillis());
+                for (int i = 0; i < fileCount; i++) {
 
-                for (int i = 0; i < 1; i++) {
+                    File file = getFile(mApp, mCurrentTableName, version, currentRowsCount, singlePart);
+                    currentRowsCount +=singlePart;
+                    mZipDownloadListener.onZipDownloaded(file.getAbsolutePath());
 
-                    long x =  System.currentTimeMillis();
-                    Log.e("hak", "time start: " + x);
-                    UnzipUtil unzipUtil = new UnzipUtil(getFile(mApp, mCurrentTableName, version, currentRowsCount, singlePart).getAbsolutePath(),
-                            FileUtil.getRoot(mApp, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
-                    String unzipped = unzipUtil.unzip();
-                    StorageUtil.processings(HttpService.getDaoSession(), unzipped, mCurrentTableName, false);
-                    long y = (System.currentTimeMillis() - x);
-                    Log.e("hak", "time finish: " + y);
-                    long z =  System.currentTimeMillis();
-                    Table table = CsvUtil.convert(unzipped);
-                    long t = (System.currentTimeMillis() - z);
-                    Log.e("hak", "time alex: " + t);
-                    //insertHandler.insert(unzipped);
-                    currentRowsCount += singlePart;
-
-                    return message;
 
                 }
+                if (true) {
+                    return message;
+                }
                 //UnzipUtil unzipUtil = new UnzipUtil(get.getAbsolutePath(), FileUtil.getRoot(mApp, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
-               // String s = unzipUtil.unzip();
-                int last = singlePart;
+                // String s = unzipUtil.unzip();
+
                 //InsertHandler<String> insertHandler = new InsertHandler<>(0 + "-" + last);
                 //insertHandler.insert(s);
                 boolean removeBeforeInsert = false;

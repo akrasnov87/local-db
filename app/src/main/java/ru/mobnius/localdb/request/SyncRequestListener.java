@@ -18,6 +18,7 @@ import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.ConnectionChecker;
+import ru.mobnius.localdb.data.InsertHandler;
 import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.RowCountAsyncTask;
@@ -31,11 +32,12 @@ import ru.mobnius.localdb.utils.UrlReader;
  * запуск синхронизации
  */
 public class SyncRequestListener extends AuthFilterRequestListener
-        implements LoadAsyncTask.OnLoadListener, ConnectionChecker.CheckConnection {
+        implements LoadAsyncTask.OnLoadListener, ConnectionChecker.CheckConnection, InsertHandler.ZipDownloadListener {
 
     private final App mApp;
     private UrlReader mUrlReader;
     private boolean isCanceled = false;
+    private InsertHandler mInsertHandler;
 
     public SyncRequestListener(App app, SyncStatusRequestListener statusRequestListener) {
         mApp = app;
@@ -82,8 +84,10 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 task.execute(PreferencesManager.getInstance().getProgress().tableName);
             } else {
                 PreferencesManager.getInstance().setProgress(null);
-                Intent cancelPreviousTask = new Intent(Tags.CANCEL_TASK_TAG);
-                LocalBroadcastManager.getInstance(mApp).sendBroadcast(cancelPreviousTask);
+
+                mInsertHandler = new InsertHandler(mApp, tableName.get(0));
+                mInsertHandler.start();
+                mInsertHandler.getLooper();
                 LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp);
                 mApp.getObserver().subscribe(Observer.STOP, task);
                 task.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
@@ -116,8 +120,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onConnectionChange(boolean isConnected) {
         if (!isConnected) {
-            Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
-            LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
             mApp.getObserver().notify(Observer.STOP, "stopping async task");
             isCanceled = true;
         } else {
@@ -143,6 +145,8 @@ public class SyncRequestListener extends AuthFilterRequestListener
         return result;
     }
 
-    public void stopDownload() {
+    @Override
+    public void onZipDownloaded(String zipFilePath) {
+        mInsertHandler.insert(zipFilePath);
     }
 }

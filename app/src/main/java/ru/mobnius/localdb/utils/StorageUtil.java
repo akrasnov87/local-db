@@ -3,6 +3,7 @@ package ru.mobnius.localdb.utils;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteFullException;
 
 import org.greenrobot.greendao.AbstractDao;
@@ -13,6 +14,7 @@ import org.json.JSONObject;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -195,7 +197,7 @@ public class StorageUtil {
         }
     }
 
-    public static void processings(DaoSession daoSession, String unzipped, String tableName, boolean removeBeforeInsert) throws SQLiteFullException, SQLiteConstraintException {
+    public static void processings(DaoSession daoSession, String unzipped, String tableName, boolean removeBeforeInsert, String zip) throws SQLiteFullException, SQLiteConstraintException {
         Database db = daoSession.getDatabase();
         if (removeBeforeInsert) {
             db.execSQL("delete from " + tableName);
@@ -215,21 +217,56 @@ public class StorageUtil {
         }
 
         SqlInsertFromString sqlInsertFromString = new SqlInsertFromString(unzipped, tableName);
-        List<Object> allValues;
-        allValues = sqlInsertFromString.getValues();
+
+        Object[] allValues = sqlInsertFromString.getValues();
         if (allValues == null) {
             return;
         }
-        if (allValues.size() > 0) {
+        if (allValues.length > 0) {
             //Вычисляем максимально возможную вставку за 1 раз. 999 за 1 раз - ограничение SQLite
             int columnsCount = abstractDao.getAllColumns().length;
             int max = 999 / columnsCount;
-            max = closestInteger(max, abstractDao.getAllColumns().length);
+            int next = max * columnsCount;
+            int idx = 0;
+            int dataLength = allValues.length;
+            db.beginTransaction();
+            try {
+                for (int i = 0; i < dataLength; i += next) {
+                    if (i + next<dataLength) {
+                        Object[] s = Arrays.copyOfRange(allValues, i, (i + next));
+                        try {
+                            db.execSQL(sqlInsertFromString.convertToSqlQuery(max), s);
+                            insertions += max;
+                        } catch (Exception e) {
+                            Logger.error(e);
+                        }
+                    }
+                    idx = i;
+                }
+                if (idx != dataLength) {
+                    Object[] s = Arrays.copyOfRange(allValues, idx, dataLength);
+                    int last = s.length/columnsCount;
 
+                    try {
+                        db.execSQL(sqlInsertFromString.convertToSqlQuery(last), s);
+                    } catch (Exception e) {
+                        Logger.error(e);
+                    }
+                }
+
+            } catch (SQLiteException e) {
+                e.printStackTrace();
+            } finally {
+                db.setTransactionSuccessful();
+                db.endTransaction();
+            }
+        }
+    }
+        /*
             int idx = 0;
             int x = 0;
             List<Object> values = new ArrayList<>(max);
-            db.beginTransaction();
+
             try {
                 for (Object o : allValues) {
                     values.add(o);
@@ -239,12 +276,7 @@ public class StorageUtil {
                         x=0;
                     }
                     if (idx == max) {
-                        try {
-                            db.execSQL(sqlInsertFromString.convertToSqlQuery(idx), values.toArray(new Object[0]));
-                            insertions += idx;
-                        } catch (Exception e) {
-                            Logger.error(e);
-                        }
+
                         idx = 0;
                         values.clear();
                     }
@@ -274,7 +306,7 @@ public class StorageUtil {
                 }
             }
         }
-    }
+    }*/
 
     /**
      * метод для приведения JSON объекта к виду key(название колнки в таблице)->value(либо значение из notNormal либо пустая строка "")

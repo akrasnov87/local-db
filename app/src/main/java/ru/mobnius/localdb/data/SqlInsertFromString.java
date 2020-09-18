@@ -15,6 +15,11 @@ public class SqlInsertFromString {
         mTableName = tableName;
         String[] dirtyArray = zipString.split("\n");
         mColumnPattern = dirtyArray[0].split("\\|");
+        for (int i = 0; i < mColumnPattern.length; i++) {
+            if (mColumnPattern[i].toLowerCase().equals("f_registr_pts___link")){
+                mColumnPattern[i] = "F_Registr_Pts";
+            }
+        }
         mValues = getPureArray(dirtyArray);
         mInsertsLength = mValues.length;
         StringBuilder paramsBuilder = new StringBuilder();
@@ -39,7 +44,7 @@ public class SqlInsertFromString {
         return "INSERT INTO " + mTableName + "(" + builder.substring(0, builder.length() - 1) + ")" + " VALUES " + paramsBuilder.substring(0, paramsBuilder.length() - 1) + ";";
     }
 
-    public List<Object> getValues() {
+    public Object [] getValues() {
         List<Object> readyValues = new ArrayList<>(mInsertsLength);
         for (String field : mValues) {
 
@@ -49,7 +54,7 @@ public class SqlInsertFromString {
             String[] cellString = field.split("\\|");
             readyValues.addAll(Arrays.asList(cellString));
         }
-        return readyValues;
+        return readyValues.toArray();
     }
 
     public String[] getPureArray(String[] dirtyArray) {
