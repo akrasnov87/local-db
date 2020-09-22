@@ -20,6 +20,7 @@ public class PreferencesManager {
     public static final String LOGIN = "MBL_LOGIN";
     public static final String PASSWORD = "MBL_PASSWORD";
     public static final String PROGRESS = "MBL_PROGRESS";
+    public static final String DOWNLOAD_PROGRESS = "MBL_DOWNLOAD_PROGRESS";
     public static final String LOGIN_RESET = "MBL_LOGIN_RESET";
     public static final String NODE_URL = "MBL_NODE_URL";
     public static final String RPC_URL = "MBL_RPC_URL";
@@ -105,6 +106,18 @@ public class PreferencesManager {
 
     public void setProgress(Progress progress) {
         getSharedPreferences().edit().putString(PROGRESS, progress == null ? null : new Gson().toJson(progress)).apply();
+    }
+
+    public void setDownloadProgress(Progress progress) {
+        getSharedPreferences().edit().putString(DOWNLOAD_PROGRESS, progress == null ? null : new Gson().toJson(progress)).apply();
+    }
+
+    public Progress getDownloadProgress() {
+        String value = getSharedPreferences().getString(DOWNLOAD_PROGRESS, null);
+        if (value == null) {
+            return null;
+        }
+        return new Gson().fromJson(value, Progress.class);
     }
 
     public Progress getProgress() {

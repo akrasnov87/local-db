@@ -15,6 +15,11 @@ import ru.mobnius.localdb.Logger;
 public class UnzipUtil {
     private String zipFile;
     private String location;
+    private String absPath;
+
+    public String getAbsPath() {
+        return absPath;
+    }
 
     public UnzipUtil(String zipFile, String location) {
         this.zipFile = zipFile;
@@ -25,7 +30,6 @@ public class UnzipUtil {
 
     public String unzip() {
 
-        String path = null;
         try {
             FileInputStream fin = new FileInputStream(zipFile);
             ZipInputStream zin = new ZipInputStream(fin);
@@ -34,10 +38,10 @@ public class UnzipUtil {
                 Log.v("Decompress", "Unzipping " + ze.getName());
                 if (ze.isDirectory()) {
                     dirChecker(ze.getName());
-                    path = location + "/" + ze.getName();
+                    absPath = location + "/" + ze.getName();
                 } else {
                     FileOutputStream fout = new FileOutputStream(location + "/" + ze.getName());
-                    path = location + "/" + ze.getName();
+                    absPath = location + "/" + ze.getName();
                     byte[] buffer = new byte[8192];
                     int len;
                     while ((len = zin.read(buffer)) != -1) {
@@ -51,9 +55,9 @@ public class UnzipUtil {
         } catch (Exception e) {
             Logger.error(e);
         }
-        if (path != null) {
+        if (absPath != null) {
             try {
-                return readFile(path);
+                return readFile(absPath);
             } catch (IOException e) {
                 e.printStackTrace();
             }

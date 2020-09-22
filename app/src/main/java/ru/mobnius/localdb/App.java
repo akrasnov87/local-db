@@ -133,6 +133,7 @@ public class App extends Application implements
     @Override
     public void onDownLoadProgress(UrlReader reader, int progress, int total) {
         for(OnHttpListener listener : mHttpListeners) {
+
             listener.onDownLoadProgress(reader, progress, total);
         }
     }
