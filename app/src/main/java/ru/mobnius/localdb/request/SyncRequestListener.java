@@ -117,6 +117,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
+        mInsertHandler.quit();
     }
 
     @Override
