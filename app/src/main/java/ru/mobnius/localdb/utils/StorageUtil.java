@@ -308,6 +308,15 @@ public class StorageUtil {
         }
     }*/
 
+
+    @SuppressWarnings("rawtypes")
+    public static void processing(int size, String tableName, OnProgressUpdate listener) {
+        int insertions = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
+        insertions += size;
+        listener.onUpdateProgress(insertions);
+        PreferencesManager.getInstance().setLocalRowCount(String.valueOf(insertions), tableName);
+    }
+
     /**
      * метод для приведения JSON объекта к виду key(название колнки в таблице)->value(либо значение из notNormal либо пустая строка "")
      *

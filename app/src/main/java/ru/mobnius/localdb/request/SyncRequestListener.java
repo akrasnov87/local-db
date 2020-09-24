@@ -18,6 +18,7 @@ import ru.mobnius.localdb.data.InsertHandler;
 import ru.mobnius.localdb.data.LoadAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.RowCountAsyncTask;
+import ru.mobnius.localdb.data.tablePack.PackManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.observer.EventListener;
@@ -63,7 +64,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
         // TODO: 17.06.2020 нужно достать из запроса логин и пароль
         ArrayList<String> tableName = new ArrayList<>();
         String table = urlReader.getParam("table");
-        /*if (table.equals("allTables")) {
+        if (table.equals("allTables")) {
             for (int i = 0; i < HttpService.getDaoSession().getAllDaos().size(); i++) {
                 AbstractDao dao = (AbstractDao) HttpService.getDaoSession().getAllDaos().toArray()[i];
                 if (!dao.getTablename().equals("sd_client_errors")) {
@@ -72,13 +73,11 @@ public class SyncRequestListener extends AuthFilterRequestListener
                     PreferencesManager.getInstance().setAllTablesArray(tableName.toArray(new String[0]));
                 }
             }
-        } else {
-        */
+        }else {
             tableName.add(table);
             PreferencesManager.getInstance().setIsAllTables(false);
             PreferencesManager.getInstance().setAllTablesArray(null);
-            mTableName = tableName.get(0);
-        //}
+        }
         if (NetworkUtil.isNetworkAvailable(mApp)) {
             if (urlReader.getParam("restore") != null) {
                 RowCountAsyncTask task = new RowCountAsyncTask(this, tableName.get(0));
@@ -92,7 +91,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 mInsertHandler.setTableName(tableName.get(0));
                 mInsertHandler.start();
                 mInsertHandler.getLooper();
-                LoadAsyncTask task = new LoadAsyncTask(tableName.get(0), this, mApp);
+                LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp);
                 mApp.getObserver().subscribe(Observer.STOP, task);
                 mApp.getObserver().subscribe(Observer.STOP, mInsertHandler);
                 task.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
@@ -167,7 +166,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
         mInsertHandler.setTableName(tableName);
         mInsertHandler.start();
         mInsertHandler.getLooper();
-        LoadAsyncTask task = new LoadAsyncTask(tableName, this, mApp);
+        LoadAsyncTask task = new LoadAsyncTask(new String [] {tableName}, this, mApp);
         mApp.getObserver().subscribe(Observer.STOP, task);
         task.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
     }

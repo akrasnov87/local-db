@@ -81,16 +81,24 @@ public class InsertHandler extends HandlerThread implements EventListener {
                         String unzippedFilePath = unzipUtil.getAbsPath();
                         String current = target.split(":")[1];
                         int cur = Integer.parseInt(current.split("-")[1]);
-                        processing(HttpService.getDaoSession(), unzipped.trim(), mCurrentTableName, false, target, cur, PreferencesManager.getInstance().getProgress().total);
+                        int total = PreferencesManager.getInstance().getProgress().total;
+                        processing(HttpService.getDaoSession(), unzipped.trim(), mCurrentTableName, target, cur, total);
                         File file = new File(target);
                         file.delete();
                         File unzippedFile = new File(unzippedFilePath);
                         unzippedFile.delete();
-                        if (PreferencesManager.getInstance().getProgress()!= null && cur >= PreferencesManager.getInstance().getProgress().total) {
+                        if (PreferencesManager.getInstance().getProgress()!= null && cur >= total) {
                             mUpdateUIHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
                                     mListener.onLoadFinish(mCurrentTableName);
+                                }
+                            });
+                        }else {
+                            mUpdateUIHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mListener.onInsertProgress(mCurrentTableName, Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(mCurrentTableName)), total);
                                 }
                             });
                         }
@@ -103,6 +111,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
     @Override
     public void update(String eventType, String... args) {
         if (eventType.equals(Observer.STOP)) {
+            mInsertHandler.removeMessages(INSERT_ROWS);
             quit();
             if (PreferencesManager.getInstance().getProgress() != null) {
                 PreferencesManager.getInstance().setProgress(null);
@@ -110,14 +119,10 @@ public class InsertHandler extends HandlerThread implements EventListener {
         }
     }
 
-    private void processing(DaoSession daoSession, String unzipped, String tableName, boolean removeBeforeInsert, String zip, int cur, int total) throws SQLiteFullException, SQLiteConstraintException {
+    private void processing(DaoSession daoSession, String unzipped, String tableName, String zip, int cur, int total) throws SQLiteFullException, SQLiteConstraintException {
         Database db = daoSession.getDatabase();
-        if (removeBeforeInsert) {
-            db.execSQL("delete from " + tableName);
-            PreferencesManager.getInstance().setLocalRowCount("0", tableName);
-        }
+
         AbstractDao abstractDao = null;
-        int insertions = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
 
         for (AbstractDao ad : daoSession.getAllDaos()) {
             if (ad.getTablename().equals(tableName)) {
@@ -149,17 +154,8 @@ public class InsertHandler extends HandlerThread implements EventListener {
                         Object[] s = Arrays.copyOfRange(allValues, i, (i + next));
                         try {
                             db.execSQL(sqlInsertFromString.convertToSqlQuery(max), s);
-                            insertions += max;
                             cur += max;
                             PreferencesManager.getInstance().setLocalRowCount(String.valueOf(cur), mCurrentTableName);
-
-                            mUpdateUIHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    mListener.onInsertProgress(mCurrentTableName, Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(mCurrentTableName)), total);
-                                }
-                            });
                         } catch (Exception e) {
                             Logger.error(e);
                         }
@@ -174,12 +170,6 @@ public class InsertHandler extends HandlerThread implements EventListener {
                         db.execSQL(sqlInsertFromString.convertToSqlQuery(last), s);
                         cur += last;
                         PreferencesManager.getInstance().setLocalRowCount(String.valueOf(cur), mCurrentTableName);
-                        mUpdateUIHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mListener.onInsertProgress(mCurrentTableName, Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(mCurrentTableName)), total);
-                            }
-                        });
                     } catch (Exception e) {
                         Logger.error(e);
                     }

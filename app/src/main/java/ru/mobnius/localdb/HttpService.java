@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -153,6 +154,9 @@ public class HttpService extends Service
             onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
         }
 
+        /*PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "UI_SV_FIAS", "1.2.641");
+        mDaoSession.getFiasDao().deleteAll();
+        mDaoSession.getFiasDao().detachAll();
        /* PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "ED_Network_Routes", "1.3.847");
         mDaoSession.getRegistrPtsDao().deleteAll();
         mDaoSession.getRegistrPtsDao().detachAll();

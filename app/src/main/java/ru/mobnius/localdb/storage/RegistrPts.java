@@ -11,7 +11,6 @@ import ru.mobnius.localdb.data.Storage;
 @Storage(description = "Потребители", table = "ED_Registr_Pts")
 public class RegistrPts {
 
-    @Id
     public String LINK;
 
     @Property(nameInDb = "C_Name")
@@ -60,15 +59,6 @@ public class RegistrPts {
         this.C_Name = C_Name;
     }
 
-
-    public String getB_EE() {
-        return this.B_EE;
-    }
-
-    public void setB_EE(String B_EE) {
-        this.B_EE = B_EE;
-    }
-
     public String getN_Code() {
         return this.N_Code;
     }
@@ -92,4 +82,13 @@ public class RegistrPts {
     public void setF_SubDivision(String F_SubDivision) {
         this.F_SubDivision = F_SubDivision;
     }
+
+    public String getB_EE() {
+        return this.B_EE;
+    }
+
+    public void setB_EE(String B_EE) {
+        this.B_EE = B_EE;
+    }
+
 }

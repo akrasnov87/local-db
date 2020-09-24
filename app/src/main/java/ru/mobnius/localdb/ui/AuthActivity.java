@@ -37,9 +37,9 @@ public class AuthActivity extends BaseActivity {
         super.onResume();
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
-            if (PreferencesManager.getInstance().isAuthorized()) {
-                startActivity(MainActivity.getIntent(this));
-            }
+        if (PreferencesManager.getInstance().isAuthorized()) {
+            startActivity(MainActivity.getIntent(this));
+        }
     }
 
     @Override

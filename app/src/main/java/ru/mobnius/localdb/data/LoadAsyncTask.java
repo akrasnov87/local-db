@@ -2,40 +2,35 @@ package ru.mobnius.localdb.data;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteFullException;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import org.greenrobot.greendao.database.Database;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import ru.mobnius.localdb.App;
+import ru.mobnius.localdb.HttpService;
+import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.Tags;
+import ru.mobnius.localdb.data.tablePack.CsvUtil;
 import ru.mobnius.localdb.model.Progress;
-import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.observer.EventListener;
 import ru.mobnius.localdb.observer.Observer;
+import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.FileUtil;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.StorageUtil;
@@ -45,14 +40,18 @@ import ru.mobnius.localdb.utils.StorageUtil;
  */
 public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate, EventListener {
 
-    private final OnLoadListener mListener;
+
     @SuppressLint("StaticFieldLeak")
     private Context mApp;
-    private final String mTableName;
+
+    private final String[] mTableName;
+    private String mCurrentTableName;
     private int mTotal;
+
+    private final OnLoadListener mListener;
     private InsertHandler.ZipDownloadListener mZipDownloadListener;
 
-    public LoadAsyncTask(String tableName, OnLoadListener listener, App app) {
+    public LoadAsyncTask(String[] tableName, OnLoadListener listener, App app) {
         mListener = listener;
         mTableName = tableName;
         mApp = app;
@@ -63,84 +62,139 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
     @Override
     protected ArrayList<String> doInBackground(String... strings) {
+        JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
         ArrayList<String> message = new ArrayList<>();
-        if (!isCancelled()) {
-            Loader loader = Loader.getInstance();
-            boolean isAuthorized = loader.auth(strings[0], strings[1]);
-            if (!isAuthorized) {
-                message.add(Tags.AUTH_ERROR);
-                message.add("Не удалось получить ответ от сервера. Возможно пароль введен неверно, попробуйте авторизоваться повторно");
-                return message;
-            }
-            String tablesInfo = getTablesInfo();
-            String version;
-            int fileCount;
-            int singlePart;
-            if (tablesInfo == null) {
-                message.add(Tags.ZIP_ERROR);
-                message.add("Не удалось получить необходимую для скачивания информацию");
-                return message;
-            } else {
+        if (!isCancelled() && mTableName != null) {
+            for (int j = 0; j < mTableName.length; j++) {
+                //количество записей с сервера за 1 rpc запрос
+                int size;
+                int fileCount;
+                int hddSize;
+                mCurrentTableName = mTableName[j];
+                String mVersion;
+                JSONObject tableInfo;
+
                 try {
-                    JSONObject jsonObject = new JSONObject(tablesInfo);
-                    JSONArray array = jsonObject.getJSONArray(mTableName);
-                    JSONObject object = (JSONObject) array.get(0);
-                    if (!object.has("VERSION")) {
-                        object = (JSONObject) array.get(1);
-                    }
-                    version = object.getString("VERSION");
-                    mTotal = Integer.parseInt(object.getString("TOTAL_COUNT"));
-                    fileCount = Integer.parseInt(object.getString("FILE_COUNT"));
-                    singlePart = Integer.parseInt(object.getString("PART"));
-                    PreferencesManager.getInstance().setProgress(new Progress(0, mTotal, mTableName));
+                    tableInfo = infoTables.getJSONArray(mCurrentTableName).getJSONObject(0);
+                    mVersion = tableInfo.getString("VERSION");
+                    size = Integer.parseInt(tableInfo.getString("PART"));
+                    fileCount = Integer.parseInt(tableInfo.getString("FILE_COUNT"));
+                    mTotal = Integer.parseInt(tableInfo.getString("TOTAL_COUNT"));
+                    hddSize = Integer.parseInt(tableInfo.getString("SIZE")) / 1024 / 1024;
                 } catch (JSONException e) {
-                    message.add(Tags.ZIP_ERROR);
-                    message.add("Не удалось прочитать необходимую для скачивания информацию");
+                    message.add(Tags.CRITICAL_ERROR);
+                    message.add("Ошибка чтения информации о таблице " + e.toString());
                     return message;
                 }
-            }
-            int currentRowsCount = 0;
-            Log.e("hak", "Начато скачивание" + System.currentTimeMillis());
-            int x = 0;
-            if (PreferencesManager.getInstance().getDownloadProgress() != null) {
-                x = PreferencesManager.getInstance().getDownloadProgress().getFilesCount();
-            }
-            for (int i = x; i < fileCount; i++) {
-                if (!isCancelled()) {
-                    File file = getFile(mApp, mTableName, version, currentRowsCount, singlePart);
-                    currentRowsCount += singlePart;
-                    mZipDownloadListener.onZipDownloaded(file.getAbsolutePath());
-                    Progress progress = new Progress(i, mTotal, mTableName);
-                    progress.setFileName(file.getName());
-                    progress.setFilesCount(i);
-                    publishProgress(i);
-                    PreferencesManager.getInstance().setDownloadProgress(progress);
+                Loader loader = Loader.getInstance();
+                boolean isAuthorized = loader.auth(strings[0], strings[1]);
+                if (!isAuthorized) {
+                    message.add(Tags.AUTH_ERROR);
+                    message.add("Не удалось получить ответ от сервера. Возможно пароль введен неверно, попробуйте авторизоваться повторно");
+                    return message;
                 }
+
+                boolean removeBeforeInsert = false;
+                Progress progress;
+                if (PreferencesManager.getInstance().getProgress() == null) {
+                    //удаляем прежде чем заливать
+                    removeBeforeInsert = true;
+                    progress = new Progress(0, mTotal, mTableName[j], mVersion);
+                } else {
+                    //восстанавливаем загрузку
+                    progress = PreferencesManager.getInstance().getProgress();
+                }
+
+                PreferencesManager.getInstance().setProgress(progress);
+
+                DaoSession daoSession = HttpService.getDaoSession();
+                publishProgress(0);
+
+                File cacheDir = mApp.getCacheDir();
+                if (cacheDir.getFreeSpace() / 1000000 < hddSize + 100) {
+                    message.add(Tags.STORAGE_ERROR);
+                    message.add("Ошибка: в хранилище телефона недостаточно свободного места для загрузки таблицы(" +
+                            mTableName + ", необходимо около " + hddSize + 100 + " МБ). Очистите место и повторите загрузку");
+                    return message;
+                }
+                PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName[j]);
+                PreferencesManager.getInstance().setProgress(new Progress(progress.current, mTotal, mTableName[j], mVersion));
+
+                try {
+                    Database db = daoSession.getDatabase();
+                    if (removeBeforeInsert) {
+                        db.execSQL("delete from " + mTableName[j]);
+                        PreferencesManager.getInstance().setLocalRowCount("0", mTableName[j]);
+                    }
+                } catch (SQLiteFullException | SQLiteConstraintException e) {
+                    message.add(Tags.SQL_ERROR);
+                    message.add(e.getMessage());
+                    Logger.error(e);
+                    return message;
+                }
+                int currentRowsCount = 0;
+                Log.e("hak", "Начато скачивание" + System.currentTimeMillis());
+                int x = 0;
+                if (PreferencesManager.getInstance().getDownloadProgress() != null) {
+                    x = PreferencesManager.getInstance().getDownloadProgress().getFilesCount();
+                }
+                for (int i = x; i < fileCount; i++) {
+                    if (!isCancelled()) {
+                        File file = getZipFile(mApp, mTableName[j], mVersion, currentRowsCount, size);
+                        currentRowsCount += size;
+                        mZipDownloadListener.onZipDownloaded(file.getAbsolutePath());
+                        Progress downloadProgress = new Progress(i, mTotal, mTableName[j], mVersion);
+                        downloadProgress.setFileName(file.getName());
+                        downloadProgress.setFilesCount(i);
+                        publishProgress(i);
+                        PreferencesManager.getInstance().setDownloadProgress(downloadProgress);
+                    }
+                }
+                PreferencesManager.getInstance().setDownloadProgress(null);
+
+/*
+                for (int i = progress.current; i < mTotal; i += size) {
+                    if (isCancelled()) {
+                        return message;
+                    }
+                    if (PreferencesManager.getInstance().getProgress() == null) {
+                        // значит принудительно все было остановлено
+                        break;
+                    }
+
+                    try {
+                        byte[] buffer = CsvUtil.getFile(PreferencesManager.getInstance().getRepoUrl(), mCurrentTableName, mVersion, i, size);
+                        byte[] result = ZipManager.decompress(buffer);
+                        String txt = new String(result, StandardCharsets.UTF_8);
+                        Table table = CsvUtil.convert(txt);
+                        table.updateHeaders("F_Registr_Pts___LINK", "F_Registr_Pts");
+                        CsvUtil.insertToTable(table, mCurrentTableName, daoSession);
+
+                    } catch (IOException | DataFormatException e) {
+                        Logger.error(e);
+                        message.add(Tags.RPC_ERROR);
+                        message.add(e.getMessage());
+                        return message;
+                    }
+                    StorageUtil.processing(size, mTableName[j], this);
+                    PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j], mVersion));
+                }*/
+                createIndexes(mTableName[j], HttpService.getDaoSession().getDatabase());
+                ArrayList<String> list = new ArrayList<>(Arrays.asList(mTableName));
+                list.remove(mCurrentTableName);
+                String[] allTablesArray = list.toArray(new String[0]);
+                PreferencesManager.getInstance().setAllTablesArray(allTablesArray);
+                PreferencesManager.getInstance().setProgress(null);
             }
-            PreferencesManager.getInstance().setDownloadProgress(null);
         }
         return message;
-    }
-
-    private RPCResult[] rpc(String tableName, int start, int limit) throws FileNotFoundException {
-        String sortColumn = "\"LINK\"";
-        if (tableName.toLowerCase().equals("ui_sv_fias")) {
-            sortColumn = "\"C_Full_Address\"";
-        }
-        String bDisabled = "";
-        if (tableName.toLowerCase().equals("ed_device_billing") || tableName.toLowerCase().equals("ed_registr_pts")) {
-            bDisabled = " \"filter\":[{\"property\":\"B_Disable\", \"value\":\"0\", \"operator\":\"=\" }]";
-        }
-        RPCResult[] results = Loader.getInstance().rpc("Domain." + tableName, "Query", "[{ \"forceLimit\": true, \"start\": " +
-                start + ", \"limit\": " + limit + ", \"sort\": [{ \"property\": " + sortColumn + ", \"direction\": \"ASC\" }]," + bDisabled + "}]");
-        return results;
     }
 
     @Override
     protected void onProgressUpdate(Integer... values) {
         super.onProgressUpdate(values);
         int progress = values[0];
-        mListener.onLoadProgress(mTableName, progress, mTotal);
+        mListener.onLoadProgress(mCurrentTableName, progress, mTotal);
     }
 
     @Override
@@ -150,7 +204,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             String[] errorData = {message.get(0), message.get(1)};
             mListener.onLoadError(errorData);
         } else {
-            mListener.onDownLoadFinish(mTableName);
+            mListener.onDownLoadFinish(mCurrentTableName);
         }
     }
 
@@ -159,22 +213,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         publishProgress(progress);
     }
 
-    private void createIndexes(String tableName, Database db) {
-        if ("ui_sv_fias".equals(tableName.toLowerCase())) {
-            db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
-                    " (\"C_Full_Address\" ASC);");
-            /*
-            db.execSQL("CREATE INDEX " + "EXISTS IDX_UI_SV_FIAS_F_Structure ON \"UI_SV_FIAS\"" +
-                    " (\"F_Structure\" ASC);");
-            db.execSQL("CREATE INDEX  " + "IDX_UI_SV_FIAS_F_Municipality ON \"UI_SV_FIAS\"" +
-                    " (\"F_Municipality\" ASC);");
-            db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_F_Town ON \"UI_SV_FIAS\"" +
-                    " (\"F_Town\" ASC);");
-             */
-        }
-    }
-
-    private File getFile(Context context, String tableName, String version, int start, int limit) {
+    private File getZipFile(Context context, String tableName, String version, int start, int limit) {
         File file = null;
         HttpURLConnection conn;
         try {
@@ -199,41 +238,12 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         return file;
     }
 
-    private String getTablesInfo() {
-        String version = null;
-        HttpURLConnection conn;
-        try {
-            URL url = new URL(PreferencesManager.getInstance().getZipUrl() + "/csv-zip/");
-            conn = (HttpURLConnection) url.openConnection();
-            int contentLength = conn.getContentLength();
-            //OutputStream outputStream = conn.getOutputStream();
-            // outputStream.write(postData);
-            int status = conn.getResponseCode();
-            if (status != 200) {
-                return null;
-            }
-            InputStream stream = conn.getInputStream();
-            InputStreamReader reader = new InputStreamReader(stream);
-            BufferedReader br = new BufferedReader(reader);
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                sb.append(line + "\n");
-
-            }
-            br.close();
-            version = sb.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void
+    createIndexes(String tableName, Database db) {
+        if ("ui_sv_fias".equals(tableName.toLowerCase())) {
+            db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
+                    " (\"C_Full_Address\" ASC);");
         }
-        return version;
-    }
-
-    private int getRequiredSpaceSize(RPCResult rpcResult, int totalSize, int size) {
-        float oneResultSize = (float) (Arrays.toString(rpcResult.result.records).length() / 1024) / 1024;
-        float totalResultsCount = (float) totalSize / size;
-        float spaceNeeded = totalResultsCount * oneResultSize;
-        return (int) spaceNeeded + 100;
     }
 
     @Override
@@ -246,7 +256,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         }
     }
 
-
     public interface OnLoadListener {
         /**
          * Прогресс выполнения
@@ -256,8 +265,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
          */
         void onLoadProgress(String tableName, int progress, int total);
 
-        void onInsertProgress(String tableName, int progress, int total);
-
         /**
          * Результат загрузки данных
          *
@@ -265,110 +272,14 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
          */
         void onLoadFinish(String tableName);
 
+        void onInsertProgress(String tableName, int progress, int total);
+
+
         void onDownLoadFinish(String tableName);
 
-        void onLoadError(String... errorData);
+
+        void onLoadError(String[] message);
     }
-/*
-  boolean removeBeforeInsert = false;
-            Progress progress;
-            if (PreferencesManager.getInstance().getProgress() == null) {
-                //удаляем прежде чем заливать
-                removeBeforeInsert = true;
-                progress = new Progress(0, 1, mTableName);
-            } else {
-                //восстанавливаем загрузку
-                progress = PreferencesManager.getInstance().getProgress();
-            }
 
-            //количество записей с сервера за 1 rpc запрос
-            int size = PreferencesManager.getInstance().getSize();
-
-            PreferencesManager.getInstance().setProgress(progress);
-
-            DaoSession daoSession = HttpService.getDaoSession();
-            RPCResult[] results;
-            try {
-                results = rpc(mTableName, progress.current, size);
-            } catch (FileNotFoundException e) {
-                Logger.error(e);
-                message.add(Tags.RPC_ERROR);
-                message.add(e.getMessage());
-                return message;
-            }
-            if (results == null) {
-                message.add(Tags.RPC_ERROR);
-                message.add("Не удалось установить соединение с сервером при старте загрузки");
-                return message;
-            }
-            RPCResult result = results[0];
-            mTotal = result.result.total;
-            publishProgress(0);
-            File cacheDir = mApp.getCacheDir();
-            int spaceNeeded = getRequiredSpaceSize(result, mTotal, size);
-            if (cacheDir.getFreeSpace() / 1000000 < spaceNeeded) {
-                message.add(Tags.STORAGE_ERROR);
-                message.add("Ошибка: в хранилище телефона недостаточно свободного места для загрузки таблицы(" +
-                        mTableName + ", необходимо около " + spaceNeeded + " МБ). Очистите место и повторите загрузку");
-                return message;
-            }
-            PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName);
-            PreferencesManager.getInstance().setProgress(new Progress(progress.current, mTotal, mTableName));
-
-            try {
-                StorageUtil.processing(daoSession, result, mTableName, removeBeforeInsert, this);
-            } catch (SQLiteFullException | SQLiteConstraintException e) {
-                message.add(Tags.SQL_ERROR);
-                message.add(e.getMessage());
-                Logger.error(e);
-                return message;
-            }
-
-            for (int i = (progress.current + size); i < mTotal; i += size) {
-                if (isCancelled()) {
-                    return message;
-                }
-                if (PreferencesManager.getInstance().getProgress() == null) {
-                    // значит принудительно все было остановлено
-                    Intent intent = new Intent(Tags.CANCEL_TASK_TAG);
-                    LocalBroadcastManager.getInstance(mApp).sendBroadcast(intent);
-                    break;
-                }
-
-                try {
-                    results = rpc(mTableName, i, size);
-                } catch (FileNotFoundException e) {
-                    Logger.error(e);
-                    message.add(Tags.RPC_ERROR);
-                    message.add(e.getMessage());
-                    return message;
-                }
-                if (results == null) {
-                    message.add(Tags.RPC_ERROR);
-                    message.add("Не удалось установить соединение с сервером в процессе загрузки");
-                    return message;
-                }
-
-                result = results[0];
-                try {
-                    StorageUtil.processing(daoSession, result, mTableName, false, this);
-                } catch (SQLiteFullException | SQLiteConstraintException e) {
-                    Logger.error(e);
-                    message.add(Tags.SQL_ERROR);
-                    message.add(e.getMessage());
-                    return message;
-
-                }
-                if (!isCancelled()) {
-                    PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j]));
-                }
-            }
-            createIndexes(mTableName, HttpService.getDaoSession().getDatabase());
-            ArrayList<String> list = new ArrayList<>(Arrays.asList(mTableName));
-            list.remove(mCurrentTableName);
-            String[] allTablesArray = list.toArray(new String[0]);
-            PreferencesManager.getInstance().setAllTablesArray(allTablesArray);
-            PreferencesManager.getInstance().setProgress(null);
- */
 
 }

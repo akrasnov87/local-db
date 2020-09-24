@@ -1,6 +1,7 @@
 package ru.mobnius.localdb.data.tablePack;
 
 import android.annotation.SuppressLint;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -24,20 +25,20 @@ public class RunnableLoad implements Runnable {
 
     public static int CACHE_SIZE = 2;
 
-    private List<byte[]> mCaches = new ArrayList<>(CACHE_SIZE);
+    private List<Table> mCaches = new ArrayList<>(CACHE_SIZE);
 
     private OnRunnableLoadListeners mListeners;
     private LoadAsyncTask mLoadAsyncTask;
-    private DaoSession mDaoSession;
+    private DaoSession mSQLiteDatabase;
     private DbAsyncTask mDbAsyncTask;
     private int mDbCount = 0;
     private String mTableName;
 
-    public RunnableLoad(OnRunnableLoadListeners listener, DaoSession daoSession, String baseUrl, String tableName, int start) {
+    public RunnableLoad(OnRunnableLoadListeners listener, DaoSession sqLiteDatabase, String baseUrl, String tableName, int start) {
         mListeners = listener;
 
         mTableName = tableName;
-        mDaoSession = daoSession;
+        mSQLiteDatabase = sqLiteDatabase;
         mBaseUrl = baseUrl;
         mStart = start;
     }
@@ -75,30 +76,36 @@ public class RunnableLoad implements Runnable {
         }
     }
 
-    public byte[] getNext() {
+    public Table getNext() {
         if(mCaches.size() > 0) {
-            byte[] buffer = mCaches.get(0);
-            byte[] copy = Arrays.copyOf(buffer, buffer.length);
+            Table txt = mCaches.get(0);
             mCaches.remove(0);
 
             if(mCaches.size() == 0) {
                 mListeners.onBufferEmpty();
             }
             load();
-            return copy;
+            return txt;
         }
 
         return null;
     }
 
     private void writeToBuffer(byte[] bytes) {
-        mCaches.add(bytes);
-        mListeners.onBufferInsert(mCaches.size());
+        try {
+            byte[] result = ZipManager.decompress(bytes);
+            String txt = new String(result, StandardCharsets.UTF_8);
+            Table table = CsvUtil.convert(txt);
+            mCaches.add(table);
+            mListeners.onBufferInsert(mCaches.size());
 
-        if(mCaches.size() == CACHE_SIZE) {
-            mListeners.onBufferSuccess(CACHE_SIZE);
-        } else {
-            load();
+            if (mCaches.size() == CACHE_SIZE) {
+                mListeners.onBufferSuccess(CACHE_SIZE);
+            } else {
+                load();
+            }
+        }catch (Exception e) {
+            mListeners.onError(e.getMessage());
         }
     }
 
@@ -128,19 +135,15 @@ public class RunnableLoad implements Runnable {
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class DbAsyncTask extends AsyncTask<byte[], Void, Void> {
+    private class DbAsyncTask extends AsyncTask<Table, Void, Void> {
 
         @Override
-        protected Void doInBackground(byte[]... bytes) {
-            byte[] buffer = bytes[0];
-            if(buffer != null) {
+        protected Void doInBackground(Table... txt) {
+            Table table = txt[0];
+            if(table != null) {
                 try {
                     long dStart = new Date().getTime();
-                    byte[] result = ZipManager.decompress(buffer);
-                    String txt = new String(result, StandardCharsets.UTF_8);
-                    Table table = CsvUtil.convert(txt);
-
-                    boolean insertedResult = CsvUtil.insertToTable(table, mTableName, mDaoSession);
+                    boolean insertedResult = CsvUtil.insertToTable(table, mTableName, mSQLiteDatabase);
                     long dEnd = new Date().getTime();
                     mDbCount += table.count();
                     Log.d(PackManager.TAG, "inserted: " + mDbCount + "("+insertedResult+")" + " за " + (dEnd - dStart));

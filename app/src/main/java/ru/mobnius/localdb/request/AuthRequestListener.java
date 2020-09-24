@@ -1,5 +1,6 @@
 package ru.mobnius.localdb.request;
 
+import android.content.ComponentName;
 import android.content.Context;
 
 import java.util.regex.Matcher;
@@ -9,11 +10,12 @@ import ru.mobnius.localdb.data.AuthorizationAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**
  * авторизация
- * http://localhost:8888/auth?login=iserv&password=iserv&node=http://demo.it-serv.ru/armnext/demo_kavkaz&rpc=http://demo.it-serv.ru/MobileServiceSevKav&zip=http://demo.it-serv.ru/repo
+ * http://localhost:8888/auth?login=iserv&password=iserv&node=http://demo.it-serv.ru/armnext/demo_kavkaz&rpc=http://demo.it-serv.ru/MobileServiceSevKav&repo=http://demo.it-serv.ru/repo
  */
 public class AuthRequestListener
         implements OnRequestListener {
@@ -39,15 +41,16 @@ public class AuthRequestListener
 
         String rpc = urlReader.getParam("rpc");
         String node = urlReader.getParam("node");
-        String zip = urlReader.getParam("zip");
 
-        if (login != null && password != null && rpc != null && node != null && zip != null) {
+        String repo = urlReader.getParam("repo");
+
+        if(login != null && password != null && rpc != null && node != null && repo != null) {
             new AuthorizationAsyncTask(mContext, login, password).execute();
             PreferencesManager.getInstance().setLogin(login);
             PreferencesManager.getInstance().setPassword(password);
             PreferencesManager.getInstance().setNodeUrl(node);
+            PreferencesManager.getInstance().setRepoUrl(repo);
             PreferencesManager.getInstance().setRpcUrl(rpc);
-            PreferencesManager.getInstance().setZipUrl(zip);
             response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
         } else {
             response = Response.getErrorInstance(urlReader, "Информация об авторизации не передана полностью", Response.RESULT_FAIL);
