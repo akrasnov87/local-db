@@ -22,12 +22,21 @@ public class RegistrPts {
     @Property(nameInDb = "B_EE")
     public String B_EE;
 
-    @Generated(hash = 1259861301)
-    public RegistrPts(String LINK, String C_Name, String N_Code, String B_EE) {
+    @Property(nameInDb = "F_Division")
+    public String F_Division;
+
+    @Property(nameInDb = "F_SubDivision")
+    public String F_SubDivision;
+
+    @Generated(hash = 1419436180)
+    public RegistrPts(String LINK, String C_Name, String N_Code, String B_EE,
+            String F_Division, String F_SubDivision) {
         this.LINK = LINK;
         this.C_Name = C_Name;
         this.N_Code = N_Code;
         this.B_EE = B_EE;
+        this.F_Division = F_Division;
+        this.F_SubDivision = F_SubDivision;
     }
 
     @Generated(hash = 925207867)
@@ -64,6 +73,22 @@ public class RegistrPts {
 
     public void setB_EE(String B_EE) {
         this.B_EE = B_EE;
+    }
+
+    public String getF_Division() {
+        return this.F_Division;
+    }
+
+    public void setF_Division(String F_Division) {
+        this.F_Division = F_Division;
+    }
+
+    public String getF_SubDivision() {
+        return this.F_SubDivision;
+    }
+
+    public void setF_SubDivision(String F_SubDivision) {
+        this.F_SubDivision = F_SubDivision;
     }
 
 }

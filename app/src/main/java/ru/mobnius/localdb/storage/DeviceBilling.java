@@ -24,13 +24,21 @@ public class DeviceBilling {
     @Property(nameInDb = "B_EE")
     public String B_EE;
 
-    @Generated(hash = 181201448)
+    @Property(nameInDb = "F_Division")
+    public String F_Division;
+
+    @Property(nameInDb = "F_SubDivision")
+    public String F_SubDivision;
+
+    @Generated(hash = 344954148)
     public DeviceBilling(String LINK, String F_Registr_Pts, String C_Serial_Number,
-            String B_EE) {
+            String B_EE, String F_Division, String F_SubDivision) {
         this.LINK = LINK;
         this.F_Registr_Pts = F_Registr_Pts;
         this.C_Serial_Number = C_Serial_Number;
         this.B_EE = B_EE;
+        this.F_Division = F_Division;
+        this.F_SubDivision = F_SubDivision;
     }
     @Generated(hash = 1568224966)
     public DeviceBilling() {
@@ -58,5 +66,17 @@ public class DeviceBilling {
     }
     public void setB_EE(String B_EE) {
         this.B_EE = B_EE;
+    }
+    public String getF_Division() {
+        return this.F_Division;
+    }
+    public void setF_Division(String F_Division) {
+        this.F_Division = F_Division;
+    }
+    public String getF_SubDivision() {
+        return this.F_SubDivision;
+    }
+    public void setF_SubDivision(String F_SubDivision) {
+        this.F_SubDivision = F_SubDivision;
     }
 }
