@@ -86,7 +86,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
                         file.delete();
                         File unzippedFile = new File(unzippedFilePath);
                         unzippedFile.delete();
-                        if (cur >= PreferencesManager.getInstance().getProgress().total) {
+                        if (PreferencesManager.getInstance().getProgress()!= null && cur >= PreferencesManager.getInstance().getProgress().total) {
                             mUpdateUIHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -103,7 +103,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
     @Override
     public void update(String eventType, String... args) {
         if (eventType.equals(Observer.STOP)) {
-            this.quit();
+            quit();
             if (PreferencesManager.getInstance().getProgress() != null) {
                 PreferencesManager.getInstance().setProgress(null);
             }

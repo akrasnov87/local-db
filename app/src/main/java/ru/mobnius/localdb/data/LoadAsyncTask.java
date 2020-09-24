@@ -150,7 +150,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             String[] errorData = {message.get(0), message.get(1)};
             mListener.onLoadError(errorData);
         } else {
-            mListener.onLoadFinish(mTableName);
+            mListener.onDownLoadFinish(mTableName);
         }
     }
 
@@ -264,6 +264,8 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
          * @param tableName имя таблицы
          */
         void onLoadFinish(String tableName);
+
+        void onDownLoadFinish(String tableName);
 
         void onLoadError(String... errorData);
     }

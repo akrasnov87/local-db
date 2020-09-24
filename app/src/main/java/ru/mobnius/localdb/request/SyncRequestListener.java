@@ -20,6 +20,7 @@ import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.RowCountAsyncTask;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
+import ru.mobnius.localdb.observer.EventListener;
 import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
@@ -29,7 +30,7 @@ import ru.mobnius.localdb.utils.UrlReader;
  */
 public class SyncRequestListener extends AuthFilterRequestListener
         implements LoadAsyncTask.OnLoadListener, ConnectionChecker.CheckConnection,
-        InsertHandler.ZipDownloadListener, RowCountAsyncTask.RowsCountListener {
+        InsertHandler.ZipDownloadListener, RowCountAsyncTask.RowsCountListener, EventListener {
 
     private final App mApp;
     private UrlReader mUrlReader;
@@ -93,6 +94,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 mInsertHandler.getLooper();
                 LoadAsyncTask task = new LoadAsyncTask(tableName.get(0), this, mApp);
                 mApp.getObserver().subscribe(Observer.STOP, task);
+                mApp.getObserver().subscribe(Observer.STOP, mInsertHandler);
                 task.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                 response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
                 isCanceled = false;
@@ -117,7 +119,12 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onLoadFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
-        mInsertHandler.quit();
+        mInsertHandler.interrupt();
+    }
+
+    @Override
+    public void onDownLoadFinish(String tableName) {
+
     }
 
     @Override
@@ -171,5 +178,15 @@ public class SyncRequestListener extends AuthFilterRequestListener
             result = 100;
         }
         return result;
+    }
+
+    @Override
+    public void update(String eventType, String... args) {
+        if (eventType.equals(Observer.STOP)) {
+            mInsertHandler.interrupt();
+            if (PreferencesManager.getInstance().getProgress() != null) {
+                PreferencesManager.getInstance().setProgress(null);
+            }
+        }
     }
 }

@@ -1,6 +1,5 @@
 package ru.mobnius.localdb.data;
 
-import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.UrlReader;
 
