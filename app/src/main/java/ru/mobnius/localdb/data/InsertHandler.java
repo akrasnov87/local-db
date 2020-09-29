@@ -9,16 +9,19 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.util.Log;
 
 import org.greenrobot.greendao.AbstractDao;
 import org.greenrobot.greendao.database.Database;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
+import ru.mobnius.localdb.data.tablePack.TableInsertKeyValue;
+import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.observer.EventListener;
 import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.storage.DaoSession;
@@ -29,19 +32,16 @@ public class InsertHandler extends HandlerThread implements EventListener {
     private boolean mHasQuit = false;
     private static final int INSERT_ROWS = 0;
     private Handler mInsertHandler;
+    private ConcurrentMap<String, String> mInsertMap = new ConcurrentHashMap<>();
     private static final String TAG = "InsertHandler";
     private Context mContext;
     private Handler mUpdateUIHandler;
 
-    public void setTableName(String mCurrentTableName) {
-        this.mCurrentTableName = mCurrentTableName;
+    public void insert(String tableName, String filePath) {
+        mInsertHandler.obtainMessage(INSERT_ROWS, new TableInsertKeyValue(tableName, filePath))
+                .sendToTarget();
     }
 
-    public String getTableName() {
-        return mCurrentTableName;
-    }
-
-    private String mCurrentTableName;
     private LoadAsyncTask.OnLoadListener mListener;
 
     @Override
@@ -57,10 +57,6 @@ public class InsertHandler extends HandlerThread implements EventListener {
         mUpdateUIHandler = handler;
     }
 
-    public void insert(String target) {
-        mInsertHandler.obtainMessage(INSERT_ROWS, target)
-                .sendToTarget();
-    }
 
     @SuppressLint("HandlerLeak")
     @Override
@@ -70,37 +66,39 @@ public class InsertHandler extends HandlerThread implements EventListener {
             public void handleMessage(Message msg) {
                 if (!mHasQuit) {
                     if (msg.what == INSERT_ROWS) {
-                        String target = (String) msg.obj;
-                        if (target.contains("UI_SV_FIAS:2220000-2230000") || target.contains("ED_Network_Routes:460000-470000")
-                                || target.contains("ED_Registr_Pts:1600000-1610000") || target.contains("ED_Device_Billing:1560000-1570000")) {
-                            Log.e("hak", "Вставлен архив" + System.currentTimeMillis());
-                        }
-                        UnzipUtil unzipUtil = new UnzipUtil(target,
+                        TableInsertKeyValue target = (TableInsertKeyValue) msg.obj;
+                        UnzipUtil unzipUtil = new UnzipUtil(target.getFilePath(),
                                 FileUtil.getRoot(mContext, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
                         String unzipped = unzipUtil.unzip();
-                        String unzippedFilePath = unzipUtil.getAbsPath();
-                        String current = target.split(":")[1];
-                        int cur = Integer.parseInt(current.split("-")[1]);
-                        int total = PreferencesManager.getInstance().getProgress().total;
-                        processing(HttpService.getDaoSession(), unzipped.trim(), mCurrentTableName, target, cur, total);
-                        File file = new File(target);
-                        file.delete();
-                        File unzippedFile = new File(unzippedFilePath);
-                        unzippedFile.delete();
-                        if (PreferencesManager.getInstance().getProgress()!= null && cur >= total) {
-                            mUpdateUIHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mListener.onLoadFinish(mCurrentTableName);
-                                }
-                            });
-                        }else {
-                            mUpdateUIHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mListener.onInsertProgress(mCurrentTableName, Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(mCurrentTableName)), total);
-                                }
-                            });
+                        if (unzipped != null) {
+                            String unzippedFilePath = unzipUtil.getAbsPath();
+                            String current = target.getFilePath().split(":")[1];
+                            int cur = Integer.parseInt(current.split("-")[0]);
+                            int total = Integer.parseInt(PreferencesManager.getInstance().getRemoteRowCount(target.getTableName()));
+                            processing(HttpService.getDaoSession(), unzipped.trim(), target.getTableName(), target.getFilePath(), cur, total);
+                            if (!mHasQuit) {
+                                PreferencesManager.getInstance().setProgress(new Progress(cur, total, target.getTableName(), null));
+                            }
+                            File file = new File(target.getFilePath());
+                            file.delete();
+                            File unzippedFile = new File(unzippedFilePath);
+                            unzippedFile.delete();
+                            if (cur + 10000 >= total) {
+                                mUpdateUIHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mListener.onInsertFinish(target.getTableName());
+                                        PreferencesManager.getInstance().setProgress(null);
+                                    }
+                                });
+                            } else {
+                                mUpdateUIHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mListener.onInsertProgress(target.getTableName(), Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(target.getTableName())), total);
+                                    }
+                                });
+                            }
                         }
                     }
                 }
@@ -110,8 +108,9 @@ public class InsertHandler extends HandlerThread implements EventListener {
 
     @Override
     public void update(String eventType, String... args) {
-        if (eventType.equals(Observer.STOP)) {
+        if (eventType.equals(Observer.STOP_THREAD)) {
             mInsertHandler.removeMessages(INSERT_ROWS);
+            mInsertMap.clear();
             quit();
             if (PreferencesManager.getInstance().getProgress() != null) {
                 PreferencesManager.getInstance().setProgress(null);
@@ -152,10 +151,19 @@ public class InsertHandler extends HandlerThread implements EventListener {
                 for (int i = 0; i < dataLength; i += next) {
                     if (i + next < dataLength) {
                         Object[] s = Arrays.copyOfRange(allValues, i, (i + next));
+                        for (int j = 3; j < s.length; j += 6) {
+                            String sd = "";
+                            if (s[j].equals("false") || s[j].equals("true")) {
+                                sd = "ok";
+                            } else {
+                                sd = "not ok";
+                            }
+                            String t = sd + "fdf";
+                        }
                         try {
                             db.execSQL(sqlInsertFromString.convertToSqlQuery(max), s);
                             cur += max;
-                            PreferencesManager.getInstance().setLocalRowCount(String.valueOf(cur), mCurrentTableName);
+                            PreferencesManager.getInstance().setLocalRowCount(String.valueOf(cur), tableName);
                         } catch (Exception e) {
                             Logger.error(e);
                         }
@@ -169,7 +177,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
                     try {
                         db.execSQL(sqlInsertFromString.convertToSqlQuery(last), s);
                         cur += last;
-                        PreferencesManager.getInstance().setLocalRowCount(String.valueOf(cur), mCurrentTableName);
+                        PreferencesManager.getInstance().setLocalRowCount(String.valueOf(cur), tableName);
                     } catch (Exception e) {
                         Logger.error(e);
                     }
@@ -185,6 +193,6 @@ public class InsertHandler extends HandlerThread implements EventListener {
     }
 
     public interface ZipDownloadListener {
-        void onZipDownloaded(String zipFilePath);
+        void onZipDownloaded(String tableName, String zipFilePath);
     }
 }

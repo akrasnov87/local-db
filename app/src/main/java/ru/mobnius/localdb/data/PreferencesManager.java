@@ -2,7 +2,6 @@ package ru.mobnius.localdb.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import com.google.gson.Gson;
 
@@ -33,7 +32,6 @@ public class PreferencesManager {
     public static final String BUSY_PORT = "MBL_BUSY_PORT";
     public static final String ALL_TABLES = "MBL_ALL_TABLES";
     private static final String ALL_TABLES_NAMES = "MBL_ALL_TABLES_NAMES";
-    private static final String ZIP_URL = "MBL_ZIP_URL";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -103,19 +101,12 @@ public class PreferencesManager {
         return getSharedPreferences().getString(RPC_URL, null);
     }
 
-    public void setZipUrl(String zip) {
-        getSharedPreferences().edit().putString( ZIP_URL, zip).apply();
-    }
-    public String getZipUrl() {
-        return getSharedPreferences().getString(ZIP_URL, null);
-    }
-
 
     public boolean isAuthorized() {
-        return getLogin() != null && getPassword() != null;
+        return getLogin() != null && getPassword() != null && getRepoUrl() != null;
     }
 
-    public void setProgress(Progress progress)  {
+    public void setProgress(Progress progress) {
         getSharedPreferences().edit().putString(PROGRESS, progress == null ? null : new Gson().toJson(progress)).apply();
     }
 

@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 public class Observer {
-    public static final String STOP = "stopAsyncTask";
-    public static final String ERROR = "errorAsyncTask";
+    public static final String STOP_ASYNC_TASK = "stopAsyncTask";
+    public static final String STOP_THREAD = "stopThread";
+    public static final String ERROR = "errorLocalDB";
     Map<String, List<EventListener>> listeners = new HashMap<>();
 
     public Observer(String... operations) {

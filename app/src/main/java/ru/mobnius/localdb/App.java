@@ -60,7 +60,7 @@ public class App extends Application implements
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         filter.addAction(Intent.ACTION_BOOT_COMPLETED);
         registerReceiver(mAutoRunReceiver, filter);
-        mObserver = new Observer(Observer.STOP, Observer.ERROR);
+        mObserver = new Observer(Observer.STOP_ASYNC_TASK, Observer.STOP_THREAD, Observer.ERROR);
     }
 
     public void registryLogListener(OnLogListener listener) {

@@ -12,7 +12,7 @@ import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
 import ru.mobnius.localdb.observer.EventListener;
-import ru.mobnius.localdb.utils.NetworkUtil;
+import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**
@@ -62,12 +62,9 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
             }
         }
         if (PreferencesManager.getInstance().getProgress() != null) {
-            if (NetworkUtil.isNetworkAvailable(mApp)) {
-                ProgressResult progressResult = ProgressResult.getInstance(PreferencesManager.getInstance().getProgress());
-                response = Response.getInstance(urlReader, progressResult.toJsonString());
-            } else {
-                response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
-            }
+            ProgressResult progressResult = ProgressResult.getInstance(PreferencesManager.getInstance().getProgress());
+            response = Response.getInstance(urlReader, progressResult.toJsonString());
+
         } else {
             response = Response.getErrorInstance(urlReader, "Информация о выполнении загрузки не найдена. Возможно она была завершена ранее.", Response.RESULT_FAIL);
         }
@@ -76,7 +73,7 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
 
     @Override
     public void update(String eventType, String... args) {
-        if (eventType.equals("error")) {
+        if (eventType.equals(Observer.ERROR)) {
             errorType = args[0];
             errorMessage = args[1];
             if (errorMessage != null && errorMessage.length() > 600) {

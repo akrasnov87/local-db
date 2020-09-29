@@ -95,20 +95,21 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 }
 
                 boolean removeBeforeInsert = false;
-                Progress progress;
+                Progress downloadProgress;
                 if (PreferencesManager.getInstance().getProgress() == null) {
                     //удаляем прежде чем заливать
                     removeBeforeInsert = true;
-                    progress = new Progress(0, mTotal, mTableName[j], mVersion);
+                    Progress progress = new Progress(0, mTotal, mTableName[j], mVersion);
+                    PreferencesManager.getInstance().setProgress(progress);
+                    downloadProgress =new Progress(0, mTotal, mTableName[j], mVersion);
                 } else {
                     //восстанавливаем загрузку
-                    progress = PreferencesManager.getInstance().getProgress();
+                    downloadProgress = PreferencesManager.getInstance().getDownloadProgress();
                 }
 
-                PreferencesManager.getInstance().setProgress(progress);
+                PreferencesManager.getInstance().setDownloadProgress(downloadProgress);
 
                 DaoSession daoSession = HttpService.getDaoSession();
-                publishProgress(0);
 
                 File cacheDir = mApp.getCacheDir();
                 if (cacheDir.getFreeSpace() / 1000000 < hddSize + 100) {
@@ -118,7 +119,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     return message;
                 }
                 PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName[j]);
-                PreferencesManager.getInstance().setProgress(new Progress(progress.current, mTotal, mTableName[j], mVersion));
 
                 try {
                     Database db = daoSession.getDatabase();
@@ -142,12 +142,17 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     if (!isCancelled()) {
                         File file = getZipFile(mApp, mTableName[j], mVersion, currentRowsCount, size);
                         currentRowsCount += size;
-                        mZipDownloadListener.onZipDownloaded(file.getAbsolutePath());
-                        Progress downloadProgress = new Progress(i, mTotal, mTableName[j], mVersion);
-                        downloadProgress.setFileName(file.getName());
-                        downloadProgress.setFilesCount(i);
+                        if (file == null) {
+                            message.add(Tags.RPC_ERROR);
+                            message.add("Не удалось получить файл с сервера");
+                            return message;
+                        }
+                        mZipDownloadListener.onZipDownloaded(mTableName[j], file.getAbsolutePath());
+                        Progress currentDownloadProgress = new Progress(i, mTotal, mTableName[j], mVersion);
+                        currentDownloadProgress.setFileName(file.getName());
+                        currentDownloadProgress.setFilesCount(i);
                         publishProgress(i);
-                        PreferencesManager.getInstance().setDownloadProgress(downloadProgress);
+                        PreferencesManager.getInstance().setDownloadProgress(currentDownloadProgress);
                     }
                 }
                 PreferencesManager.getInstance().setDownloadProgress(null);
@@ -184,7 +189,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 list.remove(mCurrentTableName);
                 String[] allTablesArray = list.toArray(new String[0]);
                 PreferencesManager.getInstance().setAllTablesArray(allTablesArray);
-                PreferencesManager.getInstance().setProgress(null);
             }
         }
         return message;
@@ -218,10 +222,16 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         HttpURLConnection conn;
         try {
             int nextStep = start + limit;
-            URL url = new URL(PreferencesManager.getInstance().getZipUrl() + "/csv-zip/" + tableName + "/" + version + "/" + start + "-" + nextStep + ".zip");
+            String repoURL = PreferencesManager.getInstance().getRepoUrl();
+            if (repoURL == null){
+                return null;
+            }
+            URL url = new URL(repoURL + "/csv-zip/" + tableName + "/" + version + "/" + start + "-" + nextStep + ".zip");
             conn = (HttpURLConnection) url.openConnection();
             int contentLength = conn.getContentLength();
-
+            if (contentLength <= 0) {
+                return null;
+            }
             DataInputStream stream = new DataInputStream(url.openStream());
 
             byte[] buffer = new byte[contentLength];
@@ -232,8 +242,8 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             fos.write(buffer);
             fos.flush();
             fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException | RuntimeException e) {
+            Logger.error(e);
         }
         return file;
     }
@@ -241,17 +251,17 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     private void
     createIndexes(String tableName, Database db) {
         if ("ui_sv_fias".equals(tableName.toLowerCase())) {
-            db.execSQL("CREATE INDEX " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
+            db.execSQL("CREATE INDEX IF NOT EXISTS " + "IDX_UI_SV_FIAS_C_Full_Address ON \"UI_SV_FIAS\"" +
                     " (\"C_Full_Address\" ASC);");
         }
     }
 
     @Override
     public void update(String eventType, String... args) {
-        if (eventType.equals(Observer.STOP)) {
+        if (eventType.equals(Observer.STOP_ASYNC_TASK)) {
             this.cancel(false);
-            if (PreferencesManager.getInstance().getProgress() != null) {
-                PreferencesManager.getInstance().setProgress(null);
+            if (PreferencesManager.getInstance().getDownloadProgress() != null) {
+                PreferencesManager.getInstance().setDownloadProgress(null);
             }
         }
     }
@@ -270,7 +280,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
          *
          * @param tableName имя таблицы
          */
-        void onLoadFinish(String tableName);
+        void onInsertFinish(String tableName);
 
         void onInsertProgress(String tableName, int progress, int total);
 

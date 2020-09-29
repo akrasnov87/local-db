@@ -1,15 +1,9 @@
 package ru.mobnius.localdb.request;
 
-import android.content.Context;
-import android.content.Intent;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
-import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
@@ -23,7 +17,7 @@ public class SyncStopRequestListener extends AuthFilterRequestListener
         implements OnRequestListener {
     private App mApp;
 
-    public SyncStopRequestListener(App app){
+    public SyncStopRequestListener(App app) {
         mApp = app;
     }
 
@@ -37,11 +31,15 @@ public class SyncStopRequestListener extends AuthFilterRequestListener
     @Override
     public Response getResponse(UrlReader urlReader) {
         Response response = super.getResponse(urlReader);
-        if(response != null) {
+        if (response != null) {
             return response;
         }
-        mApp.getObserver().notify(Observer.STOP, "stopAsyncTask");
-        if(PreferencesManager.getInstance().getProgress() != null) {
+        mApp.getObserver().notify(Observer.STOP_ASYNC_TASK, "stopAsyncTask");
+        if (PreferencesManager.getInstance().getDownloadProgress() != null) {
+            PreferencesManager.getInstance().setDownloadProgress(null);
+        }
+        mApp.getObserver().notify(Observer.STOP_THREAD, "stopAsyncTask");
+        if (PreferencesManager.getInstance().getProgress() != null) {
             PreferencesManager.getInstance().setProgress(null);
 
             ProgressResult progressResult = ProgressResult.getInstance(PreferencesManager.getInstance().getProgress());

@@ -10,25 +10,26 @@ import ru.mobnius.localdb.data.Storage;
 @SuppressWarnings("unused")
 @Entity(nameInDb = "UI_SV_FIAS")
 @Storage(description = "ФИАС", table = "UI_SV_FIAS")
-    public class Fias {
+public class Fias {
 
-        @Id
-        public String LINK;
+    @Id
+    public String LINK;
 
-        @Property(nameInDb = "C_Full_Address")
-        public String C_Full_Address;
+    @Property(nameInDb = "C_Full_Address")
+    public String C_Full_Address;
 
-        @Property(nameInDb = "C_House_Number")
-        public String C_House_Number;
+    @Property(nameInDb = "C_House_Number")
+    public String C_House_Number;
 
-        @Property(nameInDb = "F_Structure")
-        public String F_Structure;
+    @Property(nameInDb = "F_Structure")
+    public String F_Structure;
 
-        @Property(nameInDb = "F_Municipality")
-        public String F_Municipality;
+    @Property(nameInDb = "F_Municipality")
+    public String F_Municipality;
 
-        @Property(nameInDb = "F_Town")
-        public String F_Town;
+    @Property(nameInDb = "F_Town")
+    public String F_Town;
+
     public Fias() {
     }
 
@@ -90,4 +91,5 @@ import ru.mobnius.localdb.data.Storage;
     public void setF_Town(String F_Town) {
         this.F_Town = F_Town;
     }
+
 }

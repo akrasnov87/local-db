@@ -30,7 +30,6 @@ import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
-import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.adapter.LogAdapter;
 import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.BaseActivity;
@@ -233,7 +232,8 @@ public class MainActivity extends BaseActivity
                     public void onClick(DialogInterface dialog, int which) {
                         if (DialogInterface.BUTTON_POSITIVE == which) {
                             App app = (App) getApplication();
-                            app.getObserver().notify(Observer.STOP, "stopping async task");
+                            app.getObserver().notify(Observer.STOP_ASYNC_TASK, "stopping async task");
+                            app.getObserver().notify(Observer.STOP_THREAD, "stopping async task");
                             PreferencesManager.getInstance().setProgress(null);
                             mUpdateFragment.stopProcess();
                             setMenuItemVisible(true);
@@ -301,6 +301,7 @@ public class MainActivity extends BaseActivity
                 db.execSQL("delete from " + name.table);
                 PreferencesManager.getInstance().setLocalRowCount("0", name.table);
                 PreferencesManager.getInstance().setRemoteRowCount("0", name.table);
+
             } else {
                 dialog.dismiss();
             }
