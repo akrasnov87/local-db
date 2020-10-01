@@ -8,6 +8,8 @@ import android.util.Log;
 import org.greenrobot.greendao.AbstractDao;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,14 +38,12 @@ public class SyncRequestListener extends AuthFilterRequestListener
     private UrlReader mUrlReader;
     private boolean isCanceled = false;
     private InsertHandler mInsertHandler;
-    private String [] mTableName;
 
     public SyncRequestListener(App app, SyncStatusRequestListener statusRequestListener) {
         mApp = app;
         mApp.getConnectionReceiver().setListener(this);
         mApp.getObserver().subscribe(Observer.ERROR, statusRequestListener);
         mApp.getObserver().subscribe(Observer.STOP_THREAD, this);
-
     }
 
     @Override
@@ -69,21 +69,21 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 AbstractDao dao = (AbstractDao) HttpService.getDaoSession().getAllDaos().toArray()[i];
                 if (!dao.getTablename().equals("sd_client_errors")) {
                     tableName.add(dao.getTablename());
-                    PreferencesManager.getInstance().setIsAllTables(true);
-                    PreferencesManager.getInstance().setAllTablesArray(tableName.toArray(new String[0]));
                 }
             }
+            Collections.sort(tableName);
+            PreferencesManager.getInstance().setIsAllTables(true);
+            PreferencesManager.getInstance().setAllTablesArray(tableName.toArray(new String[0]));
         } else {
             tableName.add(table);
             PreferencesManager.getInstance().setIsAllTables(false);
             PreferencesManager.getInstance().setAllTablesArray(null);
         }
-        mTableName = tableName.toArray(new String[0]);
         if (NetworkUtil.isNetworkAvailable(mApp)) {
             if (urlReader.getParam("restore") != null) {
-                LoadAsyncTask task = new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp);
+                LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), SyncRequestListener.this, mApp);
                 mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
-                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                task.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
             } else {
                 PreferencesManager.getInstance().setProgress(null);
                 if (mInsertHandler != null) {
@@ -96,7 +96,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp);
                 mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
                 mApp.getObserver().subscribe(Observer.STOP_THREAD, mInsertHandler);
-                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                 response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
                 isCanceled = false;
             }
@@ -124,10 +124,11 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     @Override
     public void onDownLoadFinish(String tableName) {
-        if (mTableName!=null){
-            mTableName = null;
-        }
-        PreferencesManager.getInstance().setDownloadProgress(null);
+    }
+
+    @Override
+    public void onSingleTableDownloaded(String tableName) {
+
     }
 
     @Override
@@ -141,13 +142,17 @@ public class SyncRequestListener extends AuthFilterRequestListener
             mApp.getObserver().notify(Observer.STOP_ASYNC_TASK, "stopping async task");
             isCanceled = true;
         } else {
-            if (PreferencesManager.getInstance().getDownloadProgress()!= null && isCanceled) {
+            if (PreferencesManager.getInstance().getDownloadProgress() != null && isCanceled) {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        LoadAsyncTask task = new LoadAsyncTask(mTableName, SyncRequestListener.this, mApp);
+                        String[] allTables = PreferencesManager.getInstance().getAllTablesArray();
+                        if (allTables == null) {
+                            allTables = new String[]{PreferencesManager.getInstance().getDownloadProgress().tableName};
+                        }
+                        LoadAsyncTask task = new LoadAsyncTask(allTables, SyncRequestListener.this, mApp);
                         mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
-                        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                        task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                         isCanceled = false;
                     }
                 }, 5000);

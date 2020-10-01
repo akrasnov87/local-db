@@ -31,8 +31,10 @@ import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.LogAdapter;
+import ru.mobnius.localdb.adapter.holder.StorageNameHolder;
 import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.BaseActivity;
+import ru.mobnius.localdb.data.DeleteTableAsyncTask;
 import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
@@ -290,7 +292,8 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    public void onClearData(final StorageName name) {
+    public void onClearData(final StorageName name, StorageNameHolder.OnDeleteTableListener onDeleteTableListener,
+                            int position) {
         final Database db = HttpService.getDaoSession().getDatabase();
         String message = "Вы уверены что хотите удалить все записи из таблицы " + name.getName() + "?";
         if (db.isDbLockedByCurrentThread()) {
@@ -298,10 +301,9 @@ public class MainActivity extends BaseActivity
         }
         confirm(message, (dialog, which) -> {
             if (!db.isDbLockedByCurrentThread()) {
-                db.execSQL("delete from " + name.table);
-                PreferencesManager.getInstance().setLocalRowCount("0", name.table);
-                PreferencesManager.getInstance().setRemoteRowCount("0", name.table);
-
+                DeleteTableAsyncTask task = new DeleteTableAsyncTask(name.table, onDeleteTableListener, position);
+                task.execute(db);
+                onDeleteTableListener.onStartDeleting(position);
             } else {
                 dialog.dismiss();
             }

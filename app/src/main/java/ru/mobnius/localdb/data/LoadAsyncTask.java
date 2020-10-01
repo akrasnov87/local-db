@@ -42,7 +42,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
 
     @SuppressLint("StaticFieldLeak")
-    private Context mApp;
+    private App mApp;
 
     private final String[] mTableName;
     private String mCurrentTableName;
@@ -63,6 +63,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     @Override
     protected ArrayList<String> doInBackground(String... strings) {
         JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
+
         ArrayList<String> message = new ArrayList<>();
         if (!isCancelled() && mTableName != null) {
             for (int j = 0; j < mTableName.length; j++) {
@@ -101,7 +102,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     removeBeforeInsert = true;
                     Progress progress = new Progress(0, mTotal, mTableName[j], mVersion);
                     PreferencesManager.getInstance().setProgress(progress);
-                    downloadProgress =new Progress(0, mTotal, mTableName[j], mVersion);
+                    downloadProgress = new Progress(0, mTotal, mTableName[j], mVersion);
                 } else {
                     //восстанавливаем загрузку
                     downloadProgress = PreferencesManager.getInstance().getDownloadProgress();
@@ -132,30 +133,38 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     Logger.error(e);
                     return message;
                 }
-                int currentRowsCount = 0;
                 Log.e("hak", "Начато скачивание" + System.currentTimeMillis());
-                int x = 0;
+                int currentRowsCount = 0;
+                int currentFile = 0;
                 if (PreferencesManager.getInstance().getDownloadProgress() != null) {
-                    x = PreferencesManager.getInstance().getDownloadProgress().getFilesCount();
+                    currentFile = PreferencesManager.getInstance().getDownloadProgress().getFilesCount();
+                    currentRowsCount = PreferencesManager.getInstance().getDownloadProgress().getDownloadRowsCount();
                 }
-                for (int i = x; i < fileCount; i++) {
+                for (int i = currentFile; i < fileCount; i++) {
                     if (!isCancelled()) {
                         File file = getZipFile(mApp, mTableName[j], mVersion, currentRowsCount, size);
-                        currentRowsCount += size;
-                        if (file == null) {
+                        if (file == null && !isCancelled()) {
                             message.add(Tags.RPC_ERROR);
                             message.add("Не удалось получить файл с сервера");
                             return message;
                         }
+                        currentRowsCount += size;
                         mZipDownloadListener.onZipDownloaded(mTableName[j], file.getAbsolutePath());
-                        Progress currentDownloadProgress = new Progress(i, mTotal, mTableName[j], mVersion);
+                        Progress currentDownloadProgress = new Progress(currentRowsCount, mTotal, mTableName[j], mVersion);
                         currentDownloadProgress.setFileName(file.getName());
-                        currentDownloadProgress.setFilesCount(i);
+                        currentDownloadProgress.setFilesCount(i + 1);
+                        currentDownloadProgress.setDownloadRowsCount(currentRowsCount);
                         publishProgress(i);
                         PreferencesManager.getInstance().setDownloadProgress(currentDownloadProgress);
                     }
                 }
+                mListener.onSingleTableDownloaded(mTableName[j]);
                 PreferencesManager.getInstance().setDownloadProgress(null);
+                createIndexes(mTableName[j], HttpService.getDaoSession().getDatabase());
+                ArrayList<String> list = new ArrayList<>(Arrays.asList(mTableName));
+                list.remove(mCurrentTableName);
+                String[] allTablesArray = list.toArray(new String[0]);
+                PreferencesManager.getInstance().setAllTablesArray(allTablesArray);
 
 /*
                 for (int i = progress.current; i < mTotal; i += size) {
@@ -184,11 +193,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     StorageUtil.processing(size, mTableName[j], this);
                     PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j], mVersion));
                 }*/
-                createIndexes(mTableName[j], HttpService.getDaoSession().getDatabase());
-                ArrayList<String> list = new ArrayList<>(Arrays.asList(mTableName));
-                list.remove(mCurrentTableName);
-                String[] allTablesArray = list.toArray(new String[0]);
-                PreferencesManager.getInstance().setAllTablesArray(allTablesArray);
+
             }
         }
         return message;
@@ -223,7 +228,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         try {
             int nextStep = start + limit;
             String repoURL = PreferencesManager.getInstance().getRepoUrl();
-            if (repoURL == null){
+            if (repoURL == null) {
                 return null;
             }
             URL url = new URL(repoURL + "/csv-zip/" + tableName + "/" + version + "/" + start + "-" + nextStep + ".zip");
@@ -260,9 +265,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     public void update(String eventType, String... args) {
         if (eventType.equals(Observer.STOP_ASYNC_TASK)) {
             this.cancel(false);
-            if (PreferencesManager.getInstance().getDownloadProgress() != null) {
-                PreferencesManager.getInstance().setDownloadProgress(null);
-            }
         }
     }
 
@@ -286,6 +288,8 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
 
         void onDownLoadFinish(String tableName);
+
+        void onSingleTableDownloaded(String tableName);
 
 
         void onLoadError(String[] message);

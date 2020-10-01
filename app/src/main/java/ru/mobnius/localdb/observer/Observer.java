@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Observer {
     public static final String STOP_ASYNC_TASK = "stopAsyncTask";
     public static final String STOP_THREAD = "stopThread";
     public static final String ERROR = "errorLocalDB";
-    Map<String, List<EventListener>> listeners = new HashMap<>();
+    ConcurrentMap<String, List<EventListener>> listeners = new ConcurrentHashMap<>();
+
 
     public Observer(String... operations) {
         for (String operation : operations) {

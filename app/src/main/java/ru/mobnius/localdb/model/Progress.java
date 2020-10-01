@@ -14,6 +14,16 @@ public class Progress {
     public final String tableName;
     private int filesCount;
 
+    public int getDownloadRowsCount() {
+        return downloadRowsCount;
+    }
+
+    public void setDownloadRowsCount(int downloadRowsCount) {
+        this.downloadRowsCount = downloadRowsCount;
+    }
+
+    private int downloadRowsCount;
+
     public int getFilesCount() {
         return filesCount;
     }

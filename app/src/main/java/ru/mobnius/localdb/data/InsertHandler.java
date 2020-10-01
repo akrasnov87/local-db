@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.tablePack.TableInsertKeyValue;
@@ -34,7 +35,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
     private Handler mInsertHandler;
     private ConcurrentMap<String, String> mInsertMap = new ConcurrentHashMap<>();
     private static final String TAG = "InsertHandler";
-    private Context mContext;
+    private App mApp;
     private Handler mUpdateUIHandler;
 
     public void insert(String tableName, String filePath) {
@@ -50,9 +51,9 @@ public class InsertHandler extends HandlerThread implements EventListener {
         return super.quit();
     }
 
-    public InsertHandler(Context context, LoadAsyncTask.OnLoadListener listener, Handler handler) {
+    public InsertHandler(App context, LoadAsyncTask.OnLoadListener listener, Handler handler) {
         super(TAG);
-        mContext = context;
+        mApp = context;
         mListener = listener;
         mUpdateUIHandler = handler;
     }
@@ -68,7 +69,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
                     if (msg.what == INSERT_ROWS) {
                         TableInsertKeyValue target = (TableInsertKeyValue) msg.obj;
                         UnzipUtil unzipUtil = new UnzipUtil(target.getFilePath(),
-                                FileUtil.getRoot(mContext, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
+                                FileUtil.getRoot(mApp, Environment.DIRECTORY_DOCUMENTS).getAbsolutePath());
                         String unzipped = unzipUtil.unzip();
                         if (unzipped != null) {
                             String unzippedFilePath = unzipUtil.getAbsPath();

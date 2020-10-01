@@ -22,12 +22,15 @@ public class StorageNameAdapter extends RecyclerView.Adapter<StorageNameHolder> 
     private final Context mContext;
     private final List<StorageName> mList;
     private final DialogDownloadFragment.OnDownloadStorageListener mListener;
+    private final StorageNameHolder.OnDeleteTableListener mOnDeleteTableListener;
 
-    public StorageNameAdapter(Context context, DialogDownloadFragment.OnDownloadStorageListener listener) {
+    public StorageNameAdapter(Context context, DialogDownloadFragment.OnDownloadStorageListener listener,
+                              StorageNameHolder.OnDeleteTableListener onDeleteTableListener) {
         mContext = context;
         mListener = listener;
         mList = new ArrayList<>();
         mList.addAll(Arrays.asList(StorageUtil.getStorage(context, "ru.mobnius.localdb.storage")));
+        mOnDeleteTableListener = onDeleteTableListener;
     }
 
     @NonNull
@@ -35,7 +38,7 @@ public class StorageNameAdapter extends RecyclerView.Adapter<StorageNameHolder> 
     public StorageNameHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         View view = inflater.inflate(R.layout.item_download, parent, false);
-        return new StorageNameHolder(view, mListener);
+        return new StorageNameHolder(view, mListener, mOnDeleteTableListener);
     }
 
     @Override
