@@ -25,6 +25,7 @@ import java.util.Arrays;
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
+import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.tablePack.CsvUtil;
 import ru.mobnius.localdb.model.Progress;
@@ -38,7 +39,7 @@ import ru.mobnius.localdb.utils.StorageUtil;
 /**
  * Загрузка данных с сервера
  */
-public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements StorageUtil.OnProgressUpdate, EventListener {
+public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>> implements EventListener {
 
 
     @SuppressLint("StaticFieldLeak")
@@ -47,7 +48,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     private final String[] mTableName;
     private String mCurrentTableName;
     private int mTotal;
-
     private final OnLoadListener mListener;
     private InsertHandler.ZipDownloadListener mZipDownloadListener;
 
@@ -63,7 +63,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     @Override
     protected ArrayList<String> doInBackground(String... strings) {
         JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
-
         ArrayList<String> message = new ArrayList<>();
         if (!isCancelled() && mTableName != null) {
             for (int j = 0; j < mTableName.length; j++) {
@@ -154,8 +153,8 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                         currentDownloadProgress.setFileName(file.getName());
                         currentDownloadProgress.setFilesCount(i + 1);
                         currentDownloadProgress.setDownloadRowsCount(currentRowsCount);
-                        publishProgress(i);
                         PreferencesManager.getInstance().setDownloadProgress(currentDownloadProgress);
+                        Log.d(Names.TAG, mTableName[j] + ": " + getPercent(currentRowsCount, mTotal));
                     }
                 }
                 mListener.onSingleTableDownloaded(mTableName[j]);
@@ -165,45 +164,9 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 list.remove(mCurrentTableName);
                 String[] allTablesArray = list.toArray(new String[0]);
                 PreferencesManager.getInstance().setAllTablesArray(allTablesArray);
-
-/*
-                for (int i = progress.current; i < mTotal; i += size) {
-                    if (isCancelled()) {
-                        return message;
-                    }
-                    if (PreferencesManager.getInstance().getProgress() == null) {
-                        // значит принудительно все было остановлено
-                        break;
-                    }
-
-                    try {
-                        byte[] buffer = CsvUtil.getFile(PreferencesManager.getInstance().getRepoUrl(), mCurrentTableName, mVersion, i, size);
-                        byte[] result = ZipManager.decompress(buffer);
-                        String txt = new String(result, StandardCharsets.UTF_8);
-                        Table table = CsvUtil.convert(txt);
-                        table.updateHeaders("F_Registr_Pts___LINK", "F_Registr_Pts");
-                        CsvUtil.insertToTable(table, mCurrentTableName, daoSession);
-
-                    } catch (IOException | DataFormatException e) {
-                        Logger.error(e);
-                        message.add(Tags.RPC_ERROR);
-                        message.add(e.getMessage());
-                        return message;
-                    }
-                    StorageUtil.processing(size, mTableName[j], this);
-                    PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j], mVersion));
-                }*/
-
             }
         }
         return message;
-    }
-
-    @Override
-    protected void onProgressUpdate(Integer... values) {
-        super.onProgressUpdate(values);
-        int progress = values[0];
-        mListener.onLoadProgress(mCurrentTableName, progress, mTotal);
     }
 
     @Override
@@ -215,11 +178,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         } else {
             mListener.onDownLoadFinish(mCurrentTableName);
         }
-    }
-
-    @Override
-    public void onUpdateProgress(int progress) {
-        publishProgress(progress);
     }
 
     private File getZipFile(Context context, String tableName, String version, int start, int limit) {
@@ -238,7 +196,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 return null;
             }
             DataInputStream stream = new DataInputStream(url.openStream());
-
             byte[] buffer = new byte[contentLength];
             stream.readFully(buffer);
             stream.close();
@@ -268,6 +225,14 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         }
     }
 
+    private double getPercent(int progress, int total) {
+        double result = (double) (progress * 100) / total;
+        if (result > 100) {
+            result = 100;
+        }
+        return result;
+    }
+
     public interface OnLoadListener {
         /**
          * Прогресс выполнения
@@ -294,6 +259,31 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
         void onLoadError(String[] message);
     }
+/*
+                for (int i = progress.current; i < mTotal; i += size) {
+                    if (isCancelled()) {
+                        return message;
+                    }
+                    if (PreferencesManager.getInstance().getProgress() == null) {
+                        // значит принудительно все было остановлено
+                        break;
+                    }
 
+                    try {
+                        byte[] buffer = CsvUtil.getFile(PreferencesManager.getInstance().getRepoUrl(), mCurrentTableName, mVersion, i, size);
+                        byte[] result = ZipManager.decompress(buffer);
+                        String txt = new String(result, StandardCharsets.UTF_8);
+                        Table table = CsvUtil.convert(txt);
+                        table.updateHeaders("F_Registr_Pts___LINK", "F_Registr_Pts");
+                        CsvUtil.insertToTable(table, mCurrentTableName, daoSession);
 
+                    } catch (IOException | DataFormatException e) {
+                        Logger.error(e);
+                        message.add(Tags.RPC_ERROR);
+                        message.add(e.getMessage());
+                        return message;
+                    }
+                    StorageUtil.processing(size, mTableName[j], this);
+                    PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j], mVersion));
+                }*/
 }

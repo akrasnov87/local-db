@@ -118,10 +118,6 @@ public class MainActivity extends BaseActivity
                 }
             }
         }
-
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        //  alert(getString(R.string.android_8));
-        // }
     }
 
     @Override

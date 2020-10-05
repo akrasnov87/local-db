@@ -17,9 +17,7 @@ import ru.mobnius.localdb.utils.ServiceUtil;
 
 public class AutoRunReceiver extends BroadcastReceiver
         implements AvailableTimerTask.OnAvailableListener {
-
     private Context mContext;
-
 
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     @Override
@@ -47,15 +45,12 @@ public class AutoRunReceiver extends BroadcastReceiver
         }
 
         ((App) mContext).onAddLog(new LogItem("пул запущен, период проверки " + (TIMEOUT / 1000) + " сек.", false));
-
-
     }
 
     @Override
     public void onAvailable(boolean available) {
         // тут нужно автоматически перезапускать сервис
         ((App) mContext).onAvailable(available);
-
         if (!available) {
             boolean serviceAvailable = ServiceUtil.checkServiceRunning(mContext, HttpService.SERVICE_NAME);
             ((App) mContext).onAddLog(new LogItem("хост не доступен, служба " + (serviceAvailable ? "запущена" : "остановлена"), true));

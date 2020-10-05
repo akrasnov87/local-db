@@ -1,16 +1,13 @@
 package ru.mobnius.localdb.request;
 
-import android.content.ComponentName;
-import android.content.Context;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.data.AuthorizationAsyncTask;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
-import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.UrlReader;
 
 /**
@@ -19,10 +16,10 @@ import ru.mobnius.localdb.utils.UrlReader;
  */
 public class AuthRequestListener
         implements OnRequestListener {
-    private Context mContext;
+    private App mApp;
 
-    public AuthRequestListener(Context context) {
-        mContext = context;
+    public AuthRequestListener(App app) {
+        mApp = app;
     }
 
     @Override
@@ -45,7 +42,7 @@ public class AuthRequestListener
         String repo = urlReader.getParam("repo");
 
         if(login != null && password != null && rpc != null && node != null && repo != null) {
-            new AuthorizationAsyncTask(mContext, login, password).execute();
+            new AuthorizationAsyncTask(mApp, login, password).execute();
             PreferencesManager.getInstance().setLogin(login);
             PreferencesManager.getInstance().setPassword(password);
             PreferencesManager.getInstance().setNodeUrl(node);

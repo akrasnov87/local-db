@@ -7,17 +7,19 @@ import android.os.AsyncTask;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.Tags;
+import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.Loader;
 
 public class AuthorizationAsyncTask extends AsyncTask<Void, Void, String> {
     @SuppressLint("StaticFieldLeak")
-    private Context mContext;
+    private App mApp;
     private String mLogin;
     private String mPassword;
 
-    public AuthorizationAsyncTask(Context context, String login, String password) {
-        mContext = context;
+    public AuthorizationAsyncTask(App app, String login, String password) {
+        mApp = app;
         mLogin = login;
         mPassword = password;
     }
@@ -37,10 +39,7 @@ public class AuthorizationAsyncTask extends AsyncTask<Void, Void, String> {
     protected void onPostExecute(String data) {
         super.onPostExecute(data);
         if (data != null && !data.isEmpty()) {
-            Intent intent = new Intent(Tags.ERROR_TAG);
-            intent.putExtra(Tags.ERROR_TEXT, data);
-            intent.putExtra(Tags.ERROR_TYPE, Tags.AUTH_ERROR);
-            LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+            mApp.getObserver().notify(Observer.ERROR, data);
         }
     }
 }

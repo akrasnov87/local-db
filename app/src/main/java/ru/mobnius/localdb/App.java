@@ -43,19 +43,15 @@ public class App extends Application implements
     public void onCreate() {
         super.onCreate();
         onExceptionIntercept();
-
         Log.d(Names.TAG, "Старт приложения");
         mLogListeners = new ArrayList<>();
         mAvailableListeners = new ArrayList<>();
         mHttpListeners = new ArrayList<>();
-
         PreferencesManager.createInstance(this, PreferencesManager.NAME);
-
         mConnectionReceiver = new ConnectionChecker();
-        IntentFilter filterq = new IntentFilter();
-        filterq.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(mConnectionReceiver, filterq);
-
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mConnectionReceiver, intentFilter);
         mAutoRunReceiver = new AutoRunReceiver();
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         filter.addAction(Intent.ACTION_BOOT_COMPLETED);

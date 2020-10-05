@@ -128,22 +128,18 @@ public class StorageUtil {
         }
         AbstractDao abstractDao = null;
         int insertions = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
-
         for (AbstractDao ad : daoSession.getAllDaos()) {
             if (ad.getTablename().equals(tableName)) {
                 abstractDao = ad;
                 break;
             }
         }
-
         if (abstractDao == null) {
             return;
         }
         if (result.result.records.length > 0) {
-
             JSONObject firstObject = toNormal(result.result.records[0], abstractDao);
             SqlInsertFromJSONObject sqlInsert = new SqlInsertFromJSONObject(firstObject, tableName, abstractDao);
-
             //Вычисляем максимально возможную вставку за 1 раз. 999 за 1 раз - ограничение SQLite
             int columnsCount = abstractDao.getAllColumns().length;
             int max = 999 / columnsCount;
@@ -192,7 +188,6 @@ public class StorageUtil {
                         }
                     }
                 }
-
             }
         }
     }
@@ -205,7 +200,6 @@ public class StorageUtil {
         }
         AbstractDao abstractDao = null;
         int insertions = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
-
         for (AbstractDao ad : daoSession.getAllDaos()) {
             if (ad.getTablename().equals(tableName)) {
                 abstractDao = ad;
@@ -215,9 +209,7 @@ public class StorageUtil {
         if (abstractDao == null) {
             return;
         }
-
         SqlInsertFromString sqlInsertFromString = new SqlInsertFromString(unzipped, tableName);
-
         Object[] allValues = sqlInsertFromString.getValues();
         if (allValues == null) {
             return;
@@ -253,7 +245,6 @@ public class StorageUtil {
                         Logger.error(e);
                     }
                 }
-
             } catch (SQLiteException e) {
                 e.printStackTrace();
             } finally {
@@ -335,7 +326,6 @@ public class StorageUtil {
             }
         }
         Iterator<String> itr = notNormal.keys();
-
         while (itr.hasNext()) {
             String key = itr.next();
             try {

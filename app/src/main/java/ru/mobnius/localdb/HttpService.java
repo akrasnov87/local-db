@@ -74,7 +74,6 @@ public class HttpService extends Service
         return intent;
     }
 
-
     /**
      * Имя сервиса
      */
@@ -137,7 +136,7 @@ public class HttpService extends Service
         SyncRequestListener syncRequestListener = new SyncRequestListener((App) getApplication(), syncStatusRequestListener);
         mRequestListeners.add(syncRequestListener);
         mRequestListeners.add(syncStatusRequestListener);
-        mRequestListeners.add(new AuthRequestListener(this));
+        mRequestListeners.add(new AuthRequestListener((App) getApplication()));
         mRequestListeners.add(new SyncStopRequestListener((App) getApplication()));
         mRequestListeners.add(new TableRequestListener());
         mRequestListeners.add(new ErrorRequestListener());
@@ -153,49 +152,6 @@ public class HttpService extends Service
             onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
             onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
         }
-
-        /*PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "UI_SV_FIAS", "1.2.641");
-        mDaoSession.getFiasDao().deleteAll();
-        mDaoSession.getFiasDao().detachAll();
-       /* PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "ED_Network_Routes", "1.3.847");
-        mDaoSession.getRegistrPtsDao().deleteAll();
-        mDaoSession.getRegistrPtsDao().detachAll();
-
-        long d_start = new Date().getTime();
-        packManager.start(new OnRunnableLoadListeners() {
-            @Override
-            public void onBufferSuccess(int count) {
-
-            }
-
-            @Override
-            public void onBufferInsert(int count) {
-
-            }
-
-            @Override
-            public void onBufferEmpty() {
-
-            }
-
-            @Override
-            public void onLoaded() {
-                long d_end = new Date().getTime();
-                Log.d(PackManager.TAG, String.valueOf(d_end - d_start));
-            }
-
-            @Override
-            public void onError(String message) {
-
-            }
-
-            @Override
-            public void onProgress(int start, int total) {
-
-            }
-        }, 0);
-    }
-*/
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -218,7 +174,6 @@ public class HttpService extends Service
         } else {
             strMode = "автоматически";
         }
-
         // запуск синхронизации через интерфейс
         if (intent != null && intent.hasExtra(TABLE)) {
             String table = intent.getStringExtra(TABLE);
@@ -287,4 +242,35 @@ public class HttpService extends Service
     public int getExceptionCode() {
         return ExceptionCode.HTTP_SERVICE;
     }
+    /*PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "UI_SV_FIAS", "1.2.641");
+        mDaoSession.getFiasDao().deleteAll();
+        mDaoSession.getFiasDao().detachAll();
+       /* PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "ED_Network_Routes", "1.3.847");
+        mDaoSession.getRegistrPtsDao().deleteAll();
+        mDaoSession.getRegistrPtsDao().detachAll();
+        long d_start = new Date().getTime();
+        packManager.start(new OnRunnableLoadListeners() {
+            @Override
+            public void onBufferSuccess(int count) {
+            }
+            @Override
+            public void onBufferInsert(int count) {
+            }
+            @Override
+            public void onBufferEmpty() {
+            }
+            @Override
+            public void onLoaded() {
+                long d_end = new Date().getTime();
+                Log.d(PackManager.TAG, String.valueOf(d_end - d_start));
+            }
+            @Override
+            public void onError(String message) {
+            }
+            @Override
+            public void onProgress(int start, int total) {
+            }
+        }, 0);
+    }
+*/
 }

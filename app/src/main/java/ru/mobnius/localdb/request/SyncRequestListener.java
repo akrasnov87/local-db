@@ -108,8 +108,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     @Override
     public void onLoadProgress(String tableName, int progress, int total) {
-
-        Log.d(Names.TAG, tableName + ": " + getPercent(progress, total));
     }
 
     @Override
@@ -163,14 +161,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onZipDownloaded(String tableName, String zipFilePath) {
         mInsertHandler.insert(tableName, zipFilePath);
-    }
-
-    private double getPercent(int progress, int total) {
-        double result = (double) (progress * 100) / total;
-        if (result > 100) {
-            result = 100;
-        }
-        return result;
     }
 
     @Override
