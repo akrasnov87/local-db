@@ -9,6 +9,7 @@ import android.os.Environment;
 import android.util.Log;
 
 import org.greenrobot.greendao.database.Database;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -60,8 +61,18 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
     @Override
     protected ArrayList<String> doInBackground(String... strings) {
-        JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
         ArrayList<String> message = new ArrayList<>();
+        if (PreferencesManager.getInstance().getRepoUrl() == null){
+            message.add(Tags.AUTH_ERROR);
+            message.add("Ошибка аторизации, не известно значение url для скачивания");
+            return message;
+        }
+        JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
+        if (infoTables == null){
+            message.add(Tags.RPC_ERROR);
+            message.add("Не удалось получить необходимую информацию о загрузке. Попробуйте повторить загрузку снова");
+            return message;
+        }
         if (!isCancelled() && mTableName != null) {
             for (String tableName : mTableName) {
                 //количество записей с сервера за 1 rpc запрос
@@ -74,12 +85,18 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
                 int mTotal;
                 try {
-                    tableInfo = infoTables.getJSONArray(mCurrentTableName).getJSONObject(0);
-                    mVersion = tableInfo.getString("VERSION");
-                    size = Integer.parseInt(tableInfo.getString("PART"));
-                    fileCount = Integer.parseInt(tableInfo.getString("FILE_COUNT"));
-                    mTotal = Integer.parseInt(tableInfo.getString("TOTAL_COUNT"));
-                    hddSize = Integer.parseInt(tableInfo.getString("SIZE")) / 1024 / 1024;
+                    if (infoTables.getJSONArray(tableName).length() > 0) {
+                        tableInfo = infoTables.getJSONArray(tableName).getJSONObject(0);
+                        mVersion = tableInfo.getString("VERSION");
+                        size = Integer.parseInt(tableInfo.getString("PART"));
+                        fileCount = Integer.parseInt(tableInfo.getString("FILE_COUNT"));
+                        mTotal = Integer.parseInt(tableInfo.getString("TOTAL_COUNT"));
+                        hddSize = Integer.parseInt(tableInfo.getString("SIZE")) / 1024 / 1024;
+                    } else {
+                        message.add(Tags.RPC_ERROR);
+                        message.add("Ошибка загрузки данных о таблице");
+                        return message;
+                    }
                 } catch (JSONException e) {
                     message.add(Tags.CRITICAL_ERROR);
                     message.add("Ошибка чтения информации о таблице " + e.toString());

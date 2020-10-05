@@ -11,12 +11,8 @@
     <string name="permissions_grant">Разрешения получены.</string>
     <string name="download_list">Список таблиц для загрузки в мобильное приложение</string>
     <string name="download">Загрузка</string>
-    <string name="android_8">В android версии 8 и выше запрещено выполнение приложений, которые работают в фоне (background). Чтобы сервер был доступен, требуется всегда держать приложение «Local Db» в активном состоянии</string>
-    <string name="handle_query">Обработать запрос</string>
     <string name="enter_query">Введите запрос</string>
     <string name="make_query">Сделать запрос</string>
     <string name="close">Закрыть</string>
     <string name="clear_table">Стереть данные</string>
-    <string name="crash_toast_text">Ошибка LOCAL_DB. Пожалуйста, отправьте отчет разработчику</string>
-    <string name="ok">ok</string>
 </resources>
