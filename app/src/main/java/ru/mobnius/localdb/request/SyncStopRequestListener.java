@@ -15,7 +15,7 @@ import ru.mobnius.localdb.utils.UrlReader;
  */
 public class SyncStopRequestListener extends AuthFilterRequestListener
         implements OnRequestListener {
-    private App mApp;
+    private final App mApp;
 
     public SyncStopRequestListener(App app) {
         mApp = app;

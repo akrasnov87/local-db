@@ -137,15 +137,12 @@ public class SettingActivity extends ExceptionInterceptActivity {
             spErrorVisibility = findPreference(PreferencesManager.ERROR_VISIBILITY);
             Objects.requireNonNull(spErrorVisibility).setVisible(PreferencesManager.getInstance().isDebug());
             spErrorVisibility.setVisible(PreferencesManager.getInstance().isDebug());
-            spErrorVisibility.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    if (preference.getKey().equals(PreferencesManager.ERROR_VISIBILITY)) {
-                        boolean errorVisibilityValue = Boolean.parseBoolean(String.valueOf(newValue));
-                        PreferencesManager.getInstance().setErrorVisibility(errorVisibilityValue);
-                    }
-                    return true;
+            spErrorVisibility.setOnPreferenceChangeListener((preference, newValue) -> {
+                if (preference.getKey().equals(PreferencesManager.ERROR_VISIBILITY)) {
+                    boolean errorVisibilityValue = Boolean.parseBoolean(String.valueOf(newValue));
+                    PreferencesManager.getInstance().setErrorVisibility(errorVisibilityValue);
                 }
+                return true;
             });
         }
 
@@ -204,38 +201,32 @@ public class SettingActivity extends ExceptionInterceptActivity {
                     break;
 
                 case PreferencesManager.LOGIN_RESET:
-                    confirm("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (which == DialogInterface.BUTTON_POSITIVE) {
-                                PreferencesManager.getInstance().setLogin(null);
-                                PreferencesManager.getInstance().setPassword(null);
+                    confirm("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?", (dialog, which) -> {
+                        if (which == DialogInterface.BUTTON_POSITIVE) {
+                            PreferencesManager.getInstance().setLogin(null);
+                            PreferencesManager.getInstance().setPassword(null);
 
-                                requireContext().startActivity(AuthActivity.getIntent(requireContext()));
-                            }
+                            requireContext().startActivity(AuthActivity.getIntent(requireContext()));
                         }
                     });
                     break;
                 case PreferencesManager.CLEAR:
-                    confirm("Все локальные данные будут удалены, авторизация сброшена. Вы уверены?", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            ActivityManager am = (ActivityManager) requireActivity().getSystemService(Context.ACTIVITY_SERVICE);
-                            String myProcessPrefix = requireActivity().getApplicationInfo().processName;
-                            String myProcessName = null;
-                            try {
-                                myProcessName = requireActivity().getPackageManager().getActivityInfo(requireActivity().getComponentName(), 0).processName;
-                            } catch (PackageManager.NameNotFoundException e) {
-                                e.printStackTrace();
-                            }
-                            for (ActivityManager.RunningAppProcessInfo proc : am.getRunningAppProcesses()) {
-                                if (proc.processName.startsWith(myProcessPrefix) && !proc.processName.equals(myProcessName)) {
-                                    android.os.Process.killProcess(proc.pid);
-                                }
-                            }
-                            boolean success = am.clearApplicationUserData();
-                            Toast.makeText(getActivity(), success ? "База данных успешно удалена" : "Не удалось удалить БД", Toast.LENGTH_SHORT).show();
+                    confirm("Все локальные данные будут удалены, авторизация сброшена. Вы уверены?", (dialog, which) -> {
+                        ActivityManager am = (ActivityManager) requireActivity().getSystemService(Context.ACTIVITY_SERVICE);
+                        String myProcessPrefix = requireActivity().getApplicationInfo().processName;
+                        String myProcessName = null;
+                        try {
+                            myProcessName = requireActivity().getPackageManager().getActivityInfo(requireActivity().getComponentName(), 0).processName;
+                        } catch (PackageManager.NameNotFoundException e) {
+                            e.printStackTrace();
                         }
+                        for (ActivityManager.RunningAppProcessInfo process : am.getRunningAppProcesses()) {
+                            if (process.processName.startsWith(myProcessPrefix) && !process.processName.equals(myProcessName)) {
+                                android.os.Process.killProcess(process.pid);
+                            }
+                        }
+                        boolean success = am.clearApplicationUserData();
+                        Toast.makeText(getActivity(), success ? "База данных успешно удалена" : "Не удалось удалить БД", Toast.LENGTH_SHORT).show();
                     });
             }
             return false;
@@ -267,7 +258,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
         protected void confirm(String message, DialogInterface.OnClickListener listener) {
             AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
             dialog.setTitle("Сообщение");
-            dialog.setMessage("После сброса вход в приложение будет заблокирован. Сбросить локальную авторизацию?");
+            dialog.setMessage(message);
             dialog.setCancelable(false);
             dialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.yes), listener);
             dialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.no), listener);

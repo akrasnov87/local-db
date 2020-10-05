@@ -1,10 +1,5 @@
 package ru.mobnius.localdb.data.tablePack;
 
-import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
-
-import java.util.Date;
-
 import ru.mobnius.localdb.storage.DaoSession;
 
 /**
@@ -12,12 +7,12 @@ import ru.mobnius.localdb.storage.DaoSession;
  */
 public class PackManager {
 
-    public static String TAG = "PACK";
+    public final static String TAG = "PACK";
 
-    private DaoSession mSQLiteDatabase;
-    private String mBaseUrl;
-    private String mTableName;
-    private String mVersion;
+    private final DaoSession mSQLiteDatabase;
+    private final String mBaseUrl;
+    private final String mTableName;
+    private final String mVersion;
 
     private RunnableLoad mRunnableLoad;
 

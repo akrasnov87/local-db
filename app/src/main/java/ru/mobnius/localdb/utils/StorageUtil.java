@@ -30,7 +30,6 @@ import ru.mobnius.localdb.model.rpc.RPCResult;
 import ru.mobnius.localdb.storage.DaoSession;
 
 public class StorageUtil {
-    private final static String TAG = "naval";
 
     /**
      * Получение списка хранилищ для загрузки данных
@@ -120,7 +119,7 @@ public class StorageUtil {
 
 
     @SuppressWarnings("rawtypes")
-    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert, OnProgressUpdate listener) throws SQLiteFullException, SQLiteConstraintException {
+    public static void processing(DaoSession daoSession, RPCResult result, String tableName, boolean removeBeforeInsert) throws SQLiteFullException, SQLiteConstraintException {
         Database db = daoSession.getDatabase();
         if (removeBeforeInsert) {
             db.execSQL("delete from " + tableName);
@@ -155,7 +154,6 @@ public class StorageUtil {
                         try {
                             db.execSQL(sqlInsert.convertToSqlQuery(idx), values.toArray(new Object[0]));
                             insertions += idx;
-                            listener.onUpdateProgress(insertions);
                         } catch (Exception e) {
                             Logger.error(e);
                         }
@@ -178,7 +176,6 @@ public class StorageUtil {
                                 sqlInsert.convertToSqlQuery(idx), values.toArray(new Object[0]));
                         db.setTransactionSuccessful();
                         insertions += idx;
-                        listener.onUpdateProgress(insertions);
                     } finally {
                         try {
                             db.endTransaction();
@@ -192,7 +189,8 @@ public class StorageUtil {
         }
     }
 
-    public static void processings(DaoSession daoSession, String unzipped, String tableName, boolean removeBeforeInsert, String zip) throws SQLiteFullException, SQLiteConstraintException {
+    @SuppressWarnings("rawtypes")
+    public static void processing(DaoSession daoSession, String unzipped, String tableName, boolean removeBeforeInsert) throws SQLiteFullException, SQLiteConstraintException {
         Database db = daoSession.getDatabase();
         if (removeBeforeInsert) {
             db.execSQL("delete from " + tableName);
@@ -299,15 +297,6 @@ public class StorageUtil {
         }
     }*/
 
-
-    @SuppressWarnings("rawtypes")
-    public static void processing(int size, String tableName, OnProgressUpdate listener) {
-        int insertions = Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(tableName));
-        insertions += size;
-        listener.onUpdateProgress(insertions);
-        PreferencesManager.getInstance().setLocalRowCount(String.valueOf(insertions), tableName);
-    }
-
     /**
      * метод для приведения JSON объекта к виду key(название колнки в таблице)->value(либо значение из notNormal либо пустая строка "")
      *
@@ -337,11 +326,6 @@ public class StorageUtil {
         return object;
     }
 
-    static int closestInteger(int a, int b) {
-        int c1 = a - (a % b);
-        return c1;
-    }
-
     /**
      * Метод для проверки строки на валидность JSON
      *
@@ -355,9 +339,5 @@ public class StorageUtil {
             return false;
         }
         return true;
-    }
-
-    public interface OnProgressUpdate {
-        void onUpdateProgress(int progress);
     }
 }

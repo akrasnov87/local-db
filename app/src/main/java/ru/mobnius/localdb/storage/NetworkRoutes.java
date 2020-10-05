@@ -2,7 +2,6 @@ package ru.mobnius.localdb.storage;
 
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
-import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;

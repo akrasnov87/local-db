@@ -1,14 +1,10 @@
 package ru.mobnius.localdb.data.tablePack;
 
-import org.greenrobot.greendao.AbstractDao;
-import org.greenrobot.greendao.Property;
-
 import java.lang.reflect.Type;
-import java.util.Date;
 
 public class Readme {
-    private String[] mHeaders;
-    private String[][] mValues;
+    private final String[] mHeaders;
+    private final String[][] mValues;
     private int mIdx = 0;
     private String mHeadersLine;
     private Type[] mTypes;
@@ -34,9 +30,7 @@ public class Readme {
     }
 
     public void addValues(String[] values) {
-        for(int i = 0; i < values.length; i++) {
-            mValues[mIdx][i] = values[i];
-        }
+        System.arraycopy(values, 0, mValues[mIdx], 0, values.length);
         mIdx++;
     }
 

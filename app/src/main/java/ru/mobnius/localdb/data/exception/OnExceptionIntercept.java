@@ -3,7 +3,7 @@ package ru.mobnius.localdb.data.exception;
 /**
  * Интерфейс перехвата ошибок
  */
-@SuppressWarnings("unused")
+
 public interface OnExceptionIntercept {
     /**
      * Обработчик перехвата ошибок

@@ -21,12 +21,10 @@ import ru.mobnius.localdb.utils.UrlReader;
 public class SyncStatusRequestListener extends AuthFilterRequestListener
         implements OnRequestListener, EventListener {
 
-    private final App mApp;
     private String errorMessage = "";
     private String errorType = "";
 
-    public SyncStatusRequestListener(App app) {
-        mApp = app;
+    public SyncStatusRequestListener() {
     }
 
     @Override

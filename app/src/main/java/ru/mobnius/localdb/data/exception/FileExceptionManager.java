@@ -182,11 +182,7 @@ public class FileExceptionManager
             if(list.size() == 1)
                 return list.get(0);
 
-            Collections.sort(list, new Comparator<ExceptionModel>() {
-                public int compare(ExceptionModel o1, ExceptionModel o2) {
-                    return (int)o2.getDate().getTime() - (int)o1.getDate().getTime();
-                }
-            });
+            Collections.sort(list, (o1, o2) -> (int)o2.getDate().getTime() - (int)o1.getDate().getTime());
             return list.get(0);
         }
         return null;

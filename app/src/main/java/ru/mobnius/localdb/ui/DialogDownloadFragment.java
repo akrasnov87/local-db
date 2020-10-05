@@ -16,7 +16,6 @@ import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.StorageNameAdapter;
 import ru.mobnius.localdb.adapter.holder.StorageNameHolder;
 import ru.mobnius.localdb.data.BaseDialogFragment;
-import ru.mobnius.localdb.data.Storage;
 import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.model.StorageName;
 
@@ -55,7 +54,6 @@ public class DialogDownloadFragment extends BaseDialogFragment implements Storag
         Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(getDialog())).getWindow()).setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
     }
 
-    @SuppressWarnings("unused")
     @Override
     public int getExceptionCode() {
         return ExceptionCode.DOWNLOAD_LIST;

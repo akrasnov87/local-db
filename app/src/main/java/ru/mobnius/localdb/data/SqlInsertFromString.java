@@ -6,10 +6,10 @@ import java.util.List;
 
 public class SqlInsertFromString {
     private final String mTableName;
-    private String[] mColumnPattern;
-    private String[] mValues;
-    private String params;
-    private int mInsertsLength;
+    private final String[] mColumnPattern;
+    private final String[] mValues;
+    private final String params;
+    private final int mInsertsLength;
 
     public SqlInsertFromString(String zipString, String tableName) {
         mTableName = tableName;

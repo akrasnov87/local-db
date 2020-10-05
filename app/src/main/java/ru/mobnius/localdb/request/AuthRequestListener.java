@@ -16,7 +16,7 @@ import ru.mobnius.localdb.utils.UrlReader;
  */
 public class AuthRequestListener
         implements OnRequestListener {
-    private App mApp;
+    private final App mApp;
 
     public AuthRequestListener(App app) {
         mApp = app;

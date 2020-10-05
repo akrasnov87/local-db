@@ -13,8 +13,8 @@ import java.util.zip.ZipInputStream;
 import ru.mobnius.localdb.Logger;
 
 public class UnzipUtil {
-    private String zipFile;
-    private String location;
+    private final String zipFile;
+    private final String location;
     private String absPath;
 
     public String getAbsPath() {
@@ -40,14 +40,14 @@ public class UnzipUtil {
                     dirChecker(ze.getName());
                     absPath = location + "/" + ze.getName();
                 } else {
-                    FileOutputStream fout = new FileOutputStream(location + "/" + ze.getName());
+                    FileOutputStream fileOutputStream = new FileOutputStream(location + "/" + ze.getName());
                     absPath = location + "/" + ze.getName();
                     byte[] buffer = new byte[8192];
                     int len;
                     while ((len = zin.read(buffer)) != -1) {
-                        fout.write(buffer, 0, len);
+                        fileOutputStream.write(buffer, 0, len);
                     }
-                    fout.close();
+                    fileOutputStream.close();
                     zin.closeEntry();
                 }
             }
@@ -65,6 +65,7 @@ public class UnzipUtil {
         return null;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private void dirChecker(String dir) {
         File f = new File(location + dir);
         if (!f.isDirectory()) {
@@ -79,7 +80,7 @@ public class UnzipUtil {
 
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {
-                fileContents.append(scanner.nextLine() + System.lineSeparator());
+                fileContents.append(scanner.nextLine()).append(System.lineSeparator());
             }
             return fileContents.toString();
         }

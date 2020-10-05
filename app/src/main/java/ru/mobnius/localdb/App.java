@@ -1,7 +1,6 @@
 package ru.mobnius.localdb;
 
 import android.app.Application;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
@@ -20,7 +19,6 @@ import ru.mobnius.localdb.data.exception.ExceptionGroup;
 import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
 import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.model.LogItem;
-import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.UrlReader;

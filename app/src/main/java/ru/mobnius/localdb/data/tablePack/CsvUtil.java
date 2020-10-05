@@ -1,13 +1,6 @@
 package ru.mobnius.localdb.data.tablePack;
 
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
-
-import com.google.gson.JsonObject;
-
-import org.greenrobot.greendao.AbstractDao;
-import org.greenrobot.greendao.AbstractDaoSession;
 import org.greenrobot.greendao.database.Database;
 import org.greenrobot.greendao.database.DatabaseStatement;
 import org.json.JSONObject;
@@ -18,8 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.Objects;
 import java.util.Scanner;
 
 import ru.mobnius.localdb.storage.DaoSession;
@@ -51,11 +43,11 @@ public class CsvUtil {
     /**
      *
      * @param baseUrl http://demo.it-serv.ru/repo
-     * @param tableName
-     * @param version
-     * @param start
-     * @param limit
-     * @return
+     * @param tableName name of table
+     * @param version version
+     * @param start where to start
+     * @param limit how many records to get
+     * @return byte array of file
      */
     public static byte[] getFile(String baseUrl, String tableName, String version, int start, int limit) {
         int nextStep = start + limit;
@@ -95,7 +87,7 @@ public class CsvUtil {
             result = s.hasNext() ? s.next() : "";
         }
         catch (Exception e) {
-            Log.d(PackManager.TAG, e.getMessage());
+            Log.d(PackManager.TAG, Objects.requireNonNull(e.getMessage()));
         }
         finally {
             urlConnection.disconnect();
@@ -121,10 +113,12 @@ public class CsvUtil {
             result = new JSONObject(s.hasNext() ? s.next() : "");
         }
         catch (Exception e) {
-            Log.d(PackManager.TAG, e.getMessage());
+            Log.d(PackManager.TAG, Objects.requireNonNull(e.getMessage()));
         }
         finally {
-            urlConnection.disconnect();
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
         }
 
         return result;
@@ -161,7 +155,7 @@ public class CsvUtil {
             database.setTransactionSuccessful();
             result = true;
         }catch (Exception e) {
-            Log.d(PackManager.TAG, e.getMessage());
+            Log.d(PackManager.TAG, Objects.requireNonNull(e.getMessage()));
             result = false;
         }
         finally {

@@ -99,7 +99,7 @@ public class MainActivity extends BaseActivity
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
-        String message = "";
+        String message;
         if (PreferencesManager.getInstance().isErrorVisible()) {
             File root = FileExceptionManager.getInstance(this).getRootCatalog();
             String[] files = root.list();
@@ -186,23 +186,17 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onAddLog(final LogItem item) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mLogAdapter.addItem(item);
-                mRecyclerView.scrollToPosition(mLogAdapter.getItemCount() - 1);
-            }
+        runOnUiThread(() -> {
+            mLogAdapter.addItem(item);
+            mRecyclerView.scrollToPosition(mLogAdapter.getItemCount() - 1);
         });
     }
 
     @Override
     public void onAvailable(final boolean available) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                btnStart.setEnabled(!available);
-                btnStop.setEnabled(available);
-            }
+        runOnUiThread(() -> {
+            btnStart.setEnabled(!available);
+            btnStop.setEnabled(available);
         });
     }
 
@@ -225,17 +219,14 @@ public class MainActivity extends BaseActivity
 
             case R.id.log_cancel:
                 String message = "После отмены процесс требуется выполнить заново. Остановить загрузку данных?";
-                confirm(message, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (DialogInterface.BUTTON_POSITIVE == which) {
-                            App app = (App) getApplication();
-                            app.getObserver().notify(Observer.STOP_ASYNC_TASK, "stopping async task");
-                            app.getObserver().notify(Observer.STOP_THREAD, "stopping async task");
-                            PreferencesManager.getInstance().setProgress(null);
-                            mUpdateFragment.stopProcess();
-                            setMenuItemVisible(true);
-                        }
+                confirm(message, (dialog, which) -> {
+                    if (DialogInterface.BUTTON_POSITIVE == which) {
+                        App app = (App) getApplication();
+                        app.getObserver().notify(Observer.STOP_ASYNC_TASK, "stopping async task");
+                        app.getObserver().notify(Observer.STOP_THREAD, "stopping async task");
+                        PreferencesManager.getInstance().setProgress(null);
+                        mUpdateFragment.stopProcess();
+                        setMenuItemVisible(true);
                     }
                 });
                 break;
@@ -267,19 +258,16 @@ public class MainActivity extends BaseActivity
     public void onDownloadStorage(final StorageName name) {
 
         if (NetworkUtil.isNetworkAvailable(this)) {
-            confirm("Убедительсь в стабильном подключении к сети интернет. Загрузить таблицу " + name.getName() + "?", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    if (which == DialogInterface.BUTTON_POSITIVE) {
-                        mDialogDownloadFragment.dismiss();
-                        if (svError.isShown()) {
-                            svError.setVisibility(View.GONE);
-                        }
-
-                        mUpdateFragment.startProcess();
-                        setMenuItemVisible(false);
-                        startService(HttpService.getIntent(MainActivity.this, name.table));
+            confirm("Убедительсь в стабильном подключении к сети интернет. Загрузить таблицу " + name.getName() + "?", (dialog, which) -> {
+                if (which == DialogInterface.BUTTON_POSITIVE) {
+                    mDialogDownloadFragment.dismiss();
+                    if (svError.isShown()) {
+                        svError.setVisibility(View.GONE);
                     }
+
+                    mUpdateFragment.startProcess();
+                    setMenuItemVisible(false);
+                    startService(HttpService.getIntent(MainActivity.this, name.table));
                 }
             });
         } else {
@@ -329,14 +317,11 @@ public class MainActivity extends BaseActivity
             try {
                 if (VersionUtil.isUpgradeVersion(MainActivity.this, s, PreferencesManager.getInstance().isDebug())) {
                     // тут доступно новая версия
-                    MySnackBar.make(mRecyclerView, "Доступна новая версия " + s, Snackbar.LENGTH_LONG).setAction("Загрузить", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            String url = Names.UPDATE_URL;
-                            Intent i = new Intent(Intent.ACTION_VIEW);
-                            i.setData(Uri.parse(url));
-                            startActivity(i);
-                        }
+                    MySnackBar.make(mRecyclerView, "Доступна новая версия " + s, Snackbar.LENGTH_LONG).setAction("Загрузить", v -> {
+                        String url = Names.UPDATE_URL;
+                        Intent i = new Intent(Intent.ACTION_VIEW);
+                        i.setData(Uri.parse(url));
+                        startActivity(i);
                     }).show();
                 }
             } catch (Exception ignored) {

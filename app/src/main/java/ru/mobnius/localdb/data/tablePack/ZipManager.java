@@ -20,7 +20,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class ZipManager {
 
-    public static int BUFFER_SIZE = 2048;
+    public final static int BUFFER_SIZE = 2048;
 
     public static String getMode() {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ? "LIB" : "ZIP";

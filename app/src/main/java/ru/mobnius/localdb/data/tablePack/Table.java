@@ -2,7 +2,7 @@ package ru.mobnius.localdb.data.tablePack;
 
 public class Table {
     private String[] mHeaders;
-    private String[][] mValues;
+    private final String[][] mValues;
     private int mIdx = 0;
     private String mHeadersLine;
 
@@ -26,9 +26,7 @@ public class Table {
     }
 
     public void addValues(String[] values) {
-        for(int i = 0; i < values.length; i++) {
-            mValues[mIdx][i] = values[i];
-        }
+        System.arraycopy(values, 0, mValues[mIdx], 0, values.length);
         mIdx++;
     }
 

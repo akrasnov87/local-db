@@ -1,9 +1,7 @@
 package ru.mobnius.localdb.request;
 
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import org.greenrobot.greendao.AbstractDao;
 
@@ -15,7 +13,6 @@ import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
-import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.data.ConnectionChecker;
 import ru.mobnius.localdb.data.InsertHandler;
 import ru.mobnius.localdb.data.LoadAsyncTask;
@@ -53,6 +50,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
         return matcher.find();
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public Response getResponse(UrlReader urlReader) {
         Response response = super.getResponse(urlReader);
@@ -107,26 +105,13 @@ public class SyncRequestListener extends AuthFilterRequestListener
     }
 
     @Override
-    public void onLoadProgress(String tableName, int progress, int total) {
-    }
-
-    @Override
-    public void onInsertProgress(String tableName, int progress, int total) {
+    public void onInsertProgress(int progress, int total) {
         mApp.onDownLoadProgress(mUrlReader, progress, total);
     }
 
     @Override
     public void onInsertFinish(String tableName) {
         mApp.onDownLoadFinish(tableName, mUrlReader);
-    }
-
-    @Override
-    public void onDownLoadFinish(String tableName) {
-    }
-
-    @Override
-    public void onSingleTableDownloaded(String tableName) {
-
     }
 
     @Override
@@ -141,18 +126,15 @@ public class SyncRequestListener extends AuthFilterRequestListener
             isCanceled = true;
         } else {
             if (PreferencesManager.getInstance().getDownloadProgress() != null && isCanceled) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        String[] allTables = PreferencesManager.getInstance().getAllTablesArray();
-                        if (allTables == null) {
-                            allTables = new String[]{PreferencesManager.getInstance().getDownloadProgress().tableName};
-                        }
-                        LoadAsyncTask task = new LoadAsyncTask(allTables, SyncRequestListener.this, mApp);
-                        mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
-                        task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-                        isCanceled = false;
+                new Handler().postDelayed(() -> {
+                    String[] allTables = PreferencesManager.getInstance().getAllTablesArray();
+                    if (allTables == null) {
+                        allTables = new String[]{PreferencesManager.getInstance().getDownloadProgress().tableName};
                     }
+                    LoadAsyncTask task = new LoadAsyncTask(allTables, SyncRequestListener.this, mApp);
+                    mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
+                    task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                    isCanceled = false;
                 }, 5000);
             }
         }

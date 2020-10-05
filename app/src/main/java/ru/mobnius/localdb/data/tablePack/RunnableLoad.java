@@ -1,38 +1,35 @@
 package ru.mobnius.localdb.data.tablePack;
 
 import android.annotation.SuppressLint;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 import ru.mobnius.localdb.storage.DaoSession;
-import ru.mobnius.localdb.storage.FiasDao;
 
 public class RunnableLoad implements Runnable {
     private boolean isStopped = false;
 
-    private String mBaseUrl;
+    private final String mBaseUrl;
     private int mTotal;
     private int mStart;
     private int mLimit;
 
-    public static int CACHE_SIZE = 2;
+    public final static int CACHE_SIZE = 2;
 
-    private List<Table> mCaches = new ArrayList<>(CACHE_SIZE);
+    private final List<Table> mCaches = new ArrayList<>(CACHE_SIZE);
 
-    private OnRunnableLoadListeners mListeners;
+    private final OnRunnableLoadListeners mListeners;
     private LoadAsyncTask mLoadAsyncTask;
-    private DaoSession mSQLiteDatabase;
+    private final DaoSession mSQLiteDatabase;
     private DbAsyncTask mDbAsyncTask;
     private int mDbCount = 0;
-    private String mTableName;
+    private final String mTableName;
 
     public RunnableLoad(OnRunnableLoadListeners listener, DaoSession sqLiteDatabase, String baseUrl, String tableName, int start) {
         mListeners = listener;

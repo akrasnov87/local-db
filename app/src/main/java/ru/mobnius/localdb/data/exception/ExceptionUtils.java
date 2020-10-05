@@ -54,7 +54,7 @@ public class ExceptionUtils {
     }
 
     /**
-     * Сохранение локально созданных ошибок в БД Sqlite
+     * Сохранение локально созданных ошибок в БД SQLite
      * @param context Контекст
      * @param daoSession подключение к БД
      */
@@ -84,7 +84,7 @@ public class ExceptionUtils {
     }
 
     /**
-     * Запись ошибки в Sqlite
+     * Запись ошибки в SQLite
      * @param context контекст
      * @param daoSession соединение
      * @param exc ошибка

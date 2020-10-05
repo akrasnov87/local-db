@@ -42,12 +42,6 @@ public class StorageUtilTest {
         Loader loader = Loader.getInstance();
         loader.auth("iserv", "iserv");
         RPCResult[] results = loader.rpc("Domain." + FiasDao.TABLENAME, "Query", "[{ \"start\": 0, \"limit\": " + 1000 + ", \"sort\": [{ \"property\": \"LINK\", \"direction\": \"ASC\" }] }]");
-        StorageUtil.processing(daoSession, results[0], FiasDao.TABLENAME, false, new StorageUtil.OnProgressUpdate() {
-            @Override
-            public void onUpdateProgress(int progress) {
-
-            }
-        });
 
         JSONArray arrays = StorageUtil.getResults(database, "select count(*) from " + FiasDao.TABLENAME);
         String result = arrays.toString(0);

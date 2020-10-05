@@ -7,7 +7,7 @@ import org.greenrobot.greendao.annotation.Property;
 
 import ru.mobnius.localdb.data.Storage;
 
-@SuppressWarnings("unused")
+
 @Entity(nameInDb = "UI_SV_FIAS")
 @Storage(description = "ФИАС", table = "UI_SV_FIAS")
 public class Fias {

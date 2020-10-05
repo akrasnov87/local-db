@@ -4,42 +4,28 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import org.greenrobot.greendao.AbstractDaoSession;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.List;
 import java.util.zip.DataFormatException;
 
 import ru.mobnius.localdb.storage.DaoMaster;
 import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.storage.DbOpenHelper;
-import ru.mobnius.localdb.storage.Fias;
 import ru.mobnius.localdb.storage.FiasDao;
-import ru.mobnius.localdb.storage.NetworkRoutes;
-import ru.mobnius.localdb.storage.NetworkRoutesDao;
 import ru.mobnius.localdb.storage.RegistrPtsDao;
 
 import static org.junit.Assert.*;
 
 public class CsvUtilTest {
 
-    private String TAG = "CSV_TEST";
-
-    private String input1 = "LINK|C_NAME\n123|Саша";
-    private String input2 = "LINK|C_NAME|C_NUMBER\n123||12";
-    private String input3 = "LINK|C_NAME|C_NUMBER\n|Саша|12";
-    private String input4 = "LINK|C_NAME|C_NUMBER\n123|Саша|";
-    private String input5 = "LINK|C_NAME|C_NUMBER\n123|Саша|\n12|Кирилл|1";
-
-    private String input6 = "TABLE_NAME|TOTAL_COUNT|VERSION|DATE|FILE_COUNT|PART|SIZE\n" +
-            "UI_SV_FIAS|2250414|1.2.641|2020-09-16T08:34:14.278Z|226|10000|66932823";
+    private final String TAG = "CSV_TEST";
 
     @Test
     public void convert() {
+        String input1 = "LINK|C_NAME\n123|Саша";
         Table table = CsvUtil.convert(input1);
 
         assertNull(CsvUtil.convert(null));
@@ -51,6 +37,7 @@ public class CsvUtilTest {
         assertEquals(table.getValue(0)[0], "123");
         assertEquals(table.getValue(0)[1], "Саша");
 
+        String input2 = "LINK|C_NAME|C_NUMBER\n123||12";
         table = CsvUtil.convert(input2);
 
         assertNull(CsvUtil.convert(null));
@@ -63,6 +50,7 @@ public class CsvUtilTest {
         assertEquals(table.getValue(0)[1], "");
         assertEquals(table.getValue(0)[2], "12");
 
+        String input3 = "LINK|C_NAME|C_NUMBER\n|Саша|12";
         table = CsvUtil.convert(input3);
 
         assertNull(CsvUtil.convert(null));
@@ -75,6 +63,7 @@ public class CsvUtilTest {
         assertEquals(table.getValue(0)[1], "Саша");
         assertEquals(table.getValue(0)[2], "12");
 
+        String input4 = "LINK|C_NAME|C_NUMBER\n123|Саша|";
         table = CsvUtil.convert(input4);
 
         assertNull(CsvUtil.convert(null));
@@ -87,6 +76,7 @@ public class CsvUtilTest {
         assertEquals(table.getValue(0)[1], "Саша");
         assertNull(table.getValue(0)[2]);
 
+        String input5 = "LINK|C_NAME|C_NUMBER\n123|Саша|\n12|Кирилл|1";
         table = CsvUtil.convert(input5);
 
         assertNull(CsvUtil.convert(null));
@@ -165,6 +155,8 @@ public class CsvUtilTest {
 
     @Test
     public void readme() throws IOException {
+        String input6 = "TABLE_NAME|TOTAL_COUNT|VERSION|DATE|FILE_COUNT|PART|SIZE\n" +
+                "UI_SV_FIAS|2250414|1.2.641|2020-09-16T08:34:14.278Z|226|10000|66932823";
         Readme table = CsvUtil.convertReadme(input6);
 
         assertNull(CsvUtil.convertReadme(null));

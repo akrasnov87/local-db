@@ -1,8 +1,6 @@
 package ru.mobnius.localdb.data;
 
 import android.content.Context;
-import android.content.Intent;
-
 import org.greenrobot.greendao.database.Database;
 import org.junit.After;
 import org.junit.Before;
@@ -29,7 +27,7 @@ public class SqlQueryAsyncTaskTest {
     private Context mContext;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         dbName = getClass().getName();
         mContext.deleteDatabase(dbName);

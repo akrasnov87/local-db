@@ -6,7 +6,6 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -14,7 +13,6 @@ import androidx.core.app.NotificationCompat;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import ru.mobnius.localdb.data.HttpServerThread;
@@ -27,9 +25,6 @@ import ru.mobnius.localdb.data.exception.ExceptionUtils;
 import ru.mobnius.localdb.data.exception.FileExceptionManager;
 import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
-import ru.mobnius.localdb.data.tablePack.OnRunnableLoadListeners;
-import ru.mobnius.localdb.data.tablePack.PackManager;
-import ru.mobnius.localdb.data.tablePack.RunnableLoad;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.model.Response;
@@ -132,7 +127,7 @@ public class HttpService extends Service
         ExceptionUtils.saveLocalException(this, mDaoSession);
 
         mRequestListeners.add(new DefaultRequestListener());
-        SyncStatusRequestListener syncStatusRequestListener = new SyncStatusRequestListener((App) getApplication());
+        SyncStatusRequestListener syncStatusRequestListener = new SyncStatusRequestListener();
         SyncRequestListener syncRequestListener = new SyncRequestListener((App) getApplication(), syncStatusRequestListener);
         mRequestListeners.add(syncRequestListener);
         mRequestListeners.add(syncStatusRequestListener);

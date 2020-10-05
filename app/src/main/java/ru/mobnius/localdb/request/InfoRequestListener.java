@@ -18,14 +18,10 @@ import ru.mobnius.localdb.utils.VersionUtil;
 
 
 public class InfoRequestListener extends AuthFilterRequestListener implements OnRequestListener {
-    private Context mContext;
-    private HttpService service;
+    private final Context mContext;
 
     public InfoRequestListener(Context context) {
         mContext = context;
-        if (context instanceof HttpService) {
-            service = (HttpService) context;
-        }
     }
 
     @Override
@@ -35,6 +31,7 @@ public class InfoRequestListener extends AuthFilterRequestListener implements On
         return matcher.find();
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public Response getResponse(UrlReader urlReader) {
         Response response = super.getResponse(urlReader);

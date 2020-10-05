@@ -25,7 +25,7 @@ public interface OnRunnableLoadListeners {
 
     /**
      * Ошибка
-     * @param message
+     * @param message just error message
      */
     void onError(String message);
 

@@ -3,7 +3,6 @@ package ru.mobnius.localdb.data;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -91,12 +90,7 @@ public abstract class BaseActivity extends ExceptionInterceptActivity {
         Toast.makeText(this, "Нажмите повторно для выхода из приложения.", Toast.LENGTH_LONG).show();
 
         int TOAST_DURATION = 2750;
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
-            }
-        }, TOAST_DURATION);
+        new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, TOAST_DURATION);
     }
 
     protected void confirm(String message, DialogInterface.OnClickListener listener) {

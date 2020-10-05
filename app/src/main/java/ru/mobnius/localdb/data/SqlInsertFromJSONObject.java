@@ -2,16 +2,12 @@ package ru.mobnius.localdb.data;
 
 
 import org.greenrobot.greendao.AbstractDao;
-import org.greenrobot.greendao.database.Database;
-import org.greenrobot.greendao.database.DatabaseStatement;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import ru.mobnius.localdb.HttpService;
 
 /**
  * Класс для обработки JSONObject и создания из него SQL запроса на добавление записи

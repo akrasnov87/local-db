@@ -34,7 +34,6 @@ import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.FileUtil;
 import ru.mobnius.localdb.utils.Loader;
-import ru.mobnius.localdb.utils.StorageUtil;
 
 /**
  * Загрузка данных с сервера
@@ -43,11 +42,10 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
 
     @SuppressLint("StaticFieldLeak")
-    private App mApp;
+    private final App mApp;
 
     private final String[] mTableName;
     private String mCurrentTableName;
-    private int mTotal;
     private final OnLoadListener mListener;
     private InsertHandler.ZipDownloadListener mZipDownloadListener;
 
@@ -65,15 +63,16 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
         ArrayList<String> message = new ArrayList<>();
         if (!isCancelled() && mTableName != null) {
-            for (int j = 0; j < mTableName.length; j++) {
+            for (String tableName : mTableName) {
                 //количество записей с сервера за 1 rpc запрос
                 int size;
                 int fileCount;
                 int hddSize;
-                mCurrentTableName = mTableName[j];
+                mCurrentTableName = tableName;
                 String mVersion;
                 JSONObject tableInfo;
 
+                int mTotal;
                 try {
                     tableInfo = infoTables.getJSONArray(mCurrentTableName).getJSONObject(0);
                     mVersion = tableInfo.getString("VERSION");
@@ -99,9 +98,9 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 if (PreferencesManager.getInstance().getProgress() == null) {
                     //удаляем прежде чем заливать
                     removeBeforeInsert = true;
-                    Progress progress = new Progress(0, mTotal, mTableName[j], mVersion);
+                    Progress progress = new Progress(0, mTotal, tableName);
                     PreferencesManager.getInstance().setProgress(progress);
-                    downloadProgress = new Progress(0, mTotal, mTableName[j], mVersion);
+                    downloadProgress = new Progress(0, mTotal, tableName);
                 } else {
                     //восстанавливаем загрузку
                     downloadProgress = PreferencesManager.getInstance().getDownloadProgress();
@@ -115,16 +114,16 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 if (cacheDir.getFreeSpace() / 1000000 < hddSize + 100) {
                     message.add(Tags.STORAGE_ERROR);
                     message.add("Ошибка: в хранилище телефона недостаточно свободного места для загрузки таблицы(" +
-                            mTableName + ", необходимо около " + hddSize + 100 + " МБ). Очистите место и повторите загрузку");
+                            tableName + ", необходимо около " + hddSize + 100 + " МБ). Очистите место и повторите загрузку");
                     return message;
                 }
-                PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), mTableName[j]);
+                PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), tableName);
 
                 try {
                     Database db = daoSession.getDatabase();
                     if (removeBeforeInsert) {
-                        db.execSQL("delete from " + mTableName[j]);
-                        PreferencesManager.getInstance().setLocalRowCount("0", mTableName[j]);
+                        db.execSQL("delete from " + tableName);
+                        PreferencesManager.getInstance().setLocalRowCount("0", tableName);
                     }
                 } catch (SQLiteFullException | SQLiteConstraintException e) {
                     message.add(Tags.SQL_ERROR);
@@ -141,25 +140,25 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 }
                 for (int i = currentFile; i < fileCount; i++) {
                     if (!isCancelled()) {
-                        File file = getZipFile(mApp, mTableName[j], mVersion, currentRowsCount, size);
+                        File file = getZipFile(mApp, tableName, mVersion, currentRowsCount, size);
                         if (file == null && !isCancelled()) {
                             message.add(Tags.RPC_ERROR);
                             message.add("Не удалось получить файл с сервера");
                             return message;
                         }
                         currentRowsCount += size;
-                        mZipDownloadListener.onZipDownloaded(mTableName[j], file.getAbsolutePath());
-                        Progress currentDownloadProgress = new Progress(currentRowsCount, mTotal, mTableName[j], mVersion);
-                        currentDownloadProgress.setFileName(file.getName());
+                        if (file != null) {
+                            mZipDownloadListener.onZipDownloaded(tableName, file.getAbsolutePath());
+                        }
+                        Progress currentDownloadProgress = new Progress(currentRowsCount, mTotal, tableName);
                         currentDownloadProgress.setFilesCount(i + 1);
                         currentDownloadProgress.setDownloadRowsCount(currentRowsCount);
                         PreferencesManager.getInstance().setDownloadProgress(currentDownloadProgress);
-                        Log.d(Names.TAG, mTableName[j] + ": " + getPercent(currentRowsCount, mTotal));
+                        Log.d(Names.TAG, tableName + ": " + getPercent(currentRowsCount, mTotal));
                     }
                 }
-                mListener.onSingleTableDownloaded(mTableName[j]);
                 PreferencesManager.getInstance().setDownloadProgress(null);
-                createIndexes(mTableName[j], HttpService.getDaoSession().getDatabase());
+                createIndexes(tableName, HttpService.getDaoSession().getDatabase());
                 ArrayList<String> list = new ArrayList<>(Arrays.asList(mTableName));
                 list.remove(mCurrentTableName);
                 String[] allTablesArray = list.toArray(new String[0]);
@@ -175,8 +174,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         if (message != null && !message.isEmpty()) {
             String[] errorData = {message.get(0), message.get(1)};
             mListener.onLoadError(errorData);
-        } else {
-            mListener.onDownLoadFinish(mCurrentTableName);
         }
     }
 
@@ -234,13 +231,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     }
 
     public interface OnLoadListener {
-        /**
-         * Прогресс выполнения
-         *
-         * @param tableName имя таблицы
-         * @param progress  процент
-         */
-        void onLoadProgress(String tableName, int progress, int total);
 
         /**
          * Результат загрузки данных
@@ -249,13 +239,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
          */
         void onInsertFinish(String tableName);
 
-        void onInsertProgress(String tableName, int progress, int total);
-
-
-        void onDownLoadFinish(String tableName);
-
-        void onSingleTableDownloaded(String tableName);
-
+        void onInsertProgress(int progress, int total);
 
         void onLoadError(String[] message);
     }

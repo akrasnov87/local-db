@@ -39,7 +39,7 @@ public class AutoRunReceiver extends BroadcastReceiver
 
         // отправка ошибок
         Timer timerSend = new Timer();
-        if (isMyServiceRunning(HttpService.class)) {
+        if (isMyServiceRunning()) {
             SendErrorTimerTask sendErrorTimerTask = new SendErrorTimerTask();
             timerSend.schedule(sendErrorTimerTask, 1000, 60 * 1000);
         }
@@ -59,10 +59,10 @@ public class AutoRunReceiver extends BroadcastReceiver
 
     }
 
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
+    private boolean isMyServiceRunning() {
         ActivityManager manager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
+            if (HttpService.class.getName().equals(service.service.getClassName())) {
                 return true;
             }
         }

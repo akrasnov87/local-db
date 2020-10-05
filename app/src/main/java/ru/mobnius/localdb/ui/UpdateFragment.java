@@ -13,7 +13,6 @@ import android.widget.TextView;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.data.BaseFragment;
 import ru.mobnius.localdb.data.exception.ExceptionCode;
-import ru.mobnius.localdb.model.Progress;
 
 public class UpdateFragment extends BaseFragment {
 
@@ -64,7 +63,7 @@ public class UpdateFragment extends BaseFragment {
         mBar.setVisibility(View.GONE);
     }
 
-    @SuppressWarnings("unused")
+
     @Override
     public int getExceptionCode() {
         return ExceptionCode.DOWNLOAD_PROGRESS;

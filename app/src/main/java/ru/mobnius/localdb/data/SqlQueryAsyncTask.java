@@ -9,8 +9,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class SqlQueryAsyncTask extends AsyncTask<String, Void, String> {
-    private Database mDatabase;
-    private OnSqlQuery mListener;
+    private final Database mDatabase;
+    private final OnSqlQuery mListener;
     private boolean isError = false;
 
     public SqlQueryAsyncTask(Database database, OnSqlQuery listener) {

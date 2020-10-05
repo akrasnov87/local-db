@@ -1,7 +1,6 @@
 package ru.mobnius.localdb.storage;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 
 import org.greenrobot.greendao.database.Database;
 

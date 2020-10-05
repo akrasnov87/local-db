@@ -70,8 +70,8 @@ public class NetworkUtil {
 
     /**
      * Check if there is any connectivity to a mobile network
-     * @param context
-     * @return
+     * @param context just context
+     * @return true if connected through mobile network
      */
     public static boolean isConnectedMobile(Context context){
         NetworkInfo info = NetworkUtil.getNetworkInfo(context);
