@@ -51,7 +51,6 @@ public class VersionUtil {
         String currentVersion = VersionUtil.getVersionName(context);
         Date currentDate = mVersion.getBuildDate(Version.BIRTH_DAY, currentVersion);
         Date serverDate = mVersion.getBuildDate(Version.BIRTH_DAY, newVersion);
-
         return serverDate.getTime() > currentDate.getTime()
                 && (mVersion.getVersionState(currentVersion) == Version.PRODUCTION || debug);
     }

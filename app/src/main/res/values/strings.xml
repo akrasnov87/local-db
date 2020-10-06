@@ -15,4 +15,5 @@
     <string name="make_query">Сделать запрос</string>
     <string name="close">Закрыть</string>
     <string name="clear_table">Стереть данные</string>
+    <string name="check_updates">Проверить обновления</string>
 </resources>

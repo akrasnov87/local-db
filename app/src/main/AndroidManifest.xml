@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUICKBOOT_POWERON" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+
+    <uses-permission
+        android:name="android.permission.REQUEST_DELETE_PACKAGES"
+        tools:ignore="ProtectedPermissions" />
 
     <application
         android:name=".App"
@@ -38,7 +43,15 @@
             android:name=".ui.SettingActivity"
             android:label="@string/settings" />
         <activity android:name=".ui.SQLViewActivity" />
-
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="ru.mobnius.localdb.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
         <service
             android:name=".HttpService"
             android:enabled="true"

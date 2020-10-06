@@ -6,7 +6,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +19,7 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,10 +28,16 @@ import com.google.android.material.snackbar.Snackbar;
 import org.greenrobot.greendao.database.Database;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Objects;
 
 import ru.mobnius.localdb.App;
+import ru.mobnius.localdb.BuildConfig;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
@@ -138,9 +149,70 @@ public class MainActivity extends BaseActivity
                 mDialogDownloadFragment = new DialogDownloadFragment(this);
                 mDialogDownloadFragment.show(getSupportFragmentManager(), "storage");
                 return true;
+
+            case R.id.action_check_ldb_updates:
+                getApk(Names.UPDATE_LOCALDB_URL, "localdb.apk");
+                return true;
+
+            case R.id.action_check_mo_updates:
+                getApk(Names.UPDATE_MO_URL, "client.apk");
+                return true;
+
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void getApk(String url, String apkType) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        Thread thread = new Thread(() -> {
+            File folder = new File(Objects.requireNonNull(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).toString());
+            File file = new File(folder.getAbsolutePath(), apkType);
+            final Uri uri = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) ?
+                    FileProvider.getUriForFile(MainActivity.this, BuildConfig.APPLICATION_ID + ".provider", file) : Uri.fromFile(file);
+            if (file.exists()) {
+                file.delete();
+            }
+            InputStream input = null;
+            OutputStream output = null;
+            HttpURLConnection connection = null;
+            try {
+                URL sUrl = new URL(url);
+                connection = (HttpURLConnection) sUrl.openConnection();
+                connection.connect();
+
+                input = connection.getInputStream();
+                output = new FileOutputStream(file);
+
+                byte[] data = new byte[4096];
+                int count;
+                while ((count = input.read(data)) != -1) {
+                    output.write(data, 0, count);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (output != null)
+                        output.close();
+                    if (input != null)
+                        input.close();
+                } catch (IOException ignored) {
+                }
+
+                if (connection != null)
+                    connection.disconnect();
+            }
+            handler.post(() -> {
+                Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE)
+                        .setData(uri)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                startActivity(install);
+            });
+        });
+        thread.start();
     }
 
     @SuppressLint("SetTextI18n")
@@ -223,7 +295,7 @@ public class MainActivity extends BaseActivity
                     if (DialogInterface.BUTTON_POSITIVE == which) {
                         App app = (App) getApplication();
                         app.getObserver().notify(Observer.STOP_ASYNC_TASK, "stopping async task");
-                        app.getObserver().notify(Observer.STOP_THREAD, "stopping async task");
+                        app.getObserver().notify(Observer.STOP_THREAD, "stopping thread");
                         PreferencesManager.getInstance().setProgress(null);
                         mUpdateFragment.stopProcess();
                         setMenuItemVisible(true);
@@ -318,7 +390,7 @@ public class MainActivity extends BaseActivity
                 if (VersionUtil.isUpgradeVersion(MainActivity.this, s, PreferencesManager.getInstance().isDebug())) {
                     // тут доступно новая версия
                     MySnackBar.make(mRecyclerView, "Доступна новая версия " + s, Snackbar.LENGTH_LONG).setAction("Загрузить", v -> {
-                        String url = Names.UPDATE_URL;
+                        String url = Names.UPDATE_LOCALDB_URL;
                         Intent i = new Intent(Intent.ACTION_VIEW);
                         i.setData(Uri.parse(url));
                         startActivity(i);

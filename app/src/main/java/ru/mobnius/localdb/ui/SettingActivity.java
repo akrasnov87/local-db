@@ -313,7 +313,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
                                 pServerVersion.setVisible(true);
                                 pServerVersion.setSummary("Доступна новая версия " + s);
                                 pServerVersion.setIntent(new Intent().setAction(Intent.ACTION_VIEW).setData(
-                                        Uri.parse(Names.UPDATE_URL)));
+                                        Uri.parse(Names.UPDATE_LOCALDB_URL)));
 
                                 if (pVersion != null) {
                                     pVersion.setSummary(VersionUtil.getVersionName(requireActivity()));
