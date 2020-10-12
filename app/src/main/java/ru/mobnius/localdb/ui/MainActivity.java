@@ -149,76 +149,17 @@ public class MainActivity extends BaseActivity
                 mDialogDownloadFragment = new DialogDownloadFragment(this);
                 mDialogDownloadFragment.show(getSupportFragmentManager(), "storage");
                 return true;
-
-            case R.id.action_check_ldb_updates:
-                getApk(Names.UPDATE_LOCALDB_URL, "localdb.apk");
-                return true;
-
-            case R.id.action_check_mo_updates:
-                getApk(Names.UPDATE_MO_URL, "client.apk");
-                return true;
-
         }
-
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void getApk(String url, String apkType) {
-        Handler handler = new Handler(Looper.getMainLooper());
-        Thread thread = new Thread(() -> {
-            File folder = new File(Objects.requireNonNull(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).toString());
-            File file = new File(folder.getAbsolutePath(), apkType);
-            final Uri uri = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) ?
-                    FileProvider.getUriForFile(MainActivity.this, BuildConfig.APPLICATION_ID + ".provider", file) : Uri.fromFile(file);
-            if (file.exists()) {
-                file.delete();
-            }
-            InputStream input = null;
-            OutputStream output = null;
-            HttpURLConnection connection = null;
-            try {
-                URL sUrl = new URL(url);
-                connection = (HttpURLConnection) sUrl.openConnection();
-                connection.connect();
-
-                input = connection.getInputStream();
-                output = new FileOutputStream(file);
-
-                byte[] data = new byte[4096];
-                int count;
-                while ((count = input.read(data)) != -1) {
-                    output.write(data, 0, count);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (output != null)
-                        output.close();
-                    if (input != null)
-                        input.close();
-                } catch (IOException ignored) {
-                }
-
-                if (connection != null)
-                    connection.disconnect();
-            }
-            handler.post(() -> {
-                Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE)
-                        .setData(uri)
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                startActivity(install);
-            });
-        });
-        thread.start();
-    }
 
     @SuppressLint("SetTextI18n")
     @Override
     protected void onResume() {
         super.onResume();
+
+
         if (PreferencesManager.getInstance().getProgress() != null) {
             mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress().current, PreferencesManager.getInstance().getProgress().total);
             setMenuItemVisible(false);

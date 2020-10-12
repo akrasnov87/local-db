@@ -32,6 +32,10 @@ public class PreferencesManager {
     public static final String BUSY_PORT = "MBL_BUSY_PORT";
     public static final String ALL_TABLES = "MBL_ALL_TABLES";
     private static final String ALL_TABLES_NAMES = "MBL_ALL_TABLES_NAMES";
+    private static final String REMOTE_LOCAL_DB_VERSION = "MBL_REMOTE_LOCAL_DB_VERSION";
+    private static final String LOCAL_DB_READY_TO_UPDATE= "MBL_LOCAL_DB_READY_TO_UPDATE";
+    private static final String REMOTE_MO_VERSION = "MBL_REMOTE_MO_VERSION";
+    private static final String MO_READY_TO_UPDATE= "MBL_MO_READY_TO_UPDATE";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -197,4 +201,49 @@ public class PreferencesManager {
         return null;
     }
 
+    public String getRemoteLocalDBVersion() {
+        return getSharedPreferences().getString(REMOTE_LOCAL_DB_VERSION, "");
+    }
+    public void setRemoteLocalDBVersion(String value) {
+        getSharedPreferences().edit().putString(REMOTE_LOCAL_DB_VERSION, value).apply();
+    }
+
+    public String getRemoteMOVersion() {
+        return getSharedPreferences().getString(REMOTE_MO_VERSION, "");
+    }
+    public void setRemoteMOVersion(String value) {
+        getSharedPreferences().edit().putString(REMOTE_MO_VERSION, value).apply();
+    }
+
+    public void setLocalDBReadyToUpdate(boolean value) {
+        getSharedPreferences().edit().putBoolean(LOCAL_DB_READY_TO_UPDATE, value).apply();
+    }
+
+    public boolean isLocalDBReadyToUpdate() {
+        return getSharedPreferences().getBoolean(LOCAL_DB_READY_TO_UPDATE, false);
+    }
+
+    public void setMOReadyToUpdate(boolean value) {
+        getSharedPreferences().edit().putBoolean(MO_READY_TO_UPDATE, value).apply();
+    }
+
+    public boolean isMOReadyToUpdate() {
+        return getSharedPreferences().getBoolean(MO_READY_TO_UPDATE, false);
+    }
+
+    public void setDataUri(String uri) {
+        getSharedPreferences().edit().putString("1234", uri).apply();
+    }
+
+    public String getDataUri() {
+        return getSharedPreferences().getString("1234", "");
+    }
+
+    public void setDataX(String x) {
+        getSharedPreferences().edit().putString("12345", x).apply();
+    }
+
+    public String getDataX() {
+        return getSharedPreferences().getString("12345", "");
+    }
 }

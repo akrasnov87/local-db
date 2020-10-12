@@ -16,4 +16,6 @@
     <string name="close">Закрыть</string>
     <string name="clear_table">Стереть данные</string>
     <string name="check_updates">Проверить обновления</string>
+    <string name="update_localdb">Обновить LocalDB</string>
+    <string name="update_MO">Обновить Мобильный Обходчик</string>
 </resources>
