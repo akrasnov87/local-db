@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
@@ -148,6 +149,10 @@ public class MainActivity extends BaseActivity
             case R.id.action_fias:
                 mDialogDownloadFragment = new DialogDownloadFragment(this);
                 mDialogDownloadFragment.show(getSupportFragmentManager(), "storage");
+                return true;
+            case R.id.action_update:
+                Intent intent = new Intent(this, UpdateActivity.class);
+                startActivity(intent);
                 return true;
         }
         return super.onOptionsItemSelected(item);

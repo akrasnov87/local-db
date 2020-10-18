@@ -1,13 +1,10 @@
 package ru.mobnius.localdb.ui;
 
-import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -20,7 +17,6 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreference;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Objects;
 
@@ -32,7 +28,6 @@ import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.data.exception.ExceptionGroup;
 import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
-import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
 public class SettingActivity extends ExceptionInterceptActivity {
@@ -88,7 +83,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
         private SwitchPreference spErrorVisibility;
         private ListPreference lpSize;
         private Preference pCreateError;
-        private ServerAppVersionAsyncTask mServerAppVersionAsyncTask;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -136,7 +130,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
 
             spErrorVisibility = findPreference(PreferencesManager.ERROR_VISIBILITY);
             Objects.requireNonNull(spErrorVisibility).setVisible(PreferencesManager.getInstance().isDebug());
-            spErrorVisibility.setVisible(PreferencesManager.getInstance().isDebug());
             spErrorVisibility.setOnPreferenceChangeListener((preference, newValue) -> {
                 if (preference.getKey().equals(PreferencesManager.ERROR_VISIBILITY)) {
                     boolean errorVisibilityValue = Boolean.parseBoolean(String.valueOf(newValue));
@@ -150,7 +143,7 @@ public class SettingActivity extends ExceptionInterceptActivity {
         public void onResume() {
             super.onResume();
 
-            pVersion.setSummary("Установлена последняя версия " + VersionUtil.getVersionName(requireActivity()));
+            pVersion.setSummary("Установлена версия " + VersionUtil.getVersionName(requireActivity()));
 
             spDebug.setSummary(String.format(debugSummary, PreferencesManager.getInstance().isDebug() ? "включен" : "отключен"));
             spDebug.setChecked(PreferencesManager.getInstance().isDebug());
@@ -164,9 +157,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
             DecimalFormat df = new DecimalFormat(Names.INT_FORMAT);
             lpSize.setSummary(df.format(PreferencesManager.getInstance().getSize()));
             lpSize.setValue(String.valueOf(PreferencesManager.getInstance().getSize()));
-
-            mServerAppVersionAsyncTask = new ServerAppVersionAsyncTask();
-            mServerAppVersionAsyncTask.execute();
         }
 
         @Override
@@ -284,53 +274,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
         @Override
         public void onDestroy() {
             super.onDestroy();
-            mServerAppVersionAsyncTask.cancel(false);
-        }
-
-        @SuppressLint("StaticFieldLeak")
-        private class ServerAppVersionAsyncTask extends AsyncTask<Void, Void, String> {
-
-            @Override
-            protected String doInBackground(Void... voids) {
-                if (!isCancelled()) {
-                    try {
-                        return Loader.getInstance().version();
-                    } catch (IOException e) {
-                        return "0.0.0.0";
-                    }
-                }
-                return "";
-            }
-
-            @Override
-            protected void onPostExecute(String s) {
-                super.onPostExecute(s);
-
-                if (pServerVersion != null) {
-                    if (!s.equals("0.0.0.0")) {
-                        try {
-                            if (VersionUtil.isUpgradeVersion(requireActivity(), s, PreferencesManager.getInstance().isDebug())) {
-                                pServerVersion.setVisible(true);
-                                pServerVersion.setSummary("Доступна новая версия " + s);
-                                pServerVersion.setIntent(new Intent().setAction(Intent.ACTION_VIEW).setData(
-                                        Uri.parse(Names.UPDATE_LOCALDB_URL)));
-
-                                if (pVersion != null) {
-                                    pVersion.setSummary(VersionUtil.getVersionName(requireActivity()));
-                                }
-
-                                return;
-                            }
-                        } catch (Exception ignored) {
-
-                        }
-                    }
-                    pServerVersion.setVisible(false);
-                    if (pVersion != null && isAdded()) {
-                        pVersion.setSummary("Установлена последняя версия " + VersionUtil.getVersionName(requireActivity()));
-                    }
-                }
-            }
         }
     }
 }

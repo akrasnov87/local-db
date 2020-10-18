@@ -19,7 +19,6 @@ public class UpdateJobService extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        Log.e("hak", "job started");
         getApkVersion(params);
         return true;
     }
@@ -33,66 +32,52 @@ public class UpdateJobService extends JobService {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                String remoteLocalDBVersion = null;
-                String remoteMOVersion = null;
-                InputStream ldbInput = null;
-                InputStream moInput = null;
-                HttpURLConnection ldbConnection = null;
-                HttpURLConnection moConnection = null;
-
-                try {
-                    URL ldbURL = new URL("http://demo.it-serv.ru/ARMNext/demo_kavkaz/versions/localdb.apk");
-                    ldbConnection = (HttpURLConnection) ldbURL.openConnection();
-                    ldbConnection.connect();
-                    ldbInput = ldbConnection.getInputStream();
-                    InputStream ldbBufferedStream = new BufferedInputStream(ldbInput);
-                    Scanner ldbScaner = new Scanner(ldbBufferedStream).useDelimiter("\\A");
-                    String ldbVersionInfo = ldbScaner.hasNext() ? ldbScaner.next() : "";
-                    if (!ldbVersionInfo.isEmpty()) {
-                        JSONObject object = new JSONObject(ldbVersionInfo);
-                        JSONObject info = object.getJSONObject("info");
-                        remoteLocalDBVersion = info.getString("version");
-                    }
-                    URL moURL = new URL("http://demo.it-serv.ru/ARMNext/demo_kavkaz/versions/ms.apk");
-                    moConnection = (HttpURLConnection) moURL.openConnection();
-                    moConnection.connect();
-                    moInput = moConnection.getInputStream();
-                    InputStream moBufferedStream = new BufferedInputStream(moInput);
-                    Scanner moScanner = new Scanner(moBufferedStream).useDelimiter("\\A");
-                    String moVersionInfo = moScanner.hasNext() ? moScanner.next() : "";
-                    if (!moVersionInfo.isEmpty()) {
-                        JSONObject object = new JSONObject(moVersionInfo);
-                        JSONObject info = object.getJSONObject("info");
-                        remoteMOVersion = info.getString("version");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        if (ldbInput != null) {
-                            ldbInput.close();
-                        }
-                        if (moInput != null) {
-                            moInput.close();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    if (ldbConnection != null) {
-                        ldbConnection.disconnect();
-                    }
-                    if (moConnection != null) {
-                        moConnection.disconnect();
-                    }
-                }
-                if (remoteLocalDBVersion != null && remoteMOVersion != null) {
+                String remoteLocalDBVersion = getServerVersion(PreferencesManager.getInstance().getNodeUrl() + "/versions/localdb.apk");
+                String remoteMOVersion = getServerVersion(PreferencesManager.getInstance().getNodeUrl() + "/versions/ms.apk");
+                if (remoteLocalDBVersion != null) {
                     PreferencesManager.getInstance().setRemoteLocalDBVersion(remoteLocalDBVersion);
+                }
+                if (remoteMOVersion != null) {
                     PreferencesManager.getInstance().setRemoteMOVersion(remoteMOVersion);
                 }
                 UpdateJobService.this.jobFinished(jobParameters, false);
             }
         });
         t.start();
+    }
+
+    private String getServerVersion(String url) {
+        String remoteVersion = null;
+        InputStream input = null;
+        HttpURLConnection connection = null;
+        try {
+            URL ldbURL = new URL(url);
+            connection = (HttpURLConnection) ldbURL.openConnection();
+            connection.connect();
+            input = connection.getInputStream();
+            InputStream ldbBufferedStream = new BufferedInputStream(input);
+            Scanner scanner = new Scanner(ldbBufferedStream).useDelimiter("\\A");
+            String info = scanner.hasNext() ? scanner.next() : "";
+            if (!info.isEmpty()) {
+                JSONObject object = new JSONObject(info);
+                JSONObject infoObject = object.getJSONObject("info");
+                remoteVersion = infoObject.getString("version");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (input != null) {
+                    input.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        return remoteVersion;
     }
 }
 

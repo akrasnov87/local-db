@@ -18,4 +18,5 @@
     <string name="check_updates">Проверить обновления</string>
     <string name="update_localdb">Обновить LocalDB</string>
     <string name="update_MO">Обновить Мобильный Обходчик</string>
+    <string name="exit">Выйти</string>
 </resources>

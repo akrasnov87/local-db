@@ -2,6 +2,7 @@ package ru.mobnius.localdb.request;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import org.greenrobot.greendao.AbstractDao;
 
@@ -35,6 +36,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
     private UrlReader mUrlReader;
     private boolean isCanceled = false;
     private InsertHandler mInsertHandler;
+    private long x = 0;
 
     public SyncRequestListener(App app, SyncStatusRequestListener statusRequestListener) {
         mApp = app;
@@ -57,7 +59,10 @@ public class SyncRequestListener extends AuthFilterRequestListener
         if (response != null) {
             return response;
         }
-
+        if (PreferencesManager.getInstance().isDownloadingLocalDB() || PreferencesManager.getInstance().isLocalDBReadyToUpdate() ||
+                PreferencesManager.getInstance().isMOReadyToUpdate() || PreferencesManager.getInstance().isDownloadingMO()) {
+            return Response.getErrorInstance(urlReader, "Сначала вам необходимо выполнить обновление приложений до последних версий", Response.RESULT_FAIL);
+        }
         mUrlReader = urlReader;
         // TODO: 17.06.2020 нужно достать из запроса логин и пароль
         ArrayList<String> tableName = new ArrayList<>();
@@ -88,6 +93,8 @@ public class SyncRequestListener extends AuthFilterRequestListener
                     mInsertHandler.quit();
                     mInsertHandler = null;
                 }
+                x = System.currentTimeMillis();
+                Log.e("hak", "started: " + x);
                 mInsertHandler = new InsertHandler(mApp, this, new Handler(Looper.getMainLooper()));
                 mInsertHandler.start();
                 mInsertHandler.getLooper();
@@ -111,6 +118,10 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     @Override
     public void onInsertFinish(String tableName) {
+        long y = System.currentTimeMillis();
+        long t = (y - x) / 1000;
+        Log.e("hak", "dif: " + t);
+        x = 0;
         mApp.onDownLoadFinish(tableName, mUrlReader);
     }
 
@@ -126,6 +137,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
             isCanceled = true;
         } else {
             if (PreferencesManager.getInstance().getDownloadProgress() != null && isCanceled) {
+
                 new Handler().postDelayed(() -> {
                     String[] allTables = PreferencesManager.getInstance().getAllTablesArray();
                     if (allTables == null) {

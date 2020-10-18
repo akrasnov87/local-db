@@ -36,6 +36,8 @@ public class PreferencesManager {
     private static final String LOCAL_DB_READY_TO_UPDATE= "MBL_LOCAL_DB_READY_TO_UPDATE";
     private static final String REMOTE_MO_VERSION = "MBL_REMOTE_MO_VERSION";
     private static final String MO_READY_TO_UPDATE= "MBL_MO_READY_TO_UPDATE";
+    private static final String MO_DOWNLOADING_NOW = "MBL_MO_DOWNLOADING_NOW";
+    private static final String LOCAL_DB_DOWNLOADING_NOW = "MBL_LOCAL_DB_DOWNLOADING_NOW";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -231,19 +233,20 @@ public class PreferencesManager {
         return getSharedPreferences().getBoolean(MO_READY_TO_UPDATE, false);
     }
 
-    public void setDataUri(String uri) {
-        getSharedPreferences().edit().putString("1234", uri).apply();
+    public void setIsDownloadingMO(boolean value) {
+        getSharedPreferences().edit().putBoolean(MO_DOWNLOADING_NOW, value).apply();
     }
 
-    public String getDataUri() {
-        return getSharedPreferences().getString("1234", "");
+    public boolean isDownloadingMO() {
+        return getSharedPreferences().getBoolean(MO_DOWNLOADING_NOW, false);
     }
 
-    public void setDataX(String x) {
-        getSharedPreferences().edit().putString("12345", x).apply();
+    public void setIsDownloadingLocalDB(boolean value) {
+        getSharedPreferences().edit().putBoolean(LOCAL_DB_DOWNLOADING_NOW, value).apply();
     }
 
-    public String getDataX() {
-        return getSharedPreferences().getString("12345", "");
+    public boolean isDownloadingLocalDB() {
+        return getSharedPreferences().getBoolean(LOCAL_DB_DOWNLOADING_NOW, false);
     }
+
 }

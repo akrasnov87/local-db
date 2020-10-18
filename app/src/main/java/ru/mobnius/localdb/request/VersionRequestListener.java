@@ -1,10 +1,13 @@
 package ru.mobnius.localdb.request;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,17 +25,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.mobnius.localdb.App;
-import ru.mobnius.localdb.Names;
+import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.UrlReader;
 import ru.mobnius.localdb.utils.VersionUtil;
 
-public class VersionRequestListener  implements OnRequestListener {
+public class VersionRequestListener implements OnRequestListener {
 
     private App mApp;
     public static final String LOCAL_DB_APK = "localdb.apk";
-    public static final String MO_APK = "client.apk";
+    public static final String MO_APK = "ms.apk";
+    private static final int LOCAL_DB_NOTIFICATION = 45;
+    private static final int MO_NOTIFICATION = 46;
 
     public VersionRequestListener(App app) {
         mApp = app;
@@ -40,6 +45,9 @@ public class VersionRequestListener  implements OnRequestListener {
 
     @Override
     public boolean isValid(String query) {
+        if (!PreferencesManager.getInstance().isAuthorized()) {
+            return false;
+        }
         Pattern pattern = Pattern.compile("^/check_updates", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(query);
         return matcher.find();
@@ -48,44 +56,43 @@ public class VersionRequestListener  implements OnRequestListener {
     @Override
     public Response getResponse(UrlReader urlReader) {
         Response response;
-        String versionMO = urlReader.getParam("version");
-        boolean isMONeedUpdate = false;
-        String remoteVersionMO = PreferencesManager.getInstance().getRemoteMOVersion();
-        if (versionMO!=null&&versionMO.contains(".") && remoteVersionMO.contains(".")) {
-            String[] versionNumbers = versionMO.split("\\.");
-            String[] remoteVersionNumbers = remoteVersionMO.split("\\.");
-            if (versionNumbers.length == remoteVersionNumbers.length) {
-                for (int i = 0; i < versionNumbers.length; i++) {
-                    try {
-                        int local = Integer.parseInt(versionNumbers[i]);
-                        int remote = Integer.parseInt(remoteVersionNumbers[i]);
-                        if (remote > local) {
-                            isMONeedUpdate = true;
-                            break;
-                        }
-                        if(remote<local){
-                            break;
-                        }
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
         JSONObject meta = new JSONObject();
         JSONObject data = new JSONObject();
         JSONObject object = new JSONObject();
-
         try {
             meta.put("success", true);
             object.put("meta", meta);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        if (PreferencesManager.getInstance().getProgress()!=null){
+            try {
+                data.put("mobiletrackerVersion", "0");
+                data.put("mobiletrackerReady", false);
+                data.put("localdbVersion", "0");
+                data.put("localdbReady", false);
+                JSONArray array = new JSONArray();
+                array.put(data);
+                JSONObject records = new JSONObject();
+                records.put("records", array);
+                object.put("result", records);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return Response.getInstance(urlReader, object.toString());
+        }
+        String versionMO = urlReader.getParam("version");
+        boolean isMONeedUpdate = false;
+        String remoteVersionMO = PreferencesManager.getInstance().getRemoteMOVersion();
+        if (versionMO != null && versionMO.contains(".") && remoteVersionMO.contains(".")) {
+            isMONeedUpdate = VersionUtil.isUpgradeMOVersion(versionMO, remoteVersionMO);
+        }
         if (isMONeedUpdate) {
             if (!PreferencesManager.getInstance().isMOReadyToUpdate()) {
-                getApk(Names.UPDATE_MO_URL, MO_APK, mApp);
+                if (!PreferencesManager.getInstance().isDownloadingMO()) {
+                    PreferencesManager.getInstance().setIsDownloadingMO(true);
+                    getApk(PreferencesManager.getInstance().getNodeUrl() + "/files/versions/ms.apk", MO_APK, mApp);
+                }
                 try {
                     data.put("mobiletrackerVersion", remoteVersionMO);
                     data.put("mobiletrackerReady", false);
@@ -110,28 +117,29 @@ public class VersionRequestListener  implements OnRequestListener {
         }
 
         String remoteLocalDBVersion = PreferencesManager.getInstance().getRemoteLocalDBVersion();
-        if (!remoteLocalDBVersion.isEmpty()) {
-            if (VersionUtil.isUpgradeVersion(mApp, remoteLocalDBVersion, true)) {
-                if (!PreferencesManager.getInstance().isLocalDBReadyToUpdate()) {
-                    getApk(Names.UPDATE_LOCALDB_URL, LOCAL_DB_APK, mApp);
-                    try {
-                        data.put("localdbVersion", remoteLocalDBVersion);
-                        data.put("localdbReady", false);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    try {
-                        data.put("localdbVersion", remoteLocalDBVersion);
-                        data.put("localdbReady", true);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+        if (!remoteLocalDBVersion.isEmpty() && VersionUtil.isUpgradeVersion(mApp, remoteLocalDBVersion, true)) {
+            if (!PreferencesManager.getInstance().isLocalDBReadyToUpdate()) {
+                if (!PreferencesManager.getInstance().isDownloadingLocalDB()) {
+                    PreferencesManager.getInstance().setIsDownloadingLocalDB(true);
+                    getApk(PreferencesManager.getInstance().getNodeUrl() + "/files/versions/localdb.apk", LOCAL_DB_APK, mApp);
+                }
+                try {
+                    data.put("localdbVersion", remoteLocalDBVersion);
+                    data.put("localdbReady", false);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                try {
+                    data.put("localdbVersion", remoteLocalDBVersion);
+                    data.put("localdbReady", true);
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
-        }else {
+        } else {
             try {
-                data.put("localdbVersion","0");
+                data.put("localdbVersion", "0");
                 data.put("localdbReady", false);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -150,6 +158,7 @@ public class VersionRequestListener  implements OnRequestListener {
         return response;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private void getApk(String url, String apkType, Context context) {
         Handler handler = new Handler(Looper.getMainLooper());
         Thread thread = new Thread(() -> {
@@ -176,12 +185,30 @@ public class VersionRequestListener  implements OnRequestListener {
                     output.write(data, 0, count);
                 }
                 handler.post(() -> {
+                    String app = "";
+                    int notif = 0;
                     if (apkType.equals(LOCAL_DB_APK)) {
                         PreferencesManager.getInstance().setLocalDBReadyToUpdate(true);
+                        PreferencesManager.getInstance().setIsDownloadingLocalDB(false);
+                        app = "LocalDB";
+                        notif = LOCAL_DB_NOTIFICATION;
                     }
                     if (apkType.equals(MO_APK)) {
                         PreferencesManager.getInstance().setMOReadyToUpdate(true);
+                        PreferencesManager.getInstance().setIsDownloadingMO(false);
+                        app = "Мобильный обходчик";
+                        notif = MO_NOTIFICATION;
                     }
+                    NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "httpServiceClientLocalDB")
+                            .setSmallIcon(R.drawable.ic_update_icon)
+                            .setColor(context.getResources().getColor(R.color.colorPrimary))
+                            .setContentTitle("ДОСТУПНО ОБНОВЛЕНИЕ")
+                            .setContentText("Обновление приложения " + app + " готово к установке. Перейдите в Мобильный обходчик для установки.")
+                            .setStyle(new NotificationCompat.BigTextStyle()
+                                    .bigText("Обновление приложения " + app + " готово к установке. Перейдите в Мобильный обходчик для установки."))
+                            .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+                    notificationManager.notify(notif, builder.build());
                 });
             } catch (Exception e) {
                 e.printStackTrace();

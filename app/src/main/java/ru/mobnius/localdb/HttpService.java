@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.telecom.Connection;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -48,7 +49,7 @@ import ru.mobnius.localdb.utils.UrlReader;
 public class HttpService extends Service
         implements OnResponseListener,
         OnLogListener,
-        OnExceptionIntercept {
+        OnExceptionIntercept{
 
     public static final int AUTO = 1;
     public static final int MANUAL = 2;
@@ -185,6 +186,7 @@ public class HttpService extends Service
     }
 
 
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -214,6 +216,7 @@ public class HttpService extends Service
         ((App) getApplication()).onHttpResponse(defaultResponse);
         return defaultResponse;
     }
+
 
 
     @Override

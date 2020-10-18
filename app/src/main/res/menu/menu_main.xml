@@ -13,4 +13,10 @@
         android:title="@string/settings"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_update"
+        android:title="@string/check_updates"
+        android:icon="@drawable/ic_baseline_system_update_alt_24"
+        app:showAsAction="ifRoom" />
+
 </menu>

@@ -10,7 +10,7 @@ import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.ui.UpdateActivity;
 import ru.mobnius.localdb.utils.UrlReader;
 
-public class InvokeUpdateActivityListener extends AuthFilterRequestListener implements OnRequestListener {
+public class InvokeUpdateActivityListener implements OnRequestListener {
     private App mApp;
 
     public InvokeUpdateActivityListener(App app) {
@@ -26,10 +26,7 @@ public class InvokeUpdateActivityListener extends AuthFilterRequestListener impl
 
     @Override
     public Response getResponse(UrlReader urlReader) {
-        Response response = super.getResponse(urlReader);
-        if (response != null) {
-            return response;
-        }
+        Response response;
         response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
         Intent intent = new Intent(mApp, UpdateActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
