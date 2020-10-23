@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.utils.UrlReader;
@@ -70,7 +69,7 @@ public class HttpResponseThread extends Thread {
 
         } catch (IOException e) {
             if(mLogListener != null) {
-                Logger.error(e);
+                e.printStackTrace();
                 mLogListener.onAddLog(new LogItem(e.getMessage(), true));
             }
         }finally {

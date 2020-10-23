@@ -161,14 +161,6 @@ public class PreferencesManager {
         return getSharedPreferences().getString(tableName + "remote", "0");
     }
 
-    public boolean isErrorVisible() {
-        return getSharedPreferences().getBoolean(ERROR_VISIBILITY, false);
-    }
-
-    public void setErrorVisibility(boolean value) {
-        getSharedPreferences().edit().putBoolean(ERROR_VISIBILITY, value).apply();
-    }
-
     public void setPortIsBusy(boolean value) {
         getSharedPreferences().edit().putBoolean(BUSY_PORT, value).apply();
     }

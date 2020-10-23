@@ -4,14 +4,9 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
+
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Looper;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,25 +15,14 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import org.greenrobot.greendao.database.Database;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Objects;
 
 import ru.mobnius.localdb.App;
-import ru.mobnius.localdb.BuildConfig;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
@@ -51,17 +35,12 @@ import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.PreferencesManager;
-import ru.mobnius.localdb.data.component.MySnackBar;
-import ru.mobnius.localdb.data.exception.ExceptionCode;
-import ru.mobnius.localdb.data.exception.FileExceptionManager;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.observer.Observer;
-import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
-import ru.mobnius.localdb.utils.VersionUtil;
 
 public class MainActivity extends BaseActivity
         implements OnLogListener,
@@ -83,7 +62,6 @@ public class MainActivity extends BaseActivity
     private ScrollView svError;
     private UpdateFragment mUpdateFragment;
     private DialogDownloadFragment mDialogDownloadFragment;
-    private ServerAppVersionAsyncTask mServerAppVersionAsyncTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,31 +89,20 @@ public class MainActivity extends BaseActivity
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
-        String message;
-        if (PreferencesManager.getInstance().isErrorVisible()) {
-            File root = FileExceptionManager.getInstance(this).getRootCatalog();
-            String[] files = root.list();
-            if (files != null) {
-                for (String fileName : files) {
-                    byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
-                    if (bytes != null) {
-                        message = new String(bytes);
-                        if (message.length() > 2000) {
-                            message = message.substring(0, 1000) + ".........\n" + message.substring(message.length() - 1000, message.length() - 1);
-                        }
-                        message = "При последнем запуске приложения возникла следующая критическая ошибка:\n" + message;
-                        tvError.setText(message);
-                        svError.setVisibility(View.VISIBLE);
-                    }
-                }
-            }
-        }
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         miSyncDB = menu.findItem(R.id.action_fias);
+        MenuItem errors = menu.findItem(R.id.action_error);
+        App app = (App) getApplication();
+        if (app.getDaoSession() != null && app.getDaoSession().getClientErrorsDao() != null && app.getDaoSession().getClientErrorsDao().count() > 0) {
+            errors.setVisible(true);
+        } else {
+            errors.setVisible(false);
+        }
         return true;
     }
 
@@ -153,6 +120,10 @@ public class MainActivity extends BaseActivity
             case R.id.action_update:
                 Intent intent = new Intent(this, UpdateActivity.class);
                 startActivity(intent);
+                return true;
+            case R.id.action_error:
+                Intent intent1 = new Intent(this, ErrorActivity.class);
+                startActivity(intent1);
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -182,8 +153,6 @@ public class MainActivity extends BaseActivity
             btnStop.setVisibility(View.GONE);
             btnStart.setVisibility(View.GONE);
         }
-        mServerAppVersionAsyncTask = new ServerAppVersionAsyncTask();
-        mServerAppVersionAsyncTask.execute();
         if (PreferencesManager.getInstance().isPortBusy()) {
             svError.setVisibility(View.VISIBLE);
             tvError.setText("Не удалось запустить службу, так как необходимый порт используется другим приложением. " +
@@ -193,10 +162,6 @@ public class MainActivity extends BaseActivity
 
     protected void onDestroy() {
         super.onDestroy();
-        if (mServerAppVersionAsyncTask != null) {
-            mServerAppVersionAsyncTask.cancel(true);
-            mServerAppVersionAsyncTask = null;
-        }
         ((App) getApplication()).unRegistryLogListener(this);
         ((App) getApplication()).unRegistryAvailableListener(this);
         ((App) getApplication()).unRegistryHttpListener(this);
@@ -310,42 +275,6 @@ public class MainActivity extends BaseActivity
                 dialog.dismiss();
             }
         });
-    }
-
-    @Override
-    public int getExceptionCode() {
-        return ExceptionCode.MAIN;
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    private class ServerAppVersionAsyncTask extends AsyncTask<Void, Void, String> {
-
-        @Override
-        protected String doInBackground(Void... voids) {
-            try {
-                return Loader.getInstance().version();
-            } catch (IOException e) {
-                return "0.0.0.0";
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            try {
-                if (VersionUtil.isUpgradeVersion(MainActivity.this, s, PreferencesManager.getInstance().isDebug())) {
-                    // тут доступно новая версия
-                    MySnackBar.make(mRecyclerView, "Доступна новая версия " + s, Snackbar.LENGTH_LONG).setAction("Загрузить", v -> {
-                        String url = Names.UPDATE_LOCALDB_URL;
-                        Intent i = new Intent(Intent.ACTION_VIEW);
-                        i.setData(Uri.parse(url));
-                        startActivity(i);
-                    }).show();
-                }
-            } catch (Exception ignored) {
-
-            }
-        }
     }
 
     private void setMenuItemVisible(boolean visible) {

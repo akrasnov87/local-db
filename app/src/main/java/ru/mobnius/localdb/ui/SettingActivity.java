@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -22,15 +23,10 @@ import java.util.Objects;
 
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
-import ru.mobnius.localdb.data.ExceptionInterceptActivity;
 import ru.mobnius.localdb.data.PreferencesManager;
-import ru.mobnius.localdb.data.exception.ExceptionCode;
-import ru.mobnius.localdb.data.exception.ExceptionGroup;
-import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
-import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
 import ru.mobnius.localdb.utils.VersionUtil;
 
-public class SettingActivity extends ExceptionInterceptActivity {
+public class SettingActivity extends AppCompatActivity {
 
     public static Intent getIntent(Context context) {
         return new Intent(context, SettingActivity.class);
@@ -58,15 +54,10 @@ public class SettingActivity extends ExceptionInterceptActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public int getExceptionCode() {
-        return ExceptionCode.SETTING;
-    }
 
     public static class PrefFragment extends PreferenceFragmentCompat implements
             Preference.OnPreferenceChangeListener,
-            Preference.OnPreferenceClickListener,
-            OnExceptionIntercept {
+            Preference.OnPreferenceClickListener{
 
         private final String debugSummary = "Режим отладки: %s";
         private int clickToVersion = 0;
@@ -80,14 +71,12 @@ public class SettingActivity extends ExceptionInterceptActivity {
         private Preference pLoginReset;
         private Preference pNodeUrl;
         private Preference pRpcUrl;
-        private SwitchPreference spErrorVisibility;
         private ListPreference lpSize;
         private Preference pCreateError;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            onExceptionIntercept();
         }
 
         @Override
@@ -128,15 +117,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
             Objects.requireNonNull(pClearDB).setVisible(PreferencesManager.getInstance().isDebug());
             pClearDB.setOnPreferenceClickListener(this);
 
-            spErrorVisibility = findPreference(PreferencesManager.ERROR_VISIBILITY);
-            Objects.requireNonNull(spErrorVisibility).setVisible(PreferencesManager.getInstance().isDebug());
-            spErrorVisibility.setOnPreferenceChangeListener((preference, newValue) -> {
-                if (preference.getKey().equals(PreferencesManager.ERROR_VISIBILITY)) {
-                    boolean errorVisibilityValue = Boolean.parseBoolean(String.valueOf(newValue));
-                    PreferencesManager.getInstance().setErrorVisibility(errorVisibilityValue);
-                }
-                return true;
-            });
         }
 
         @Override
@@ -147,7 +127,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
 
             spDebug.setSummary(String.format(debugSummary, PreferencesManager.getInstance().isDebug() ? "включен" : "отключен"));
             spDebug.setChecked(PreferencesManager.getInstance().isDebug());
-            spErrorVisibility.setChecked(PreferencesManager.getInstance().isErrorVisible());
 
             String loginSummary = "Логин для авторизации на сервере: %s";
             pLogin.setSummary(String.format(loginSummary, PreferencesManager.getInstance().getLogin()));
@@ -173,7 +152,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
                         lpSize.setEnabled(true);
                         pCreateError.setVisible(true);
                         pClearDB.setVisible(true);
-                        spErrorVisibility.setVisible(true);
                         spDebug.setSummary(String.format(debugSummary, "включен"));
                         Toast.makeText(getActivity(), "Режим отладки активирован.", Toast.LENGTH_SHORT).show();
                         clickToVersion = 0;
@@ -231,7 +209,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
                 pSQLite.setVisible(debugValue);
                 lpSize.setEnabled(debugValue);
                 pCreateError.setVisible(debugValue);
-                spErrorVisibility.setVisible(debugValue);
                 PreferencesManager.getInstance().setDebug(debugValue);
                 pLoginReset.setVisible(debugValue);
             }
@@ -254,21 +231,6 @@ public class SettingActivity extends ExceptionInterceptActivity {
             dialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.no), listener);
             dialog.setIcon(R.drawable.ic_baseline_warning_24);
             dialog.show();
-        }
-
-        @Override
-        public void onExceptionIntercept() {
-            Thread.setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler(), getExceptionGroup(), getExceptionCode(), getContext()));
-        }
-
-        @Override
-        public String getExceptionGroup() {
-            return ExceptionGroup.SETTING;
-        }
-
-        @Override
-        public int getExceptionCode() {
-            return ExceptionCode.SETTING;
         }
 
         @Override

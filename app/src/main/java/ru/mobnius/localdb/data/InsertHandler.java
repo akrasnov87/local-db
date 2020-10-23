@@ -18,7 +18,6 @@ import java.util.Arrays;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
-import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.tablePack.TableInsertKeyValue;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.observer.EventListener;
@@ -34,10 +33,12 @@ public class InsertHandler extends HandlerThread implements EventListener {
     private static final String TAG = "InsertHandler";
     private final App mApp;
     private final Handler mUpdateUIHandler;
+    private final String mLastTable;
 
     public void insert(String tableName, String filePath) {
         mInsertHandler.obtainMessage(INSERT_ROWS, new TableInsertKeyValue(tableName, filePath))
                 .sendToTarget();
+
     }
 
     private final LoadAsyncTask.OnLoadListener mListener;
@@ -48,11 +49,12 @@ public class InsertHandler extends HandlerThread implements EventListener {
         return super.quit();
     }
 
-    public InsertHandler(App context, LoadAsyncTask.OnLoadListener listener, Handler handler) {
+    public InsertHandler(App context, LoadAsyncTask.OnLoadListener listener, Handler handler, String lastTable) {
         super(TAG);
         mApp = context;
         mListener = listener;
         mUpdateUIHandler = handler;
+        mLastTable = lastTable;
     }
 
 
@@ -84,8 +86,12 @@ public class InsertHandler extends HandlerThread implements EventListener {
                             unzippedFile.delete();
                             if (cur + 10000 >= total) {
                                 mUpdateUIHandler.post(() -> {
+                                    if (mLastTable.equals(target.getTableName())){
+                                        PreferencesManager.getInstance().setProgress(null);
+                                        mApp.getObserver().unsubscribe(Observer.STOP_THREAD, InsertHandler.this);
+                                    }
                                     mListener.onInsertFinish(target.getTableName());
-                                    PreferencesManager.getInstance().setProgress(null);
+
                                 });
                             } else {
                                 mUpdateUIHandler.post(() -> mListener.onInsertProgress(Integer.parseInt(PreferencesManager.getInstance().getLocalRowCount(target.getTableName())), total));
@@ -105,6 +111,12 @@ public class InsertHandler extends HandlerThread implements EventListener {
             if (PreferencesManager.getInstance().getProgress() != null) {
                 PreferencesManager.getInstance().setProgress(null);
             }
+            mUpdateUIHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                mApp.getObserver().unsubscribe(Observer.STOP_THREAD, InsertHandler.this);
+                }
+            });
         }
     }
 
@@ -145,7 +157,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
                             cur += max;
                             PreferencesManager.getInstance().setLocalRowCount(String.valueOf(cur), tableName);
                         } catch (Exception e) {
-                            Logger.error(e);
+                            e.printStackTrace();
                         }
                     }
                     idx = i;
@@ -158,7 +170,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
                         cur += last;
                         PreferencesManager.getInstance().setLocalRowCount(String.valueOf(cur), tableName);
                     } catch (Exception e) {
-                        Logger.error(e);
+                        e.printStackTrace();
                     }
                 }
 

@@ -16,7 +16,9 @@ android {
         targetSdkVersion 29
         versionName getVersion()
         setProperty("archivesBaseName", getVersion())
-
+        greendao {
+            schemaVersion 2
+        }
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

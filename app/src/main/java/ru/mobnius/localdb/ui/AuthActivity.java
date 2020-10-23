@@ -3,6 +3,8 @@ package ru.mobnius.localdb.ui;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
+
 import java.util.Objects;
 
 import ru.mobnius.localdb.R;
@@ -33,13 +35,9 @@ public class AuthActivity extends BaseActivity {
         super.onResume();
         Objects.requireNonNull(getSupportActionBar()).setSubtitle(NetworkUtil.getIPv4Address() + ":" + HttpServerThread.HTTP_SERVER_PORT);
 
-        if (PreferencesManager.getInstance().isAuthorized()) {
+        if (PreferencesManager.getInstance()!= null && PreferencesManager.getInstance().isAuthorized()) {
             startActivity(MainActivity.getIntent(this));
         }
     }
 
-    @Override
-    public int getExceptionCode() {
-        return ExceptionCode.AUTH;
-    }
 }

@@ -14,11 +14,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import ru.mobnius.localdb.R;
 
-public abstract class BaseActivity extends ExceptionInterceptActivity {
+public abstract class BaseActivity extends AppCompatActivity {
     private final int REQUEST_PERMISSIONS = 1;
     private int mPermissionLength = 0;
     private boolean doubleBackToExitPressedOnce = false;
@@ -35,8 +36,6 @@ public abstract class BaseActivity extends ExceptionInterceptActivity {
         if(view instanceof ViewGroup) {
             ((ViewGroup)view).addView(mProgressBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
-        // предназначено для привязки перехвата ошибок
-        onExceptionIntercept();
     }
 
     @Override

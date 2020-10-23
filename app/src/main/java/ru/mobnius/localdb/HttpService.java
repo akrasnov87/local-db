@@ -6,10 +6,12 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
 import android.telecom.Connection;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import java.io.File;
@@ -48,8 +50,7 @@ import ru.mobnius.localdb.utils.UrlReader;
 
 public class HttpService extends Service
         implements OnResponseListener,
-        OnLogListener,
-        OnExceptionIntercept{
+        OnLogListener {
 
     public static final int AUTO = 1;
     public static final int MANUAL = 2;
@@ -57,7 +58,8 @@ public class HttpService extends Service
     private static final String MODE = "mode";
     private static final String TABLE = "table";
 
-    public static Intent getIntent(Context context, int mode) {
+    public static Intent
+    getIntent(Context context, int mode) {
         Intent intent = new Intent();
         intent.setClass(context, HttpService.class);
         intent.putExtra(MODE, mode);
@@ -92,12 +94,6 @@ public class HttpService extends Service
     }
 
     @Override
-    public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    @Override
     public void onCreate() {
         super.onCreate();
         NotificationChannel channel;
@@ -108,26 +104,8 @@ public class HttpService extends Service
             Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle("").setContentText("").build();
             startForeground(1, notification);
         }
-        onExceptionIntercept();
-        mDaoSession = new DaoMaster(new DbOpenHelper(getApplication(), "local-db.db").getWritableDb()).newSession();
-        String message;
-        File root = FileExceptionManager.getInstance(this).getRootCatalog();
-        String[] files = root.list();
-        if (files != null) {
-            for (String fileName : files) {
-                byte[] bytes = FileExceptionManager.getInstance(this).readPath(fileName);
-                if (bytes != null) {
-                    message = new String(bytes);
-                    if (message.length() > 2000) {
-                        message = message.substring(0, 1000) + ".........\n" + message.substring(message.length() - 1000, message.length() - 1);
-                    }
-                    App app = (App) getApplication();
-                    String[] strings = {Tags.CRITICAL_ERROR, message};
-                    app.getObserver().notify(Observer.ERROR, strings);
-                }
-            }
-        }
-        ExceptionUtils.saveLocalException(this, mDaoSession);
+        App app = (App) getApplication();
+        mDaoSession = app.getDaoSession();
 
         mRequestListeners.add(new DefaultRequestListener());
         SyncStatusRequestListener syncStatusRequestListener = new SyncStatusRequestListener();
@@ -144,15 +122,18 @@ public class HttpService extends Service
 
         sHttpServerThread = new HttpServerThread(this);
         sHttpServerThread.start();
-        Log.d(Names.TAG, "Http Service start");
+        Log.e(Names.TAG, "Http Service start");
 
         // для возобновления после destroy
-        Progress progress = PreferencesManager.getInstance().getProgress();
-        if (progress != null) {
-            onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
-            onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
+        if (PreferencesManager.getInstance() != null) {
+            Progress progress = PreferencesManager.getInstance().getProgress();
+            if (progress != null) {
+                onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
+                onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
+            }
         }
     }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String strMode;
@@ -186,12 +167,17 @@ public class HttpService extends Service
     }
 
 
-
     @Override
     public void onDestroy() {
         super.onDestroy();
         Log.d(Names.TAG, "Остановка сервиса");
         sHttpServerThread.onDestroy();
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
     /**
@@ -218,61 +204,15 @@ public class HttpService extends Service
     }
 
 
-
     @Override
     public void onAddLog(LogItem item) {
         ((App) getApplication()).onAddLog(item);
     }
 
-    /**
-     * Обработчик перехвата ошибок
-     */
-    public void onExceptionIntercept() {
-        Thread.setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler(), getExceptionGroup(), getExceptionCode(), this));
+    public class MyBinder extends Binder {
+        public HttpService getService() {
+            return HttpService.this;
+        }
     }
 
-    /**
-     * Группа ошибки из IExceptionGroup
-     *
-     * @return строка
-     */
-    public String getExceptionGroup() {
-        return ExceptionGroup.SERVICE;
-    }
-
-    @Override
-    public int getExceptionCode() {
-        return ExceptionCode.HTTP_SERVICE;
-    }
-    /*PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "UI_SV_FIAS", "1.2.641");
-        mDaoSession.getFiasDao().deleteAll();
-        mDaoSession.getFiasDao().detachAll();
-       /* PackManager packManager = new PackManager(mDaoSession, "http://demo.it-serv.ru/repo", "ED_Network_Routes", "1.3.847");
-        mDaoSession.getRegistrPtsDao().deleteAll();
-        mDaoSession.getRegistrPtsDao().detachAll();
-        long d_start = new Date().getTime();
-        packManager.start(new OnRunnableLoadListeners() {
-            @Override
-            public void onBufferSuccess(int count) {
-            }
-            @Override
-            public void onBufferInsert(int count) {
-            }
-            @Override
-            public void onBufferEmpty() {
-            }
-            @Override
-            public void onLoaded() {
-                long d_end = new Date().getTime();
-                Log.d(PackManager.TAG, String.valueOf(d_end - d_start));
-            }
-            @Override
-            public void onError(String message) {
-            }
-            @Override
-            public void onProgress(int start, int total) {
-            }
-        }, 0);
-    }
-*/
 }

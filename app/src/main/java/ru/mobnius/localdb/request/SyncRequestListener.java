@@ -2,7 +2,6 @@ package ru.mobnius.localdb.request;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import org.greenrobot.greendao.AbstractDao;
 
@@ -36,7 +35,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
     private UrlReader mUrlReader;
     private boolean isCanceled = false;
     private InsertHandler mInsertHandler;
-    private long x = 0;
 
     public SyncRequestListener(App app, SyncStatusRequestListener statusRequestListener) {
         mApp = app;
@@ -84,18 +82,17 @@ public class SyncRequestListener extends AuthFilterRequestListener
         }
         if (NetworkUtil.isNetworkAvailable(mApp)) {
             if (urlReader.getParam("restore") != null) {
+                PreferencesManager.getInstance().setProgress(null);
                 LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), SyncRequestListener.this, mApp);
                 mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
-                task.execute(PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+                task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
             } else {
                 PreferencesManager.getInstance().setProgress(null);
                 if (mInsertHandler != null) {
                     mInsertHandler.quit();
                     mInsertHandler = null;
                 }
-                x = System.currentTimeMillis();
-                Log.e("hak", "started: " + x);
-                mInsertHandler = new InsertHandler(mApp, this, new Handler(Looper.getMainLooper()));
+                mInsertHandler = new InsertHandler(mApp, this, new Handler(Looper.getMainLooper()), tableName.get(tableName.size()-1));
                 mInsertHandler.start();
                 mInsertHandler.getLooper();
                 LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp);
@@ -118,10 +115,6 @@ public class SyncRequestListener extends AuthFilterRequestListener
 
     @Override
     public void onInsertFinish(String tableName) {
-        long y = System.currentTimeMillis();
-        long t = (y - x) / 1000;
-        Log.e("hak", "dif: " + t);
-        x = 0;
         mApp.onDownLoadFinish(tableName, mUrlReader);
     }
 
@@ -147,7 +140,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
                     mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
                     task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
                     isCanceled = false;
-                }, 5000);
+                }, 2000);
             }
         }
     }

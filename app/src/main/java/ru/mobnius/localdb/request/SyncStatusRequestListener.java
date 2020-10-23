@@ -6,8 +6,6 @@ import org.json.JSONObject;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ru.mobnius.localdb.App;
-import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.progress.ProgressResult;
@@ -56,7 +54,7 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
                 errorMessage = "";
                 return response;
             } catch (JSONException e) {
-                Logger.error(e);
+               e.printStackTrace();
             }
         }
         if (PreferencesManager.getInstance().getProgress() != null) {

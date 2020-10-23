@@ -64,10 +64,6 @@ public class UpdateFragment extends BaseFragment {
     }
 
 
-    @Override
-    public int getExceptionCode() {
-        return ExceptionCode.DOWNLOAD_PROGRESS;
-    }
 
     private double getPercent(int progress, int total) {
         double result = (double) (progress * 100) / total;

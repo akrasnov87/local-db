@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.model.LogItem;
 
 public class HttpServerThread extends Thread {
@@ -38,7 +37,7 @@ public class HttpServerThread extends Thread {
                 }
             } catch (IOException e) {
                 if (mLogListener != null) {
-                    Logger.error(e);
+                    e.printStackTrace();
                     mLogListener.onAddLog(new LogItem(e.getMessage(), true));
                 }
             }
@@ -53,7 +52,7 @@ public class HttpServerThread extends Thread {
                 httpServerSocket.close();
             } catch (IOException e) {
                 if (mLogListener != null) {
-                    Logger.error(e);
+                    e.printStackTrace();
                     mLogListener.onAddLog(new LogItem(e.getMessage(), true));
                 }
             }
@@ -67,13 +66,13 @@ public class HttpServerThread extends Thread {
             ss.setReuseAddress(true);
             return true;
         } catch (IOException e) {
-            Logger.error(e);
+            e.printStackTrace();
         } finally {
             if (ss != null) {
                 try {
                     ss.close();
                 } catch (IOException e) {
-                    Logger.error(e);
+                    e.printStackTrace();
                 }
             }
         }

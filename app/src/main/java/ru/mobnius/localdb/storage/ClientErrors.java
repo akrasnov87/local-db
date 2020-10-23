@@ -42,6 +42,8 @@ public class ClientErrors {
      */
     public String platform;
 
+
+
     @Generated(hash = 1895835611)
     public ClientErrors(String id, String date, String message, String code,
             String user, String version, String platform) {
@@ -57,6 +59,8 @@ public class ClientErrors {
     @Generated(hash = 2056679704)
     public ClientErrors() {
     }
+
+   
 
     public String getId() {
         return this.id;
@@ -113,5 +117,6 @@ public class ClientErrors {
     public void setPlatform(String platform) {
         this.platform = platform;
     }
+
 }
 

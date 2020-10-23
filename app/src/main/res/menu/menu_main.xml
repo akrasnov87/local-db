@@ -18,5 +18,10 @@
         android:title="@string/check_updates"
         android:icon="@drawable/ic_baseline_system_update_alt_24"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_error"
+        android:title="@string/look_at_error"
+        android:icon="@drawable/ic_baseline_error_outline_24"
+        app:showAsAction="ifRoom" />
 
 </menu>

@@ -49,7 +49,7 @@ public class FileExceptionManager
         File dir = getRootCatalog();
         if(!dir.exists()){
             if(!dir.mkdirs()) {
-                Logger.error(new Exception("Ошибка создания каталога"));
+               return;
             }
         }
 
@@ -102,14 +102,14 @@ public class FileExceptionManager
     public void deleteFile(String fileName) {
         File dir = getRootCatalog();
         if(!dir.exists()) {
-            Logger.error(new Exception("Корневая директория " + EXCEPTION_FOLDER + " не найдена."));
+            //Logger.error(new Exception("Корневая директория " + EXCEPTION_FOLDER + " не найдена."));
             return;
         }
         File file = new File(dir, fileName);
         if(file.exists()) {
             deleteRecursive(file);
         }else{
-            Logger.error(new Exception("Файл " + fileName + " в директории " + EXCEPTION_FOLDER + " не найден."));
+            //Logger.error(new Exception("Файл " + fileName + " в директории " + EXCEPTION_FOLDER + " не найден."));
         }
     }
 
@@ -119,7 +119,7 @@ public class FileExceptionManager
         if(dir.exists()){
             deleteRecursive(dir);
         }else {
-            Logger.error(new Exception("Директория " + EXCEPTION_FOLDER + " не найдена."));
+            //Logger.error(new Exception("Директория " + EXCEPTION_FOLDER + " не найдена."));
         }
     }
 
@@ -133,7 +133,7 @@ public class FileExceptionManager
                 deleteRecursive(child);
 
         if(!fileOrDirectory.delete()) {
-            Logger.error(new Exception("Ошибка удаления каталога"));
+           // Logger.error(new Exception("Ошибка удаления каталога"));
         }
     }
 

@@ -9,7 +9,6 @@ import android.os.Environment;
 import android.util.Log;
 
 import org.greenrobot.greendao.database.Database;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,7 +24,6 @@ import java.util.Arrays;
 
 import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
-import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.tablePack.CsvUtil;
@@ -46,7 +44,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     private final App mApp;
 
     private final String[] mTableName;
-    private String mCurrentTableName;
     private final OnLoadListener mListener;
     private InsertHandler.ZipDownloadListener mZipDownloadListener;
 
@@ -62,13 +59,13 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     @Override
     protected ArrayList<String> doInBackground(String... strings) {
         ArrayList<String> message = new ArrayList<>();
-        if (PreferencesManager.getInstance().getRepoUrl() == null){
+        if (PreferencesManager.getInstance().getRepoUrl() == null) {
             message.add(Tags.AUTH_ERROR);
             message.add("Ошибка аторизации, не известно значение url для скачивания");
             return message;
         }
         JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
-        if (infoTables == null){
+        if (infoTables == null) {
             message.add(Tags.RPC_ERROR);
             message.add("Не удалось получить необходимую информацию о загрузке. Попробуйте повторить загрузку снова");
             return message;
@@ -79,7 +76,6 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 int size;
                 int fileCount;
                 int hddSize;
-                mCurrentTableName = tableName;
                 String mVersion;
                 JSONObject tableInfo;
 
@@ -120,6 +116,11 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     downloadProgress = new Progress(0, mTotal, tableName);
                 } else {
                     //восстанавливаем загрузку
+                    if (!PreferencesManager.getInstance().getProgress().tableName.toLowerCase().equals(tableName.toLowerCase())){
+                        //так как многопоточная загрузка при загрузке всех таблиц
+                        // Progress может не быть null, так как вставляется другая таблица
+                        removeBeforeInsert = true;
+                    }
                     downloadProgress = PreferencesManager.getInstance().getDownloadProgress();
                 }
 
@@ -145,10 +146,9 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 } catch (SQLiteFullException | SQLiteConstraintException e) {
                     message.add(Tags.SQL_ERROR);
                     message.add(e.getMessage());
-                    Logger.error(e);
+                    e.printStackTrace();
                     return message;
                 }
-                Log.e("hak", "Начато скачивание" + System.currentTimeMillis());
                 int currentRowsCount = 0;
                 int currentFile = 0;
                 if (PreferencesManager.getInstance().getDownloadProgress() != null) {
@@ -159,9 +159,12 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     if (!isCancelled()) {
                         File file = getZipFile(mApp, tableName, mVersion, currentRowsCount, size);
                         if (file == null && !isCancelled()) {
-                            message.add(Tags.RPC_ERROR);
-                            message.add("Не удалось получить файл с сервера");
-                            return message;
+                            file = tryToGetProblemFile(mApp, tableName, mVersion, currentRowsCount, size);
+                            if (file == null) {
+                                message.add(Tags.RPC_ERROR);
+                                message.add("Не удалось получить файл с сервера");
+                                return message;
+                            }
                         }
                         currentRowsCount += size;
                         if (file != null) {
@@ -177,7 +180,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                 PreferencesManager.getInstance().setDownloadProgress(null);
                 createIndexes(tableName, HttpService.getDaoSession().getDatabase());
                 ArrayList<String> list = new ArrayList<>(Arrays.asList(mTableName));
-                list.remove(mCurrentTableName);
+                list.remove(tableName);
                 String[] allTablesArray = list.toArray(new String[0]);
                 PreferencesManager.getInstance().setAllTablesArray(allTablesArray);
             }
@@ -194,34 +197,20 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         }
     }
 
-    private File getZipFile(Context context, String tableName, String version, int start, int limit) {
-        File file = null;
-        HttpURLConnection conn;
-        try {
-            int nextStep = start + limit;
-            String repoURL = PreferencesManager.getInstance().getRepoUrl();
-            if (repoURL == null) {
-                return null;
-            }
-            URL url = new URL(repoURL + "/csv-zip/" + tableName + "/" + version + "/" + start + "-" + nextStep + ".zip");
-            conn = (HttpURLConnection) url.openConnection();
-            int contentLength = conn.getContentLength();
-            if (contentLength <= 0) {
-                return null;
-            }
-            DataInputStream stream = new DataInputStream(url.openStream());
-            byte[] buffer = new byte[contentLength];
-            stream.readFully(buffer);
-            stream.close();
-            file = new File(FileUtil.getRoot(context, Environment.DIRECTORY_DOCUMENTS), tableName + ":" + start + "-" + nextStep);
-            DataOutputStream fos = new DataOutputStream(new FileOutputStream(file));
-            fos.write(buffer);
-            fos.flush();
-            fos.close();
-        } catch (IOException | RuntimeException e) {
-            Logger.error(e);
+    @Override
+    public void update(String eventType, String... args) {
+        if (eventType.equals(Observer.STOP_ASYNC_TASK)) {
+            this.cancel(false);
+            mApp.getObserver().unsubscribe(Observer.STOP_ASYNC_TASK, this);
         }
-        return file;
+    }
+
+    private double getPercent(int progress, int total) {
+        double result = (double) (progress * 100) / total;
+        if (result > 100) {
+            result = 100;
+        }
+        return result;
     }
 
     private void
@@ -232,19 +221,62 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
         }
     }
 
-    @Override
-    public void update(String eventType, String... args) {
-        if (eventType.equals(Observer.STOP_ASYNC_TASK)) {
-            this.cancel(false);
+    private File getZipFile(Context context, String tableName, String version, int start, int limit) {
+        File file = null;
+        HttpURLConnection conn;
+        try {
+            int nextStep = start + limit;
+            String repoURL = PreferencesManager.getInstance().getRepoUrl();
+            if (repoURL == null) {
+                return null;
+            }
+            URL url = new URL(repoURL + "/csv-zip/" + tableName + "/" + version + "/" + start + "-" + nextStep + ".zip");
+
+
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            if (conn.getResponseCode() != 200) {
+                return null;
+            }
+            int contentLength = conn.getContentLength();
+            if (contentLength <= 0) {
+                return null;
+            }
+            if (!isCancelled()) {
+                DataInputStream stream = new DataInputStream(url.openStream());
+                byte[] buffer = new byte[contentLength];
+                stream.readFully(buffer);
+                stream.close();
+                file = new File(FileUtil.getRoot(context, Environment.DIRECTORY_DOCUMENTS), tableName + ":" + start + "-" + nextStep);
+                DataOutputStream fos = new DataOutputStream(new FileOutputStream(file));
+                fos.write(buffer);
+                fos.flush();
+                fos.close();
+            }
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
         }
+        return file;
     }
 
-    private double getPercent(int progress, int total) {
-        double result = (double) (progress * 100) / total;
-        if (result > 100) {
-            result = 100;
+    private File tryToGetProblemFile(Context context, String tableName, String version, int start, int limit) {
+        File file = null;
+        for (int i = 0; i < 20; i++) {
+            try {
+                Thread.sleep(3000);
+                if (!isCancelled()) {
+                    file = getZipFile(context, tableName, version, start, limit);
+                }
+                if (file != null) {
+                    break;
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-        return result;
+        return file;
     }
 
     public interface OnLoadListener {
@@ -260,31 +292,4 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
         void onLoadError(String[] message);
     }
-/*
-                for (int i = progress.current; i < mTotal; i += size) {
-                    if (isCancelled()) {
-                        return message;
-                    }
-                    if (PreferencesManager.getInstance().getProgress() == null) {
-                        // значит принудительно все было остановлено
-                        break;
-                    }
-
-                    try {
-                        byte[] buffer = CsvUtil.getFile(PreferencesManager.getInstance().getRepoUrl(), mCurrentTableName, mVersion, i, size);
-                        byte[] result = ZipManager.decompress(buffer);
-                        String txt = new String(result, StandardCharsets.UTF_8);
-                        Table table = CsvUtil.convert(txt);
-                        table.updateHeaders("F_Registr_Pts___LINK", "F_Registr_Pts");
-                        CsvUtil.insertToTable(table, mCurrentTableName, daoSession);
-
-                    } catch (IOException | DataFormatException e) {
-                        Logger.error(e);
-                        message.add(Tags.RPC_ERROR);
-                        message.add(e.getMessage());
-                        return message;
-                    }
-                    StorageUtil.processing(size, mTableName[j], this);
-                    PreferencesManager.getInstance().setProgress(new Progress(i, mTotal, mTableName[j], mVersion));
-                }*/
 }

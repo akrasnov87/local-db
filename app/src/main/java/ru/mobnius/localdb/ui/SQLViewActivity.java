@@ -99,10 +99,5 @@ public class SQLViewActivity extends BaseActivity implements TextWatcher, SqlQue
         }
     }
 
-    @Override
-    public int getExceptionCode() {
-        return ExceptionCode.SQL_ACTIVITY;
-    }
-
 }
 

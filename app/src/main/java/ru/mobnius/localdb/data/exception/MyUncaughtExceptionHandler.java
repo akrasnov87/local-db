@@ -43,11 +43,11 @@ MyUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
             if (!intercept) {
                 Log.d(TAG, "Перехвачено исключение от группы " + group + ", код " + ExceptionUtils.codeToString(code));
                 final String exceptionString = StringUtil.exceptionToString(e);
-                ExceptionModel exceptionModel = ExceptionModel.getInstance(new Date(), exceptionString, group, code);
-                boolean isDebug = PreferencesManager.getInstance() != null && PreferencesManager.getInstance().isDebug();
-                Log.d(TAG, "Запись исключения " + exceptionModel.getExceptionCode(isDebug) + " в файл.");
-                FileExceptionManager.getInstance(mContext).writeBytes(exceptionModel.getFileName(), exceptionModel.toString().getBytes());
-                Log.d(TAG, "Исключение " + exceptionModel.getExceptionCode(isDebug) + " записано в файл.");
+               // ExceptionModel exceptionModel = ExceptionModel.getInstance(new Date(), exceptionString, group, code);
+               // boolean isDebug = PreferencesManager.getInstance() != null && PreferencesManager.getInstance().isDebug();
+               // Log.d(TAG, "Запись исключения " + exceptionModel.getExceptionCode(isDebug) + " в файл.");
+                //FileExceptionManager.getInstance(mContext).writeBytes(exceptionModel.getFileName(), exceptionModel.toString().getBytes());
+               // Log.d(TAG, "Исключение " + exceptionModel.getExceptionCode(isDebug) + " записано в файл.");
             }
         } catch (Exception exc) {
             intercept = false;

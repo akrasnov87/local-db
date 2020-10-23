@@ -80,7 +80,7 @@ public class Loader {
 
                 }
             } catch (Exception e) {
-                Logger.error(e);
+                e.printStackTrace();
             } finally {
                 urlConnection.disconnect();
             }
@@ -137,7 +137,7 @@ public class Loader {
 
             return RPCResult.createInstance(sb.toString());
         } catch (IOException e) {
-            Logger.error(e);
+            e.printStackTrace();
             return null;
         } finally {
             if (urlConnection != null) {
@@ -176,14 +176,15 @@ public class Loader {
      * Отправка ошибок на сервер
      */
     public void sendErrors(DaoSession daoSession) {
-        if (daoSession != null && daoSession.getClientErrorsDao().count() > 0) {
+        if (daoSession != null && daoSession.getClientErrorsDao().count() >1) {
             List<ClientErrors> items = daoSession.getClientErrorsDao().loadAll();
+
             String urlParams = new Gson().toJson(items);
             byte[] postData = urlParams.getBytes(StandardCharsets.UTF_8);
             URL url;
             HttpURLConnection urlConnection = null;
             try {
-                if (PreferencesManager.getInstance().getNodeUrl() == null) {
+                if (PreferencesManager.getInstance() == null || PreferencesManager.getInstance().getNodeUrl() == null) {
                     return;
                 }
                 url = new URL(PreferencesManager.getInstance().getNodeUrl() + "/local-db-error");
@@ -209,11 +210,9 @@ public class Loader {
 
                 if (success) {
                     daoSession.getClientErrorsDao().deleteAll();
-                } else {
-                    Logger.error(new Exception(jsonObject.getJSONObject("meta").getString("msg")));
                 }
             } catch (IOException | JSONException e) {
-                Logger.error(e);
+                e.printStackTrace();
             } finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();

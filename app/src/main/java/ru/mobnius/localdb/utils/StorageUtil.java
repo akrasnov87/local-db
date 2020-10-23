@@ -61,11 +61,11 @@ public class StorageUtil {
                         }
                     }
                 } catch (Exception e) {
-                    Logger.error(e);
+                   e.printStackTrace();
                 }
             }
         } catch (Exception e) {
-            Logger.error(e);
+            e.printStackTrace();
         }
 
         return storageNames.toArray(new StorageName[0]);
@@ -97,7 +97,7 @@ public class StorageUtil {
                                     JSONObject object = new JSONObject(cursor.getString(i));
                                     rowObject.put(cursor.getColumnName(i), object);
                                 } catch (JSONException e) {
-                                    Logger.error(e);
+                                    e.printStackTrace();
                                 }
                             } else {
                                 rowObject.put(cursor.getColumnName(i), cursor.getString(i));
@@ -106,7 +106,7 @@ public class StorageUtil {
                             rowObject.put(cursor.getColumnName(i), "");
                         }
                     } catch (Exception e) {
-                        Logger.error(e);
+                        e.printStackTrace();
                     }
                 }
             }
@@ -155,7 +155,7 @@ public class StorageUtil {
                             db.execSQL(sqlInsert.convertToSqlQuery(idx), values.toArray(new Object[0]));
                             insertions += idx;
                         } catch (Exception e) {
-                            Logger.error(e);
+                            e.printStackTrace();
                         }
                         idx = 0;
                         values.clear();
@@ -165,7 +165,7 @@ public class StorageUtil {
                     db.setTransactionSuccessful();
                 }
             } catch (Exception e) {
-                Logger.error(e);
+                e.printStackTrace();
             } finally {
                 if (idx == 0) {
                     db.endTransaction();
@@ -181,7 +181,7 @@ public class StorageUtil {
                             db.endTransaction();
                             PreferencesManager.getInstance().setLocalRowCount(String.valueOf(insertions), tableName);
                         } catch (IllegalStateException e) {
-                            Logger.error(e);
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -228,7 +228,7 @@ public class StorageUtil {
                             db.execSQL(sqlInsertFromString.convertToSqlQuery(max), s);
                             insertions += max;
                         } catch (Exception e) {
-                            Logger.error(e);
+                            e.printStackTrace();
                         }
                     }
                     idx = i;
@@ -240,7 +240,7 @@ public class StorageUtil {
                     try {
                         db.execSQL(sqlInsertFromString.convertToSqlQuery(last), s);
                     } catch (Exception e) {
-                        Logger.error(e);
+                        e.printStackTrace();
                     }
                 }
             } catch (SQLiteException e) {

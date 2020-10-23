@@ -46,6 +46,7 @@
         <activity
             android:name=".ui.UpdateActivity">
         </activity>
+        <activity android:name=".ui.ErrorActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -63,6 +64,12 @@
             android:exported="false" />
         <service
             android:name=".UpdateJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".HttpCheckJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".SendErrorsJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 

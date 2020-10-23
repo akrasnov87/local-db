@@ -21,13 +21,21 @@ public class NetworkRoutes {
     @Property(nameInDb = "F_Prev_Item_Types")
     public String F_Prev_Item_Types;
 
-    @Generated(hash = 10540881)
+    @Property(nameInDb = "F_Division")
+    public String F_Division;
+    
+    @Property(nameInDb = "F_Subdivision")
+    public String F_Subdivision;
+
+    @Generated(hash = 1858121259)
     public NetworkRoutes(String LINK, String F_Parent, String C_Network_Path,
-                         String F_Prev_Item_Types) {
+            String F_Prev_Item_Types, String F_Division, String F_Subdivision) {
         this.LINK = LINK;
         this.F_Parent = F_Parent;
         this.C_Network_Path = C_Network_Path;
         this.F_Prev_Item_Types = F_Prev_Item_Types;
+        this.F_Division = F_Division;
+        this.F_Subdivision = F_Subdivision;
     }
 
     @Generated(hash = 1842325579)
@@ -66,4 +74,22 @@ public class NetworkRoutes {
     public void setF_Prev_Item_Types(String F_Prev_Item_Types) {
         this.F_Prev_Item_Types = F_Prev_Item_Types;
     }
+
+    public String getF_Division() {
+        return this.F_Division;
+    }
+
+    public void setF_Division(String F_Division) {
+        this.F_Division = F_Division;
+    }
+
+    public String getF_Subdivision() {
+        return this.F_Subdivision;
+    }
+
+    public void setF_Subdivision(String F_Subdivision) {
+        this.F_Subdivision = F_Subdivision;
+    }
+
+
 }

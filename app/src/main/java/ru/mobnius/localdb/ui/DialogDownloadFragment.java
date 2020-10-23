@@ -16,7 +16,6 @@ import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.StorageNameAdapter;
 import ru.mobnius.localdb.adapter.holder.StorageNameHolder;
 import ru.mobnius.localdb.data.BaseDialogFragment;
-import ru.mobnius.localdb.data.exception.ExceptionCode;
 import ru.mobnius.localdb.model.StorageName;
 
 public class DialogDownloadFragment extends BaseDialogFragment implements StorageNameHolder.OnDeleteTableListener {
@@ -52,11 +51,6 @@ public class DialogDownloadFragment extends BaseDialogFragment implements Storag
         super.onStart();
 
         Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(getDialog())).getWindow()).setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-    }
-
-    @Override
-    public int getExceptionCode() {
-        return ExceptionCode.DOWNLOAD_LIST;
     }
 
     @Override

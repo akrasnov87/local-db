@@ -53,7 +53,7 @@ public class UnzipUtil {
             }
             zin.close();
         } catch (Exception e) {
-            Logger.error(e);
+            e.printStackTrace();
         }
         if (absPath != null) {
             try {

@@ -19,4 +19,7 @@
     <string name="update_localdb">Обновить LocalDB</string>
     <string name="update_MO">Обновить Мобильный Обходчик</string>
     <string name="exit">Выйти</string>
+    <string name="look_at_error">Посмотреть ошибки</string>
+    <string name="send_error_report">Отправить текст ошибки</string>
+    <string name="no_saved_errors">Нет сохраненных ошибок</string>
 </resources>
