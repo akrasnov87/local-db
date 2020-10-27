@@ -42,6 +42,9 @@ public class RegistrPts {
     public RegistrPts() {
     }
 
+
+
+
     public String getLINK() {
         return this.LINK;
     }
@@ -65,6 +68,15 @@ public class RegistrPts {
     public void setN_Code(String N_Code) {
         this.N_Code = N_Code;
     }
+    
+
+    public String getB_EE() {
+        return this.B_EE;
+    }
+
+    public void setB_EE(String B_EE) {
+        this.B_EE = B_EE;
+    }
 
     public String getF_Division() {
         return this.F_Division;
@@ -81,13 +93,6 @@ public class RegistrPts {
     public void setF_SubDivision(String F_SubDivision) {
         this.F_SubDivision = F_SubDivision;
     }
-
-    public String getB_EE() {
-        return this.B_EE;
-    }
-
-    public void setB_EE(String B_EE) {
-        this.B_EE = B_EE;
-    }
+    
 
 }

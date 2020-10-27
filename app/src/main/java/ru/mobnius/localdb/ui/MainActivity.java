@@ -5,8 +5,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +18,7 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -41,6 +45,8 @@ import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
+
+import static android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS;
 
 public class MainActivity extends BaseActivity
         implements OnLogListener,
@@ -134,8 +140,6 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
-
-
         if (PreferencesManager.getInstance().getProgress() != null) {
             mUpdateFragment.updateProcess(PreferencesManager.getInstance().getProgress().current, PreferencesManager.getInstance().getProgress().total);
             setMenuItemVisible(false);
@@ -193,7 +197,11 @@ public class MainActivity extends BaseActivity
                 }
                 break;
             case R.id.service_start:
-                startService(HttpService.getIntent(this, HttpService.MANUAL));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ContextCompat.startForegroundService(this, HttpService.getIntent(this, HttpService.MANUAL));
+                } else {
+                    startService(HttpService.getIntent(this, HttpService.MANUAL));
+                }
                 break;
 
             case R.id.service_stop:
@@ -250,7 +258,11 @@ public class MainActivity extends BaseActivity
 
                     mUpdateFragment.startProcess();
                     setMenuItemVisible(false);
-                    startService(HttpService.getIntent(MainActivity.this, name.table));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(HttpService.getIntent(MainActivity.this, name.table));
+                    } else {
+                        startService(HttpService.getIntent(MainActivity.this, name.table));
+                    }
                 }
             });
         } else {

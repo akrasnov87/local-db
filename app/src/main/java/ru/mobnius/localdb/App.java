@@ -1,10 +1,16 @@
 package ru.mobnius.localdb;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
+import android.os.Build;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.io.PrintWriter;
@@ -58,15 +64,18 @@ public class App extends Application implements
     @Override
     public void onCreate() {
         super.onCreate();
-        {
-            // Setup handler for uncaught exceptions.
-            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                @Override
-                public void uncaughtException(Thread thread, Throwable e) {
-                    handleUncaughtException(thread, e);
-                }
-            });
+        NotificationChannel channel;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            channel = new NotificationChannel(HttpService.NOTIFICATION_CHANEL_ID,
+                    "LocalDBChannel", NotificationManager.IMPORTANCE_DEFAULT);
+            ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
         }
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread thread, Throwable e) {
+                handleUncaughtException(thread, e);
+            }
+        });
         Log.d(Names.TAG, "Старт приложения");
         mLogListeners = new ArrayList<>();
         mAvailableListeners = new ArrayList<>();
@@ -83,7 +92,6 @@ public class App extends Application implements
         mObserver = new Observer(Observer.STOP_ASYNC_TASK, Observer.STOP_THREAD, Observer.ERROR);
         DbOpenHelper dbOpenHelper = new DbOpenHelper(this, "local-db.db");
         mDaoSession = new DaoMaster(dbOpenHelper.getWritableDb()).newSession();
-        //dbOpenHelper.onUpgrade((SQLiteDatabase) mDaoSession.getDatabase().getRawDatabase(), 1, 2);
     }
 
     public void registryLogListener(OnLogListener listener) {
@@ -184,17 +192,12 @@ public class App extends Application implements
                     error.setUser(PreferencesManager.getInstance().getLogin());
                 }
             }
-           getDaoSession().getClientErrorsDao().insert(error);
+            getDaoSession().getClientErrorsDao().insert(error);
         }
 
-        /*
-        Intent intent = new Intent ();
-        intent.setAction ("com.mydomain.SEND_LOG"); // see step 5.
-        intent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK); // required when starting from Application
-        startActivity (intent);
-        */
-        System.exit(1); // kill off the crashed app
+        System.exit(1);
     }
+
     public static String getStackTrace(final Throwable throwable) {
         final StringWriter sw = new StringWriter();
         final PrintWriter pw = new PrintWriter(sw, true);

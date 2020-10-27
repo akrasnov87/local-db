@@ -3,6 +3,7 @@ package ru.mobnius.localdb.utils;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
+import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteFullException;
 
@@ -20,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import dalvik.system.DexFile;
+import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Logger;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.data.SqlInsertFromJSONObject;
@@ -27,7 +29,9 @@ import ru.mobnius.localdb.data.SqlInsertFromString;
 import ru.mobnius.localdb.data.Storage;
 import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.model.rpc.RPCResult;
+import ru.mobnius.localdb.storage.DaoMaster;
 import ru.mobnius.localdb.storage.DaoSession;
+import ru.mobnius.localdb.storage.DbOpenHelper;
 
 public class StorageUtil {
 

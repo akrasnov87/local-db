@@ -4,10 +4,13 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.telecom.Connection;
 import android.util.Log;
 
@@ -48,6 +51,9 @@ import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.storage.DbOpenHelper;
 import ru.mobnius.localdb.utils.UrlReader;
 
+import static androidx.core.app.NotificationCompat.PRIORITY_DEFAULT;
+import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
+
 public class HttpService extends Service
         implements OnResponseListener,
         OnLogListener {
@@ -58,8 +64,9 @@ public class HttpService extends Service
     private static final String MODE = "mode";
     private static final String TABLE = "table";
 
-    public static Intent
-    getIntent(Context context, int mode) {
+    public final static String NOTIFICATION_CHANEL_ID = "httpServiceClientLocalDB";
+
+    public static Intent getIntent(Context context, int mode) {
         Intent intent = new Intent();
         intent.setClass(context, HttpService.class);
         intent.putExtra(MODE, mode);
@@ -96,17 +103,11 @@ public class HttpService extends Service
     @Override
     public void onCreate() {
         super.onCreate();
-        NotificationChannel channel;
-        String channelId = "httpServiceClientLocalDB";
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            channel = new NotificationChannel(channelId, "ltnChannel", NotificationManager.IMPORTANCE_DEFAULT);
-            ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-            Notification notification = new NotificationCompat.Builder(this, channelId).setContentTitle("").setContentText("").build();
-            startForeground(1, notification);
-        }
+        Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANEL_ID).setContentTitle("LocalDB").setContentText("Фоновый режим запущен").setPriority(PRIORITY_DEFAULT)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE).build();
+        startForeground(1411, notification);
         App app = (App) getApplication();
         mDaoSession = app.getDaoSession();
-
         mRequestListeners.add(new DefaultRequestListener());
         SyncStatusRequestListener syncStatusRequestListener = new SyncStatusRequestListener();
         SyncRequestListener syncRequestListener = new SyncRequestListener((App) getApplication(), syncStatusRequestListener);
@@ -136,6 +137,10 @@ public class HttpService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANEL_ID).setContentTitle("LocalDB")
+                .setContentText("Фоновый режим запущен").setPriority(PRIORITY_DEFAULT)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE).build();
+        startForeground(1411, notification);
         String strMode;
         if (intent != null) {
             int mode = intent.getIntExtra(MODE, 0);
@@ -166,6 +171,10 @@ public class HttpService extends Service
         return Service.START_STICKY;
     }
 
+    @Override
+    public boolean stopService(Intent name) {
+        return super.stopService(name);
+    }
 
     @Override
     public void onDestroy() {
@@ -207,12 +216,6 @@ public class HttpService extends Service
     @Override
     public void onAddLog(LogItem item) {
         ((App) getApplication()).onAddLog(item);
-    }
-
-    public class MyBinder extends Binder {
-        public HttpService getService() {
-            return HttpService.this;
-        }
     }
 
 }

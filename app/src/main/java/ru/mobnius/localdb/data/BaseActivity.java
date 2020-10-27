@@ -1,10 +1,19 @@
 package ru.mobnius.localdb.data;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -17,7 +26,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import java.util.List;
+
 import ru.mobnius.localdb.R;
+
+import static android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS;
 
 public abstract class BaseActivity extends AppCompatActivity {
     private final int REQUEST_PERMISSIONS = 1;
@@ -33,17 +46,18 @@ public abstract class BaseActivity extends AppCompatActivity {
         mProgressBar = new ProgressBar(this);
         mProgressBar.setVisibility(View.GONE);
 
-        if(view instanceof ViewGroup) {
-            ((ViewGroup)view).addView(mProgressBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        if (view instanceof ViewGroup) {
+            ((ViewGroup) view).addView(mProgressBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
     }
 
+    @SuppressLint("BatteryLife")
     @Override
     protected void onResume() {
         super.onResume();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
-            String[] permissions = new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE };
+            String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
             mPermissionLength = permissions.length;
 
             ActivityCompat.requestPermissions(this,
@@ -51,6 +65,8 @@ public abstract class BaseActivity extends AppCompatActivity {
                     REQUEST_PERMISSIONS);
         }
     }
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -119,7 +135,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         mProgressBar.setVisibility(View.GONE);
     }
 
-    public void returnToPrevious(){
+    public void returnToPrevious() {
         super.onBackPressed();
     }
 }

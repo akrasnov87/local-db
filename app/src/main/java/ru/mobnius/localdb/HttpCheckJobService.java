@@ -1,9 +1,15 @@
 package ru.mobnius.localdb;
 
+import android.app.Notification;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -66,7 +72,7 @@ public class HttpCheckJobService extends JobService {
                         app.onAddLog(new LogItem("хост не доступен, служба " + (serviceAvailable ? "запущена" : "остановлена"), true));
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             Log.e(Names.TAG, "at the end");
-                            startForegroundService(HttpService.getIntent(HttpCheckJobService.this, HttpService.AUTO));
+                            ContextCompat.startForegroundService(HttpCheckJobService.this, HttpService.getIntent(HttpCheckJobService.this, HttpService.AUTO));
                         } else {
                             Log.e(Names.TAG, "at the end");
                             startService(HttpService.getIntent(HttpCheckJobService.this, HttpService.AUTO));
@@ -78,6 +84,7 @@ public class HttpCheckJobService extends JobService {
         });
         thread.start();
     }
+
 
 
 }
