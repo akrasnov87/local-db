@@ -212,7 +212,6 @@ public class HttpService extends Service
         return defaultResponse;
     }
 
-
     @Override
     public void onAddLog(LogItem item) {
         ((App) getApplication()).onAddLog(item);

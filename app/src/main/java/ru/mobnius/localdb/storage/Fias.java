@@ -30,23 +30,25 @@ public class Fias {
     @Property(nameInDb = "F_Town")
     public String F_Town;
 
-    @Generated(hash = 415324961)
+    @Property(nameInDb = "F_Region")
+    public String F_Region;
+
+    @Generated(hash = 1364402492)
     public Fias(String LINK, String C_Full_Address, String C_House_Number,
-            String F_Structure, String F_Municipality, String F_Town) {
+            String F_Structure, String F_Municipality, String F_Town,
+            String F_Region) {
         this.LINK = LINK;
         this.C_Full_Address = C_Full_Address;
         this.C_House_Number = C_House_Number;
         this.F_Structure = F_Structure;
         this.F_Municipality = F_Municipality;
         this.F_Town = F_Town;
+        this.F_Region = F_Region;
     }
 
     @Generated(hash = 274996750)
     public Fias() {
     }
-
-//    @Property(nameInDb = "F_Region")
-//    public String F_Region;
 
 
     public String getLINK() {
@@ -95,6 +97,14 @@ public class Fias {
 
     public void setF_Town(String F_Town) {
         this.F_Town = F_Town;
+    }
+
+    public String getF_Region() {
+        return this.F_Region;
+    }
+
+    public void setF_Region(String F_Region) {
+        this.F_Region = F_Region;
     }
 
 

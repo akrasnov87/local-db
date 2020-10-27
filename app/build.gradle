@@ -10,11 +10,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    greendao {
+        schemaVersion 2
+    }
     defaultConfig {
         applicationId "ru.mobnius.localdb"
         minSdkVersion 21
         targetSdkVersion 29
         versionName getVersion()
+
         setProperty("archivesBaseName", getVersion())
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

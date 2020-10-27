@@ -178,23 +178,26 @@ public class App extends Application implements
     }
 
     public void handleUncaughtException(Thread thread, Throwable e) {
-        e.printStackTrace(); // not all Android versions will print the stack trace automatically
+        e.printStackTrace();
         if (getDaoSession() != null && getDaoSession().getClientErrorsDao().loadAll().size() < 10) {
-            ClientErrors error = new ClientErrors();
-            error.setId(UUID.randomUUID().toString());
-            Date date = Calendar.getInstance().getTime();
-            DateFormat dateFormat = DateFormat.getDateInstance();
-            String strDate = dateFormat.format(date);
-            error.setDate(strDate);
-            error.setMessage(getStackTrace(e));
-            if (PreferencesManager.getInstance() != null) {
-                if (PreferencesManager.getInstance().getLogin() != null) {
-                    error.setUser(PreferencesManager.getInstance().getLogin());
+            try {
+                ClientErrors error = new ClientErrors();
+                error.setId(UUID.randomUUID().toString());
+                Date date = Calendar.getInstance().getTime();
+                DateFormat dateFormat = DateFormat.getDateInstance();
+                String strDate = dateFormat.format(date);
+                error.setDate(strDate);
+                error.setMessage(getStackTrace(e));
+                if (PreferencesManager.getInstance() != null) {
+                    if (PreferencesManager.getInstance().getLogin() != null) {
+                        error.setUser(PreferencesManager.getInstance().getLogin());
+                    }
                 }
+                getDaoSession().getClientErrorsDao().insert(error);
+            }catch (Exception e2){
+                e2.printStackTrace();
             }
-            getDaoSession().getClientErrorsDao().insert(error);
         }
-
         System.exit(1);
     }
 
