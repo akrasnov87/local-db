@@ -86,7 +86,7 @@ public class InsertHandler extends HandlerThread implements EventListener {
                             unzippedFile.delete();
                             if (cur + 10000 >= total) {
                                 mUpdateUIHandler.post(() -> {
-                                    if (mLastTable.equals(target.getTableName())){
+                                    if (mLastTable.equals(target.getTableName())) {
                                         PreferencesManager.getInstance().setProgress(null);
                                         mApp.getObserver().unsubscribe(Observer.STOP_THREAD, InsertHandler.this);
                                     }
@@ -108,13 +108,13 @@ public class InsertHandler extends HandlerThread implements EventListener {
         if (eventType.equals(Observer.STOP_THREAD)) {
             mInsertHandler.removeMessages(INSERT_ROWS);
             quit();
-            if (PreferencesManager.getInstance().getProgress() != null) {
-                PreferencesManager.getInstance().setProgress(null);
-            }
             mUpdateUIHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                mApp.getObserver().unsubscribe(Observer.STOP_THREAD, InsertHandler.this);
+                    mApp.getObserver().unsubscribe(Observer.STOP_THREAD, InsertHandler.this);
+                    if (PreferencesManager.getInstance().getProgress() != null) {
+                        PreferencesManager.getInstance().setProgress(null);
+                    }
                 }
             });
         }

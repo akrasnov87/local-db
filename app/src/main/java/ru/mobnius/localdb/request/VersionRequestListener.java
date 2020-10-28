@@ -65,7 +65,7 @@ public class VersionRequestListener implements OnRequestListener {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        if (PreferencesManager.getInstance().getProgress()!=null){
+        if (PreferencesManager.getInstance().getProgress() != null) {
             try {
                 data.put("mobiletrackerVersion", "0");
                 data.put("mobiletrackerReady", false);
@@ -163,7 +163,6 @@ public class VersionRequestListener implements OnRequestListener {
         Handler handler = new Handler(Looper.getMainLooper());
         Thread thread = new Thread(() -> {
             File folder = new File(Objects.requireNonNull(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).toString());
-
             File file = new File(folder.getAbsolutePath(), apkType);
             if (file.exists()) {
                 file.delete();
@@ -175,7 +174,32 @@ public class VersionRequestListener implements OnRequestListener {
                 URL sUrl = new URL(url);
                 connection = (HttpURLConnection) sUrl.openConnection();
                 connection.connect();
-
+                if (connection.getResponseCode() != 200) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (apkType.equals(LOCAL_DB_APK)) {
+                                PreferencesManager.getInstance().setIsDownloadingLocalDB(false);
+                            }
+                            if (apkType.equals(MO_APK)) {
+                                PreferencesManager.getInstance().setIsDownloadingMO(false);
+                            }
+                        }
+                    });
+                }
+                if (connection.getContentLength() <= 0) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (apkType.equals(LOCAL_DB_APK)) {
+                                PreferencesManager.getInstance().setIsDownloadingLocalDB(false);
+                            }
+                            if (apkType.equals(MO_APK)) {
+                                PreferencesManager.getInstance().setIsDownloadingMO(false);
+                            }
+                        }
+                    });
+                }
                 input = connection.getInputStream();
                 output = new FileOutputStream(file);
 
@@ -211,7 +235,12 @@ public class VersionRequestListener implements OnRequestListener {
                     notificationManager.notify(notif, builder.build());
                 });
             } catch (Exception e) {
-                e.printStackTrace();
+                if (apkType.equals(LOCAL_DB_APK)) {
+                    PreferencesManager.getInstance().setIsDownloadingLocalDB(false);
+                }
+                if (apkType.equals(MO_APK)) {
+                    PreferencesManager.getInstance().setIsDownloadingMO(false);
+                }
             } finally {
                 try {
                     if (output != null)

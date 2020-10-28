@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.telecom.Connection;
@@ -21,6 +22,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import ru.mobnius.localdb.adapter.holder.StorageNameHolder;
+import ru.mobnius.localdb.data.DeleteTableAsyncTask;
 import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.OnResponseListener;
@@ -56,7 +59,7 @@ import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
 
 public class HttpService extends Service
         implements OnResponseListener,
-        OnLogListener {
+        OnLogListener, StorageNameHolder.OnDeleteTableListener {
 
     public static final int AUTO = 1;
     public static final int MANUAL = 2;
@@ -106,8 +109,9 @@ public class HttpService extends Service
         Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANEL_ID).setContentTitle("LocalDB").setContentText("Фоновый режим запущен").setPriority(PRIORITY_DEFAULT)
                 .setCategory(NotificationCompat.CATEGORY_SERVICE).build();
         startForeground(1411, notification);
-        App app = (App) getApplication();
-        mDaoSession = app.getDaoSession();
+
+        DbOpenHelper dbOpenHelper = new DbOpenHelper(this, "local-db.db");
+        mDaoSession = new DaoMaster(dbOpenHelper.getWritableDb()).newSession();
         mRequestListeners.add(new DefaultRequestListener());
         SyncStatusRequestListener syncStatusRequestListener = new SyncStatusRequestListener();
         SyncRequestListener syncRequestListener = new SyncRequestListener((App) getApplication(), syncStatusRequestListener);
@@ -129,8 +133,7 @@ public class HttpService extends Service
         if (PreferencesManager.getInstance() != null) {
             Progress progress = PreferencesManager.getInstance().getProgress();
             if (progress != null) {
-                onAddLog(new LogItem("Возобновление загрузки " + progress.tableName, false));
-                onResponse(new UrlReader("GET /sync?table=" + progress.tableName + "&restore=true HTTP/1.1"));
+                PreferencesManager.getInstance().setProgress(null);
             }
         }
     }
@@ -141,6 +144,32 @@ public class HttpService extends Service
                 .setContentText("Фоновый режим запущен").setPriority(PRIORITY_DEFAULT)
                 .setCategory(NotificationCompat.CATEGORY_SERVICE).build();
         startForeground(1411, notification);
+        if (PreferencesManager.getInstance() != null && PreferencesManager.getInstance().getSCHEMA_VERSION() != DaoMaster.SCHEMA_VERSION
+                && PreferencesManager.getInstance().getSCHEMA_VERSION() < 2) {
+            ((App) getApplication()).onAddLog(new LogItem("Подождите идет удаление невалидных данных. ", true));
+            ((App) getApplication()).onAddLog(new LogItem("Это может занять до 10 минут", true));
+            Handler handler = new Handler(getMainLooper());
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    getDaoSession().getDatabase().execSQL("delete from " + "UI_SV_FIAS");
+                    getDaoSession().getDatabase().execSQL("delete from " + "ED_Network_Routes");
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            PreferencesManager.getInstance().setSCHEMA_VERSION(DaoMaster.SCHEMA_VERSION);
+                            ((App) getApplication()).onAddLog(new LogItem("Удаление невалидных данных прошло успешно", true));
+                            PreferencesManager.getInstance().setLocalRowCount("0", "ED_Network_Routes");
+                            PreferencesManager.getInstance().setRemoteRowCount("0", "ED_Network_Routes");
+                            PreferencesManager.getInstance().setLocalRowCount("0", "UI_SV_FIAS");
+                            PreferencesManager.getInstance().setRemoteRowCount("0", "UI_SV_FIAS");
+                        }
+                    });
+                }
+            });
+            thread.start();
+
+        }
         String strMode;
         if (intent != null) {
             int mode = intent.getIntExtra(MODE, 0);
@@ -150,7 +179,7 @@ public class HttpService extends Service
                     break;
 
                 case MANUAL:
-                    strMode = "в ручную";
+                    strMode = "вручную";
                     break;
 
                 default:
@@ -173,7 +202,9 @@ public class HttpService extends Service
 
     @Override
     public boolean stopService(Intent name) {
+        stopForeground(true);
         return super.stopService(name);
+
     }
 
     @Override
@@ -217,4 +248,14 @@ public class HttpService extends Service
         ((App) getApplication()).onAddLog(item);
     }
 
+
+    @Override
+    public void onTableDeleted(int position) {
+
+    }
+
+    @Override
+    public void onStartDeleting(int position) {
+
+    }
 }

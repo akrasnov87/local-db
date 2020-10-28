@@ -80,5 +80,9 @@
         app:isPreferenceVisible="false"
         app:summary="Информация о доступном обновлении"
         tools:isPreferenceVisible="true" />
+    <Preference
+        android:key="START_HTTP_SERVICE"
+        android:summary="Принудительно запустить службу"
+        android:title="Запуск службы"/>
 
 </PreferenceScreen>

@@ -30,6 +30,7 @@ import ru.mobnius.localdb.data.tablePack.CsvUtil;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.observer.EventListener;
 import ru.mobnius.localdb.observer.Observer;
+import ru.mobnius.localdb.storage.DaoMaster;
 import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.FileUtil;
 import ru.mobnius.localdb.utils.Loader;

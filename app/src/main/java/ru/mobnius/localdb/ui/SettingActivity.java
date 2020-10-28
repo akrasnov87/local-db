@@ -24,6 +24,7 @@ import java.util.Objects;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.data.PreferencesManager;
+import ru.mobnius.localdb.utils.JobSchedulerUtil;
 import ru.mobnius.localdb.utils.VersionUtil;
 
 public class SettingActivity extends AppCompatActivity {
@@ -69,6 +70,7 @@ public class SettingActivity extends AppCompatActivity {
         private Preference pSQLite;
         private Preference pClearDB;
         private Preference pLoginReset;
+        private Preference pStartService;
         private Preference pNodeUrl;
         private Preference pRpcUrl;
         private ListPreference lpSize;
@@ -89,6 +91,9 @@ public class SettingActivity extends AppCompatActivity {
 
             pServerVersion = findPreference(PreferencesManager.SERVER_APP_VERSION);
             Objects.requireNonNull(pServerVersion).setOnPreferenceClickListener(this);
+
+            pStartService = findPreference(PreferencesManager.START_SERVICE);
+            Objects.requireNonNull(pStartService).setOnPreferenceClickListener(this);
 
             pVersion = findPreference(PreferencesManager.APP_VERSION);
             Objects.requireNonNull(pVersion).setOnPreferenceClickListener(this);
@@ -178,6 +183,9 @@ public class SettingActivity extends AppCompatActivity {
                         }
                     });
                     break;
+                case PreferencesManager.START_SERVICE:
+                    JobSchedulerUtil.scheduleServiceCheckJob(requireContext());
+                break;
                 case PreferencesManager.CLEAR:
                     confirm("Все локальные данные будут удалены, авторизация сброшена. Вы уверены?", (dialog, which) -> {
                         ActivityManager am = (ActivityManager) requireActivity().getSystemService(Context.ACTIVITY_SERVICE);

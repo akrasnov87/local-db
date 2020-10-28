@@ -38,6 +38,8 @@ public class PreferencesManager {
     private static final String MO_READY_TO_UPDATE= "MBL_MO_READY_TO_UPDATE";
     private static final String MO_DOWNLOADING_NOW = "MBL_MO_DOWNLOADING_NOW";
     private static final String LOCAL_DB_DOWNLOADING_NOW = "MBL_LOCAL_DB_DOWNLOADING_NOW";
+    public static final String START_SERVICE = "START_HTTP_SERVICE";
+    private static final String DAO_SCHEMA_VERSION = "DAO_SCHEMA_VERSION";
 
     private static PreferencesManager preferencesManager;
     private final SharedPreferences sharedPreferences;
@@ -239,6 +241,14 @@ public class PreferencesManager {
 
     public boolean isDownloadingLocalDB() {
         return getSharedPreferences().getBoolean(LOCAL_DB_DOWNLOADING_NOW, false);
+    }
+
+    public void setSCHEMA_VERSION(int version) {
+        getSharedPreferences().edit().putInt(DAO_SCHEMA_VERSION, version).apply();
+    }
+
+    public int getSCHEMA_VERSION() {
+        return getSharedPreferences().getInt(DAO_SCHEMA_VERSION, 1);
     }
 
 }

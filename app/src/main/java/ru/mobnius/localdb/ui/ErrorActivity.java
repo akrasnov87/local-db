@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 import ru.mobnius.localdb.App;
+import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.R;
 import ru.mobnius.localdb.adapter.ErrorsAdapter;
 import ru.mobnius.localdb.storage.ClientErrors;
@@ -25,9 +26,9 @@ public class ErrorActivity extends AppCompatActivity {
         setContentView(R.layout.activity_error);
         RecyclerView rvErrors = findViewById(R.id.rv_errors);
         App app = (App) getApplicationContext();
-        if (app.getDaoSession()!=null) {
-            if (app.getDaoSession().getClientErrorsDao()!=null) {
-                List<ClientErrors> errors = app.getDaoSession().getClientErrorsDao().loadAll();
+        if (HttpService.getDaoSession()!=null) {
+            if (HttpService.getDaoSession().getClientErrorsDao()!=null) {
+                List<ClientErrors> errors = HttpService.getDaoSession().getClientErrorsDao().loadAll();
                 if (errors.size() == 0) {
                     TextView tvNoErrors = findViewById(R.id.tv_no_errors);
                     tvNoErrors.setVisibility(View.VISIBLE);

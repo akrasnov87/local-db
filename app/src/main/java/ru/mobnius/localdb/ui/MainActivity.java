@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.Menu;
@@ -35,6 +36,7 @@ import ru.mobnius.localdb.adapter.holder.StorageNameHolder;
 import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.BaseActivity;
 import ru.mobnius.localdb.data.DeleteTableAsyncTask;
+import ru.mobnius.localdb.data.DropAsync;
 import ru.mobnius.localdb.data.HttpServerThread;
 import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
@@ -43,6 +45,7 @@ import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.StorageName;
 import ru.mobnius.localdb.observer.Observer;
+import ru.mobnius.localdb.storage.DaoMaster;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
@@ -53,7 +56,7 @@ public class MainActivity extends BaseActivity
         AvailableTimerTask.OnAvailableListener,
         View.OnClickListener,
         OnHttpListener,
-        DialogDownloadFragment.OnDownloadStorageListener {
+        DialogDownloadFragment.OnDownloadStorageListener{
 
     public static Intent getIntent(Context context) {
         return new Intent(context, MainActivity.class);
@@ -95,7 +98,6 @@ public class MainActivity extends BaseActivity
         btnStart.setOnClickListener(this);
         btnStop = findViewById(R.id.service_stop);
         btnStop.setOnClickListener(this);
-
     }
 
     @Override
@@ -103,8 +105,7 @@ public class MainActivity extends BaseActivity
         getMenuInflater().inflate(R.menu.menu_main, menu);
         miSyncDB = menu.findItem(R.id.action_fias);
         MenuItem errors = menu.findItem(R.id.action_error);
-        App app = (App) getApplication();
-        if (app.getDaoSession() != null && app.getDaoSession().getClientErrorsDao() != null && app.getDaoSession().getClientErrorsDao().count() > 0) {
+        if (HttpService.getDaoSession() != null && HttpService.getDaoSession().getClientErrorsDao() != null && HttpService.getDaoSession().getClientErrorsDao().count() > 0) {
             errors.setVisible(true);
         } else {
             errors.setVisible(false);
@@ -279,12 +280,14 @@ public class MainActivity extends BaseActivity
             message = "База данных заблокирована другим потоком. Попробуйте позднее.";
         }
         confirm(message, (dialog, which) -> {
-            if (!db.isDbLockedByCurrentThread()) {
-                DeleteTableAsyncTask task = new DeleteTableAsyncTask(name.table, onDeleteTableListener, position);
-                task.execute(db);
-                onDeleteTableListener.onStartDeleting(position);
-            } else {
-                dialog.dismiss();
+            if (DialogInterface.BUTTON_POSITIVE == which) {
+                if (!db.isDbLockedByCurrentThread()) {
+                    DeleteTableAsyncTask task = new DeleteTableAsyncTask(name.table, onDeleteTableListener, position);
+                    task.execute(db);
+                    onDeleteTableListener.onStartDeleting(position);
+                } else {
+                    dialog.dismiss();
+                }
             }
         });
     }
@@ -294,4 +297,5 @@ public class MainActivity extends BaseActivity
             miSyncDB.setVisible(visible);
         }
     }
+
 }

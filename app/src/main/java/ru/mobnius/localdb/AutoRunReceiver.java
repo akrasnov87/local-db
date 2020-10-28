@@ -23,10 +23,8 @@ public class AutoRunReceiver extends BroadcastReceiver
         mContext = context;
         //Logger.setContext(context);
         Log.d(Names.TAG, "Receive");
-
-        JobSchedulerUtil.scheduleServiceCheckJob(mContext);
         JobSchedulerUtil.scheduleSendErrorsJob(mContext);
-
+        JobSchedulerUtil.scheduleServiceCheckJob(mContext);
         ((App) mContext).onAddLog(new LogItem("пул запущен, период проверки " + "15" + " мин.", false));
     }
 

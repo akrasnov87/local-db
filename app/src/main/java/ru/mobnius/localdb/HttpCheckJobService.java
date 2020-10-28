@@ -72,7 +72,7 @@ public class HttpCheckJobService extends JobService {
                         app.onAddLog(new LogItem("хост не доступен, служба " + (serviceAvailable ? "запущена" : "остановлена"), true));
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             Log.e(Names.TAG, "at the end");
-                            ContextCompat.startForegroundService(HttpCheckJobService.this, HttpService.getIntent(HttpCheckJobService.this, HttpService.AUTO));
+                            startForegroundService(HttpService.getIntent(HttpCheckJobService.this, HttpService.AUTO));
                         } else {
                             Log.e(Names.TAG, "at the end");
                             startService(HttpService.getIntent(HttpCheckJobService.this, HttpService.AUTO));

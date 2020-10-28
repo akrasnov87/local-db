@@ -21,6 +21,7 @@ import ru.mobnius.localdb.model.DefaultResult;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.observer.EventListener;
 import ru.mobnius.localdb.observer.Observer;
+import ru.mobnius.localdb.storage.DaoMaster;
 import ru.mobnius.localdb.utils.NetworkUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
@@ -61,8 +62,11 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 PreferencesManager.getInstance().isMOReadyToUpdate() || PreferencesManager.getInstance().isDownloadingMO()) {
             return Response.getErrorInstance(urlReader, "Сначала вам необходимо выполнить обновление приложений до последних версий", Response.RESULT_FAIL);
         }
+        if (PreferencesManager.getInstance() != null && PreferencesManager.getInstance().getSCHEMA_VERSION() != DaoMaster.SCHEMA_VERSION
+                && PreferencesManager.getInstance().getSCHEMA_VERSION() < 2) {
+            return Response.getErrorInstance(urlReader, "Подождите, в LocalDB происходит удаление невалидных данных", Response.RESULT_FAIL);
+        }
         mUrlReader = urlReader;
-        // TODO: 17.06.2020 нужно достать из запроса логин и пароль
         ArrayList<String> tableName = new ArrayList<>();
         String table = urlReader.getParam("table");
         if (table.equals("allTables")) {
@@ -81,29 +85,23 @@ public class SyncRequestListener extends AuthFilterRequestListener
             PreferencesManager.getInstance().setAllTablesArray(null);
         }
         if (NetworkUtil.isNetworkAvailable(mApp)) {
-            if (urlReader.getParam("restore") != null) {
-                PreferencesManager.getInstance().setProgress(null);
-                LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), SyncRequestListener.this, mApp);
-                mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
-                task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-            } else {
-                PreferencesManager.getInstance().setProgress(null);
-                if (mInsertHandler != null) {
-                    mInsertHandler.quit();
-                    mInsertHandler = null;
-                }
-                mInsertHandler = new InsertHandler(mApp, this, new Handler(Looper.getMainLooper()), tableName.get(tableName.size()-1));
-                mInsertHandler.start();
-                mInsertHandler.getLooper();
-                LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp);
-                mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
-                mApp.getObserver().subscribe(Observer.STOP_THREAD, mInsertHandler);
-                task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
-                response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
-                isCanceled = false;
+            PreferencesManager.getInstance().setProgress(null);
+            if (mInsertHandler != null) {
+                mInsertHandler.quit();
+                mInsertHandler = null;
             }
+            mInsertHandler = new InsertHandler(mApp, this, new Handler(Looper.getMainLooper()), tableName.get(tableName.size() - 1));
+            mInsertHandler.start();
+            mInsertHandler.getLooper();
+            LoadAsyncTask task = new LoadAsyncTask(tableName.toArray(new String[0]), this, mApp);
+            mApp.getObserver().subscribe(Observer.STOP_ASYNC_TASK, task);
+            mApp.getObserver().subscribe(Observer.STOP_THREAD, mInsertHandler);
+            task.executeOnExecutor(Executors.newSingleThreadExecutor(), PreferencesManager.getInstance().getLogin(), PreferencesManager.getInstance().getPassword());
+            response = Response.getInstance(urlReader, DefaultResult.getSuccessInstance().toJsonString());
+            isCanceled = false;
         } else {
-            response = Response.getErrorInstance(urlReader, "Не подключения к сети интернет", Response.RESULT_FAIL);
+            mApp.getObserver().notify(Observer.ERROR, "Нет подключения к сети интернет");
+            response = Response.getErrorInstance(urlReader, "Нет подключения к сети интернет", Response.RESULT_FAIL);
         }
         return response;
     }

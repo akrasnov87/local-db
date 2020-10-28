@@ -1,22 +1,18 @@
 package ru.mobnius.localdb;
 
-import android.annotation.SuppressLint;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.os.Build;
-import android.os.PowerManager;
 import android.util.Log;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -25,21 +21,17 @@ import java.util.UUID;
 
 import ru.mobnius.localdb.data.AvailableTimerTask;
 import ru.mobnius.localdb.data.ConnectionChecker;
+import ru.mobnius.localdb.data.DropAsync;
 import ru.mobnius.localdb.data.OnHttpListener;
 import ru.mobnius.localdb.data.OnLogListener;
 import ru.mobnius.localdb.data.PreferencesManager;
-import ru.mobnius.localdb.data.exception.ExceptionCode;
-import ru.mobnius.localdb.data.exception.ExceptionGroup;
-import ru.mobnius.localdb.data.exception.OnExceptionIntercept;
-import ru.mobnius.localdb.data.exception.MyUncaughtExceptionHandler;
 import ru.mobnius.localdb.model.LogItem;
 import ru.mobnius.localdb.model.Response;
 import ru.mobnius.localdb.model.User;
 import ru.mobnius.localdb.observer.Observer;
 import ru.mobnius.localdb.storage.ClientErrors;
-import ru.mobnius.localdb.storage.DaoMaster;
-import ru.mobnius.localdb.storage.DaoSession;
-import ru.mobnius.localdb.storage.DbOpenHelper;
+import ru.mobnius.localdb.ui.MainActivity;
+import ru.mobnius.localdb.utils.JobSchedulerUtil;
 import ru.mobnius.localdb.utils.UrlReader;
 
 public class App extends Application implements
@@ -54,12 +46,6 @@ public class App extends Application implements
     private List<AvailableTimerTask.OnAvailableListener> mAvailableListeners;
     private List<OnHttpListener> mHttpListeners;
     private Observer mObserver;
-    private DaoSession mDaoSession;
-
-
-    public DaoSession getDaoSession() {
-        return mDaoSession;
-    }
 
     @Override
     public void onCreate() {
@@ -90,8 +76,6 @@ public class App extends Application implements
         filter.addAction(Intent.ACTION_BOOT_COMPLETED);
         registerReceiver(mAutoRunReceiver, filter);
         mObserver = new Observer(Observer.STOP_ASYNC_TASK, Observer.STOP_THREAD, Observer.ERROR);
-        DbOpenHelper dbOpenHelper = new DbOpenHelper(this, "local-db.db");
-        mDaoSession = new DaoMaster(dbOpenHelper.getWritableDb()).newSession();
     }
 
     public void registryLogListener(OnLogListener listener) {
@@ -179,7 +163,7 @@ public class App extends Application implements
 
     public void handleUncaughtException(Thread thread, Throwable e) {
         e.printStackTrace();
-        if (getDaoSession() != null && getDaoSession().getClientErrorsDao().loadAll().size() < 10) {
+        if (HttpService.getDaoSession() != null && HttpService.getDaoSession().getClientErrorsDao().loadAll().size() < 10) {
             try {
                 ClientErrors error = new ClientErrors();
                 error.setId(UUID.randomUUID().toString());
@@ -193,7 +177,7 @@ public class App extends Application implements
                         error.setUser(PreferencesManager.getInstance().getLogin());
                     }
                 }
-                getDaoSession().getClientErrorsDao().insert(error);
+                HttpService.getDaoSession().getClientErrorsDao().insert(error);
             }catch (Exception e2){
                 e2.printStackTrace();
             }
@@ -207,4 +191,5 @@ public class App extends Application implements
         throwable.printStackTrace(pw);
         return sw.getBuffer().toString();
     }
+
 }

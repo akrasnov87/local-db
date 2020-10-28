@@ -75,7 +75,6 @@ public class SyncStatusRequestListener extends AuthFilterRequestListener
             if (errorMessage != null && errorMessage.length() > 600) {
                 errorMessage = errorMessage.substring(0, 600);
             }
-            errorMessage = "В LocalDB произошла ошибка: " + errorMessage;
         }
     }
 }

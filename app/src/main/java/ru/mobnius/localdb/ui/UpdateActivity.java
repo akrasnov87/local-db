@@ -20,7 +20,9 @@ import java.io.File;
 import java.util.Objects;
 
 import ru.mobnius.localdb.BuildConfig;
+import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.R;
+import ru.mobnius.localdb.Tags;
 import ru.mobnius.localdb.data.PreferencesManager;
 import ru.mobnius.localdb.request.VersionRequestListener;
 import ru.mobnius.localdb.utils.VersionUtil;
@@ -78,39 +80,50 @@ public class UpdateActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (isTryingToUpdateLDB) {
-            boolean isNotUpdated = VersionUtil.isUpgradeVersion(this, PreferencesManager.getInstance().getRemoteLocalDBVersion(), true);
-            if (isNotUpdated) {
-                PreferencesManager.getInstance().setLocalDBReadyToUpdate(true);
-                isTryingToUpdateLDB = false;
-            }
-        }
-        if (!PreferencesManager.getInstance().isLocalDBReadyToUpdate() && !PreferencesManager.getInstance().isMOReadyToUpdate()) {
-            String noUpdates = "Нет доступных  для установки обновлений";
-            tvUpdateInfo.setText(noUpdates);
-        } else {
-            if (PreferencesManager.getInstance().isLocalDBReadyToUpdate() && PreferencesManager.getInstance().isMOReadyToUpdate()) {
-                String message = "Вам доступны обновления LocalDB и Мобильного обходчика. Сначала необходимо установить обновление для Мобильного обходчика";
-                tvUpdateInfo.setText(message);
-                btnUpdateMO.setVisibility(View.VISIBLE);
-                btnUpdateLocalDB.setEnabled(false);
-                btnUpdateLocalDB.setVisibility(View.VISIBLE);
-            } else {
-                String oneUpdate = "Вам доступно обновление ";
-                if (PreferencesManager.getInstance().isLocalDBReadyToUpdate()) {
-                    btnUpdateLocalDB.setVisibility(View.VISIBLE);
-                    btnUpdateLocalDB.setEnabled(true);
-                    oneUpdate = oneUpdate + "LocalDB до версии " + PreferencesManager.getInstance().getRemoteLocalDBVersion();
-                    tvUpdateInfo.setText(oneUpdate);
-                } else {
-                    btnUpdateLocalDB.setVisibility(View.GONE);
+        File cacheDir = getCacheDir();
+        File f = getDatabasePath("local-db.db");
+        long dbSize = f.length();
+        long dbSizeInMb = dbSize / 1048576;
+        long totalSize = dbSizeInMb + 300;
+        if (cacheDir.getFreeSpace() / 1000000 < totalSize && PreferencesManager.getInstance().isLocalDBReadyToUpdate()) {
+           String noSpace = "Недостаточно места на диске для установки обновления. Необходимо " + totalSize +" MB. Попробуйте очистить базу данных LocalDB";
+           tvUpdateInfo.setText(noSpace);
+           tvUpdateInfo.setVisibility(View.GONE);
+        }else {
+            if (isTryingToUpdateLDB) {
+                boolean isNotUpdated = VersionUtil.isUpgradeVersion(this, PreferencesManager.getInstance().getRemoteLocalDBVersion(), true);
+                if (isNotUpdated) {
+                    PreferencesManager.getInstance().setLocalDBReadyToUpdate(true);
+                    isTryingToUpdateLDB = false;
                 }
-                if (PreferencesManager.getInstance().isMOReadyToUpdate()) {
+            }
+            if (!PreferencesManager.getInstance().isLocalDBReadyToUpdate() && !PreferencesManager.getInstance().isMOReadyToUpdate()) {
+                String noUpdates = "Нет доступных  для установки обновлений";
+                tvUpdateInfo.setText(noUpdates);
+            } else {
+                if (PreferencesManager.getInstance().isLocalDBReadyToUpdate() && PreferencesManager.getInstance().isMOReadyToUpdate()) {
+                    String message = "Вам доступны обновления LocalDB и Мобильного обходчика. Сначала необходимо установить обновление для Мобильного обходчика";
+                    tvUpdateInfo.setText(message);
                     btnUpdateMO.setVisibility(View.VISIBLE);
-                    oneUpdate = oneUpdate + " Мобильного обходчика до версии " + PreferencesManager.getInstance().getRemoteMOVersion();
-                    tvUpdateInfo.setText(oneUpdate);
+                    btnUpdateLocalDB.setEnabled(false);
+                    btnUpdateLocalDB.setVisibility(View.VISIBLE);
                 } else {
-                    btnUpdateMO.setVisibility(View.GONE);
+                    String oneUpdate = "Вам доступно обновление ";
+                    if (PreferencesManager.getInstance().isLocalDBReadyToUpdate()) {
+                        btnUpdateLocalDB.setVisibility(View.VISIBLE);
+                        btnUpdateLocalDB.setEnabled(true);
+                        oneUpdate = oneUpdate + "LocalDB до версии " + PreferencesManager.getInstance().getRemoteLocalDBVersion();
+                        tvUpdateInfo.setText(oneUpdate);
+                    } else {
+                        btnUpdateLocalDB.setVisibility(View.GONE);
+                    }
+                    if (PreferencesManager.getInstance().isMOReadyToUpdate()) {
+                        btnUpdateMO.setVisibility(View.VISIBLE);
+                        oneUpdate = oneUpdate + " Мобильного обходчика до версии " + PreferencesManager.getInstance().getRemoteMOVersion();
+                        tvUpdateInfo.setText(oneUpdate);
+                    } else {
+                        btnUpdateMO.setVisibility(View.GONE);
+                    }
                 }
             }
         }
@@ -131,6 +144,7 @@ public class UpdateActivity extends AppCompatActivity {
             PreferencesManager.getInstance().setLocalDBReadyToUpdate(false);
             btnUpdateLocalDB.setVisibility(View.GONE);
             isTryingToUpdateLDB = true;
+            stopService(HttpService.getIntent(this, HttpService.MANUAL));
             startActivity(install);
         }
         if (requestCode == MO_REQUEST_CODE) {
