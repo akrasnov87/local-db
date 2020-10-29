@@ -1,8 +1,10 @@
 package ru.mobnius.localdb.data.tablePack;
 
 import android.util.Log;
+
 import org.greenrobot.greendao.database.Database;
 import org.greenrobot.greendao.database.DatabaseStatement;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -18,12 +20,12 @@ import ru.mobnius.localdb.storage.DaoSession;
 
 public class CsvUtil {
     public static Table convert(String input) {
-        if(input != null && !input.equals("")) {
+        if (input != null && !input.equals("")) {
             String[] lines = input.split("\n");
-            if(lines.length > 0) {
+            if (lines.length > 0) {
                 Table table = new Table(lines[0], lines.length - 1);
 
-                for(int i = 1; i < lines.length; i++) {
+                for (int i = 1; i < lines.length; i++) {
                     String line = lines[i];
                     String[] values = new String[table.getHeaders().length];
                     int idx = 0;
@@ -41,12 +43,11 @@ public class CsvUtil {
     }
 
     /**
-     *
-     * @param baseUrl http://demo.it-serv.ru/repo
+     * @param baseUrl   http://demo.it-serv.ru/repo
      * @param tableName name of table
-     * @param version version
-     * @param start where to start
-     * @param limit how many records to get
+     * @param version   version
+     * @param start     where to start
+     * @param limit     how many records to get
      * @return byte array of file
      */
     public static byte[] getFile(String baseUrl, String tableName, String version, int start, int limit) {
@@ -85,11 +86,9 @@ public class CsvUtil {
 
             Scanner s = new Scanner(in).useDelimiter("\\A");
             result = s.hasNext() ? s.next() : "";
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.d(PackManager.TAG, Objects.requireNonNull(e.getMessage()));
-        }
-        finally {
+        } finally {
             urlConnection.disconnect();
         }
 
@@ -100,8 +99,8 @@ public class CsvUtil {
         JSONObject result = null;
         HttpURLConnection urlConnection = null;
         try {
-        URL url = new URL(baseUrl + "/csv-zip");
-        urlConnection = (HttpURLConnection) url.openConnection();
+            URL url = new URL(baseUrl + "/csv-zip");
+            urlConnection = (HttpURLConnection) url.openConnection();
 
 
             urlConnection.setRequestMethod("GET");
@@ -111,11 +110,46 @@ public class CsvUtil {
 
             Scanner s = new Scanner(in).useDelimiter("\\A");
             result = new JSONObject(s.hasNext() ? s.next() : "");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.d(PackManager.TAG, Objects.requireNonNull(e.getMessage()));
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
         }
-        finally {
+
+        return result;
+    }
+
+    public static JSONObject newGetInfo(String baseUrl, String tableName) {
+        JSONObject result = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(baseUrl);
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+
+            urlConnection.setRequestMethod("GET");
+            urlConnection.setConnectTimeout(3000);
+
+            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+
+            Scanner s = new Scanner(in).useDelimiter("\\A");
+            JSONArray array = new JSONArray(s.hasNext() ? s.next() : "");
+            if (array != null && array.length() > 0) {
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject temp = array.getJSONObject(i);
+                    if (temp.getString("table_Name").toLowerCase().equals(tableName.toLowerCase())) {
+                        result = array.getJSONObject(i);
+                        break;
+                    }
+                }
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            Log.d(PackManager.TAG, Objects.requireNonNull(e.getMessage()));
+        } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
             }
@@ -140,9 +174,9 @@ public class CsvUtil {
 
         try {
             for (int i = 0; i < table.count(); i++) {
-                for(int j = 0; j < table.getHeaders().length; j++) {
+                for (int j = 0; j < table.getHeaders().length; j++) {
                     String value = table.getValue(i)[j];
-                    if(value == null) {
+                    if (value == null) {
                         mStatement.bindNull(j + 1);
                     } else {
                         mStatement.bindString(j + 1, value);
@@ -154,11 +188,10 @@ public class CsvUtil {
 
             database.setTransactionSuccessful();
             result = true;
-        }catch (Exception e) {
+        } catch (Exception e) {
             Log.d(PackManager.TAG, Objects.requireNonNull(e.getMessage()));
             result = false;
-        }
-        finally {
+        } finally {
             database.endTransaction();
         }
 
@@ -166,12 +199,12 @@ public class CsvUtil {
     }
 
     public static Readme convertReadme(String input) {
-        if(input != null && !input.equals("")) {
+        if (input != null && !input.equals("")) {
             String[] lines = input.split("\n");
-            if(lines.length > 0) {
+            if (lines.length > 0) {
                 Readme table = new Readme(lines[0], lines.length - 1);
 
-                for(int i = 1; i < lines.length; i++) {
+                for (int i = 1; i < lines.length; i++) {
                     String line = lines[i];
                     String[] values = new String[table.getHeaders().length];
                     int idx = 0;

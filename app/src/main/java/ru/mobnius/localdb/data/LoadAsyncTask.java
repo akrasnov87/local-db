@@ -9,6 +9,7 @@ import android.os.Environment;
 import android.util.Log;
 
 import org.greenrobot.greendao.database.Database;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,6 +27,7 @@ import ru.mobnius.localdb.App;
 import ru.mobnius.localdb.HttpService;
 import ru.mobnius.localdb.Names;
 import ru.mobnius.localdb.Tags;
+import ru.mobnius.localdb.data.dowloadInfo.TableInfo;
 import ru.mobnius.localdb.data.tablePack.CsvUtil;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.observer.EventListener;
@@ -34,6 +36,7 @@ import ru.mobnius.localdb.storage.DaoMaster;
 import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.FileUtil;
 import ru.mobnius.localdb.utils.Loader;
+import ru.mobnius.localdb.utils.VersionUtil;
 
 /**
  * Загрузка данных с сервера
@@ -65,30 +68,65 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             message.add("Ошибка аторизации, не известно значение url для скачивания");
             return message;
         }
-        JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
-        if (infoTables == null) {
-            message.add(Tags.RPC_ERROR);
-            message.add("Не удалось получить необходимую информацию о загрузке. Попробуйте повторить загрузку снова");
-            return message;
-        }
+
         if (!isCancelled() && mTableName != null) {
             for (String tableName : mTableName) {
+                Progress startProgress = new Progress(0, 0, tableName);
+                PreferencesManager.getInstance().setProgress(startProgress);
+                JSONObject versions = CsvUtil.newGetInfo(PreferencesManager.getInstance().getRpcUrl() + "/localdb/versions/1.139.0.513", tableName); //+ VersionUtil.getVersionName(mApp));
+                JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
+                if (infoTables == null || versions == null) {
+                    message.add(Tags.RPC_ERROR);
+                    message.add("Не удалось получить необходимую информацию о загрузке. Попробуйте повторить загрузку снова");
+                    return message;
+                }
                 //количество записей с сервера за 1 rpc запрос
                 int size;
                 int fileCount;
                 int hddSize;
                 String mVersion;
-                JSONObject tableInfo;
-
+                JSONObject resource = null;
                 int mTotal;
                 try {
                     if (infoTables.getJSONArray(tableName).length() > 0) {
-                        tableInfo = infoTables.getJSONArray(tableName).getJSONObject(0);
-                        mVersion = tableInfo.getString("VERSION");
-                        size = Integer.parseInt(tableInfo.getString("PART"));
-                        fileCount = Integer.parseInt(tableInfo.getString("FILE_COUNT"));
-                        mTotal = Integer.parseInt(tableInfo.getString("TOTAL_COUNT"));
-                        hddSize = Integer.parseInt(tableInfo.getString("SIZE")) / 1024 / 1024;
+                        TableInfo tableInfo;
+                        try {
+                            tableInfo = new TableInfo(infoTables, versions, tableName);
+                        } catch (JSONException | NumberFormatException e) {
+                            message.add(Tags.RPC_ERROR);
+                            message.add("Не удалось получить необходимую для синхронизации информацию. Нужен стабильный источник интернет сигнала. Попробуйте повторить загрузку позднее");
+                            return message;
+                        }
+                        if (tableInfo != null && tableInfo.isError) {
+                            message.add(Tags.RPC_ERROR);
+                            message.add("Не удалось прочитать информацию о синхронизации. Попробуйте повторить загрузку позднее");
+                            return message;
+                        }
+
+                        String actualVersion = versions.getString("version_Pack_Max");
+                        if (actualVersion.equals(JUST_LAST_VERSION)) {
+                            resource = infoTables.getJSONArray(tableName).getJSONObject(0);
+                        } else {
+                            JSONArray array = infoTables.getJSONArray(tableName);
+                            for (int i = 0; i < array.length(); i++) {
+                                JSONObject temp = array.getJSONObject(i);
+                                if (temp.getString("VERSION").equals(actualVersion)) {
+                                    resource = array.getJSONObject(i);
+                                    break;
+                                }
+                            }
+                        }
+                        if (resource != null) {
+                            mVersion = resource.getString("VERSION");
+                            size = Integer.parseInt(resource.getString("PART"));
+                            fileCount = Integer.parseInt(resource.getString("FILE_COUNT"));
+                            mTotal = Integer.parseInt(resource.getString("TOTAL_COUNT"));
+                            hddSize = Integer.parseInt(resource.getString("SIZE")) / 1024 / 1024;
+                        } else {
+                            message.add(Tags.RPC_ERROR);
+                            message.add("Отсутствует подходящая версия таблицы, попробуйте повторить загрузку позднее");
+                            return message;
+                        }
                     } else {
                         message.add(Tags.RPC_ERROR);
                         message.add("Ошибка загрузки данных о таблице");
@@ -117,7 +155,7 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     downloadProgress = new Progress(0, mTotal, tableName);
                 } else {
                     //восстанавливаем загрузку
-                    if (!PreferencesManager.getInstance().getProgress().tableName.toLowerCase().equals(tableName.toLowerCase())){
+                    if (!PreferencesManager.getInstance().getProgress().tableName.toLowerCase().equals(tableName.toLowerCase())) {
                         //так как многопоточная загрузка при загрузке всех таблиц
                         // Progress может не быть null, так как вставляется другая таблица
                         removeBeforeInsert = true;
