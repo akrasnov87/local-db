@@ -42,8 +42,6 @@ public class NetworkRoutes {
     public NetworkRoutes() {
     }
 
-
-
     public String getLINK() {
         return this.LINK;
     }
@@ -59,7 +57,6 @@ public class NetworkRoutes {
     public void setF_Parent(String F_Parent) {
         this.F_Parent = F_Parent;
     }
-
 
     public String getC_Network_Path() {
         return this.C_Network_Path;
@@ -94,4 +91,4 @@ public class NetworkRoutes {
     }
 
 
-}
+    }

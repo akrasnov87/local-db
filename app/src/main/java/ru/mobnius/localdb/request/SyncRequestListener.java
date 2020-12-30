@@ -66,6 +66,10 @@ public class SyncRequestListener extends AuthFilterRequestListener
                 && PreferencesManager.getInstance().getSCHEMA_VERSION() < 2) {
             return Response.getErrorInstance(urlReader, "Подождите, в LocalDB происходит удаление невалидных данных", Response.RESULT_FAIL);
         }
+        if (PreferencesManager.getInstance() != null && PreferencesManager.getInstance().getSCHEMA_VERSION() != DaoMaster.SCHEMA_VERSION
+                && PreferencesManager.getInstance().getSCHEMA_VERSION() < 3) {
+            return Response.getErrorInstance(urlReader, "Подождите, в LocalDB происходит удаление невалидных данных", Response.RESULT_FAIL);
+        }
         mUrlReader = urlReader;
         ArrayList<String> tableName = new ArrayList<>();
         String table = urlReader.getParam("table");
@@ -119,6 +123,7 @@ public class SyncRequestListener extends AuthFilterRequestListener
     @Override
     public void onLoadError(String[] message) {
         mApp.getObserver().notify(Observer.ERROR, message);
+
     }
 
     @Override

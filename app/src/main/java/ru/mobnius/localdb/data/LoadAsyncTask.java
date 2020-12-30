@@ -8,9 +8,9 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import org.greenrobot.greendao.database.Database;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.DataInputStream;
@@ -32,8 +32,6 @@ import ru.mobnius.localdb.data.tablePack.CsvUtil;
 import ru.mobnius.localdb.model.Progress;
 import ru.mobnius.localdb.observer.EventListener;
 import ru.mobnius.localdb.observer.Observer;
-import ru.mobnius.localdb.storage.DaoMaster;
-import ru.mobnius.localdb.storage.DaoSession;
 import ru.mobnius.localdb.utils.FileUtil;
 import ru.mobnius.localdb.utils.Loader;
 import ru.mobnius.localdb.utils.VersionUtil;
@@ -63,96 +61,35 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
     @Override
     protected ArrayList<String> doInBackground(String... strings) {
         ArrayList<String> message = new ArrayList<>();
-        if (PreferencesManager.getInstance().getRepoUrl() == null) {
+        if (isAuthProblems(strings[0], strings[1])) {
             message.add(Tags.AUTH_ERROR);
-            message.add("Ошибка аторизации, не известно значение url для скачивания");
+            message.add("Не удалось получить ответ от сервера, проблема авторизации. Попробуйте авторизоваться повторно.");
             return message;
         }
-
         if (!isCancelled() && mTableName != null) {
             for (String tableName : mTableName) {
-                Progress startProgress = new Progress(0, 0, tableName);
-                PreferencesManager.getInstance().setProgress(startProgress);
-                JSONObject versions = CsvUtil.newGetInfo(PreferencesManager.getInstance().getRpcUrl() + "/localdb/versions/1.139.0.513", tableName); //+ VersionUtil.getVersionName(mApp));
-                JSONObject infoTables = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl());
-                if (infoTables == null || versions == null) {
+
+                JSONObject actualVersions = CsvUtil.getActualVersions(PreferencesManager.getInstance().getRpcUrl() + "/localdb/versions/1.140.0.623" , tableName);
+                JSONObject completeInfo = CsvUtil.getInfo(PreferencesManager.getInstance().getRepoUrl(), tableName);
+                if (completeInfo == null || actualVersions == null) {
                     message.add(Tags.RPC_ERROR);
-                    message.add("Не удалось получить необходимую информацию о загрузке. Попробуйте повторить загрузку снова");
-                    return message;
-                }
-                //количество записей с сервера за 1 rpc запрос
-                int size;
-                int fileCount;
-                int hddSize;
-                String mVersion;
-                JSONObject resource = null;
-                int mTotal;
-                try {
-                    if (infoTables.getJSONArray(tableName).length() > 0) {
-                        TableInfo tableInfo;
-                        try {
-                            tableInfo = new TableInfo(infoTables, versions, tableName);
-                        } catch (JSONException | NumberFormatException e) {
-                            message.add(Tags.RPC_ERROR);
-                            message.add("Не удалось получить необходимую для синхронизации информацию. Нужен стабильный источник интернет сигнала. Попробуйте повторить загрузку позднее");
-                            return message;
-                        }
-                        if (tableInfo != null && tableInfo.isError) {
-                            message.add(Tags.RPC_ERROR);
-                            message.add("Не удалось прочитать информацию о синхронизации. Попробуйте повторить загрузку позднее");
-                            return message;
-                        }
-
-                        String actualVersion = versions.getString("version_Pack_Max");
-                        if (actualVersion.equals(JUST_LAST_VERSION)) {
-                            resource = infoTables.getJSONArray(tableName).getJSONObject(0);
-                        } else {
-                            JSONArray array = infoTables.getJSONArray(tableName);
-                            for (int i = 0; i < array.length(); i++) {
-                                JSONObject temp = array.getJSONObject(i);
-                                if (temp.getString("VERSION").equals(actualVersion)) {
-                                    resource = array.getJSONObject(i);
-                                    break;
-                                }
-                            }
-                        }
-                        if (resource != null) {
-                            mVersion = resource.getString("VERSION");
-                            size = Integer.parseInt(resource.getString("PART"));
-                            fileCount = Integer.parseInt(resource.getString("FILE_COUNT"));
-                            mTotal = Integer.parseInt(resource.getString("TOTAL_COUNT"));
-                            hddSize = Integer.parseInt(resource.getString("SIZE")) / 1024 / 1024;
-                        } else {
-                            message.add(Tags.RPC_ERROR);
-                            message.add("Отсутствует подходящая версия таблицы, попробуйте повторить загрузку позднее");
-                            return message;
-                        }
-                    } else {
-                        message.add(Tags.RPC_ERROR);
-                        message.add("Ошибка загрузки данных о таблице");
-                        return message;
-                    }
-                } catch (JSONException e) {
-                    message.add(Tags.CRITICAL_ERROR);
-                    message.add("Ошибка чтения информации о таблице " + e.toString());
-                    return message;
-                }
-                Loader loader = Loader.getInstance();
-                boolean isAuthorized = loader.auth(strings[0], strings[1]);
-                if (!isAuthorized) {
-                    message.add(Tags.AUTH_ERROR);
-                    message.add("Не удалось получить ответ от сервера. Возможно пароль введен неверно, попробуйте авторизоваться повторно");
+                    message.add("Не удалось получить необходимую для синхронизации информацию. Нужен стабильный источник интернет сигнала. Попробуйте повторить загрузку позднее.");
                     return message;
                 }
 
+                TableInfo tableInfo = CsvUtil.getTableInfo(completeInfo, actualVersions, tableName);
+                if (tableInfo == null) {
+                    message.add(Tags.RPC_ERROR);
+                    message.add("Не удалось получить валидные данные необходимые для начала загрузки. Попробуйте повторить загрузку позднее");
+                    return message;
+                }
                 boolean removeBeforeInsert = false;
                 Progress downloadProgress;
                 if (PreferencesManager.getInstance().getProgress() == null) {
-                    //удаляем прежде чем заливать
-                    removeBeforeInsert = true;
-                    Progress progress = new Progress(0, mTotal, tableName);
+                    removeBeforeInsert = true;//удаляем прежде чем заливать
+                    Progress progress = new Progress(0, tableInfo.totalRows, tableName);
                     PreferencesManager.getInstance().setProgress(progress);
-                    downloadProgress = new Progress(0, mTotal, tableName);
+                    downloadProgress = new Progress(0, tableInfo.totalRows, tableName);
                 } else {
                     //восстанавливаем загрузку
                     if (!PreferencesManager.getInstance().getProgress().tableName.toLowerCase().equals(tableName.toLowerCase())) {
@@ -165,19 +102,18 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
 
                 PreferencesManager.getInstance().setDownloadProgress(downloadProgress);
 
-                DaoSession daoSession = HttpService.getDaoSession();
-
                 File cacheDir = mApp.getCacheDir();
-                if (cacheDir.getFreeSpace() / 1000000 < hddSize + 100) {
+                int wholeTableSize = ((tableInfo.hddSize*10) + 300);
+                if (cacheDir.getFreeSpace() / 1000000 < wholeTableSize) {
                     message.add(Tags.STORAGE_ERROR);
                     message.add("Ошибка: в хранилище телефона недостаточно свободного места для загрузки таблицы(" +
-                            tableName + ", необходимо около " + hddSize + 100 + " МБ). Очистите место и повторите загрузку");
+                            tableName + ", необходимо около "+ wholeTableSize + "МБ). Очистите место и повторите загрузку");
                     return message;
                 }
-                PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(mTotal), tableName);
+                PreferencesManager.getInstance().setRemoteRowCount(String.valueOf(tableInfo.totalRows), tableName);
 
                 try {
-                    Database db = daoSession.getDatabase();
+                    Database db = HttpService.getDaoSession().getDatabase();
                     if (removeBeforeInsert) {
                         db.execSQL("delete from " + tableName);
                         PreferencesManager.getInstance().setLocalRowCount("0", tableName);
@@ -194,26 +130,26 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
                     currentFile = PreferencesManager.getInstance().getDownloadProgress().getFilesCount();
                     currentRowsCount = PreferencesManager.getInstance().getDownloadProgress().getDownloadRowsCount();
                 }
-                for (int i = currentFile; i < fileCount; i++) {
+                for (int i = currentFile; i < tableInfo.fileCount; i++) {
                     if (!isCancelled()) {
-                        File file = getZipFile(mApp, tableName, mVersion, currentRowsCount, size);
+                        File file = getZipFile(mApp, tableName, tableInfo.actualVersion, currentRowsCount, tableInfo.size);
                         if (file == null && !isCancelled()) {
-                            file = tryToGetProblemFile(mApp, tableName, mVersion, currentRowsCount, size);
+                            file = tryToGetProblemFile(mApp, tableName, tableInfo.actualVersion, currentRowsCount, tableInfo.size);
                             if (file == null) {
                                 message.add(Tags.RPC_ERROR);
                                 message.add("Не удалось получить файл с сервера");
                                 return message;
                             }
                         }
-                        currentRowsCount += size;
+                        currentRowsCount += tableInfo.size;
                         if (file != null) {
                             mZipDownloadListener.onZipDownloaded(tableName, file.getAbsolutePath());
                         }
-                        Progress currentDownloadProgress = new Progress(currentRowsCount, mTotal, tableName);
+                        Progress currentDownloadProgress = new Progress(currentRowsCount, tableInfo.totalRows, tableName);
                         currentDownloadProgress.setFilesCount(i + 1);
                         currentDownloadProgress.setDownloadRowsCount(currentRowsCount);
                         PreferencesManager.getInstance().setDownloadProgress(currentDownloadProgress);
-                        Log.d(Names.TAG, tableName + ": " + getPercent(currentRowsCount, mTotal));
+                        Log.d(Names.TAG, tableName + ": " + getPercent(currentRowsCount, tableInfo.totalRows));
                     }
                 }
                 PreferencesManager.getInstance().setDownloadProgress(null);
@@ -316,6 +252,16 @@ public class LoadAsyncTask extends AsyncTask<String, Integer, ArrayList<String>>
             }
         }
         return file;
+    }
+
+    private boolean isAuthProblems(String login, String password) {
+        boolean isProblem = false;
+        if (PreferencesManager.getInstance().getRepoUrl() == null) {
+            isProblem = true;
+        } else {
+            isProblem = !Loader.getInstance().auth(login, password);
+        }
+        return isProblem;
     }
 
     public interface OnLoadListener {

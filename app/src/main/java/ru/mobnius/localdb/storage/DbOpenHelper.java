@@ -28,9 +28,16 @@ public class DbOpenHelper extends DaoMaster.OpenHelper {
             String sql = "ALTER TABLE " + "\"ED_Network_Routes\"" + " ADD COLUMN \"F_Division\" TEXT;";
             String sql1 = "ALTER TABLE " + "\"ED_Network_Routes\"" + " ADD COLUMN \"F_Subdivision\" TEXT;";
             String sql2 = "ALTER TABLE " + "\"UI_SV_FIAS\"" + " ADD COLUMN \"F_Region\" TEXT;";
+            String sql3 = "ALTER TABLE " + "\"UI_SV_FIAS\"" + " ADD COLUMN \"B_House\" TEXT;";
             db.execSQL(sql);
             db.execSQL(sql1);
             db.execSQL(sql2);
+            db.execSQL(sql3);
+        } else {
+            if (oldVersion == 2) {
+                String sqlForVersionTwo = "ALTER TABLE " + "\"UI_SV_FIAS\"" + " ADD COLUMN \"B_House\" TEXT;";
+                db.execSQL(sqlForVersionTwo);
+            }
         }
     }
 }

@@ -168,8 +168,31 @@ public class HttpService extends Service
                 }
             });
             thread.start();
-
         }
+        if (PreferencesManager.getInstance() != null && PreferencesManager.getInstance().getSCHEMA_VERSION() != DaoMaster.SCHEMA_VERSION
+                && PreferencesManager.getInstance().getSCHEMA_VERSION() < 3) {
+            ((App) getApplication()).onAddLog(new LogItem("Подождите идет удаление невалидных данных. ", true));
+            ((App) getApplication()).onAddLog(new LogItem("Это может занять до 10 минут", true));
+            Handler handler = new Handler(getMainLooper());
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    getDaoSession().getDatabase().execSQL("delete from " + "UI_SV_FIAS");
+                    getDaoSession().getDatabase().execSQL("delete from " + "ED_Network_Routes");
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            PreferencesManager.getInstance().setSCHEMA_VERSION(DaoMaster.SCHEMA_VERSION);
+                            ((App) getApplication()).onAddLog(new LogItem("Удаление невалидных данных прошло успешно", true));
+                            PreferencesManager.getInstance().setLocalRowCount("0", "UI_SV_FIAS");
+                            PreferencesManager.getInstance().setRemoteRowCount("0", "UI_SV_FIAS");
+                        }
+                    });
+                }
+            });
+            thread.start();
+        }
+
         String strMode;
         if (intent != null) {
             int mode = intent.getIntExtra(MODE, 0);
